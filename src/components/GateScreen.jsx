@@ -124,4 +124,4 @@ export function AboutScreen({ onContinue }) {
   )
 }
 
-export default { GateScreen, AboutScreen }
+
