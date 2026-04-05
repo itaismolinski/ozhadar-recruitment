@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react'
 import { onAuthChange, signOut } from './lib/supabase.js'
-import GateScreen    from './components/GateScreen.jsx'
-import AboutScreen   from './components/AboutScreen.jsx'
+import { GateScreen }  from './components/GateScreen.jsx'
+import { AboutScreen } from './components/GateScreen.jsx'
 import RegistrationForm from './components/RegistrationForm.jsx'
 import LoginScreen   from './components/LoginScreen.jsx'
 import CRM           from './components/CRM.jsx'
 
-// Detect if visitor is staff (?crm in URL or /crm path)
 const isCRMRoute = () =>
   window.location.pathname.includes('crm') ||
   window.location.search.includes('crm')
@@ -14,7 +13,7 @@ const isCRMRoute = () =>
 export default function App() {
   const [session, setSession]   = useState(null)
   const [authLoading, setAuthLoading] = useState(true)
-  const [screen, setScreen]     = useState('gate') // gate | about | form
+  const [screen, setScreen]     = useState('gate')
   const [crmMode]               = useState(isCRMRoute)
 
   useEffect(() => {
@@ -25,7 +24,6 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  // ── CRM path ──────────────────────────────────────────────────────────────
   if (crmMode) {
     if (authLoading) return <Spinner />
     if (!session)   return <LoginScreen onLogin={s => setSession(s)} />
@@ -36,7 +34,6 @@ export default function App() {
     )
   }
 
-  // ── Public form path ─────────────────────────────────────────────────────
   return (
     <Shell>
       {screen === 'gate'  && <GateScreen  onYes={() => setScreen('about')} />}
