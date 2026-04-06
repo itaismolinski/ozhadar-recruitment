@@ -1,9 +1,7 @@
-import { useState } from 'react';
-import { AuthProvider, useAuth } from './providers/AuthProvider';
-import { GateFlow } from './features/gate/GateScreen.jsx';
-import RegistrationForm from './features/registration/RegistrationForm.jsx';
-import CRM from './features/crm/CRM.jsx';
-import LoginScreen from './features/crm/LoginScreen.jsx';
+import { GateFlow } from './features/gate/GateScreen.jsx'
+import RegistrationForm from './features/registration/RegistrationForm.jsx'
+import CRM from './features/crm/CRM.jsx'
+import LoginScreen from './features/crm/LoginScreen.jsx'
 
 const IS_CRM = new URLSearchParams(window.location.search).has('crm');
 
