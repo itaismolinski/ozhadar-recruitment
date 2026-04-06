@@ -1,40 +1,55 @@
-// ─── REPLACE YOUR EXISTING App.jsx STATE + ROUTING WITH THIS ─────────────────
-// In App.jsx, change the state and routing section as follows:
-
-import { GateFlow } from './components/GateScreen.jsx'
-import RegistrationForm from './components/RegistrationForm.jsx'
-
-// Inside your App component:
-const [screen, setScreen] = useState('gate')  // gate | form
-const [lang, setLang]     = useState('he')
-
-// Replace gate/about routing with:
-// <GateFlow onYes={(selectedLang) => { setLang(selectedLang); setScreen('form') }} />
-
-// Replace form rendering with:
-// <RegistrationForm lang={lang} onDone={() => setScreen('gate')} />
-
-// ─── MINIMAL COMPLETE App.jsx ─────────────────────────────────────────────────
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { GateFlow } from './components/GateScreen.jsx'
 import RegistrationForm from './components/RegistrationForm.jsx'
 import CRM from './components/CRM.jsx'
 import LoginScreen from './components/LoginScreen.jsx'
+import { getSession, onAuthChange } from './lib/supabase.js'
 
-const CRM_PARAM = new URLSearchParams(window.location.search).has('crm')
+const IS_CRM = new URLSearchParams(window.location.search).has('crm')
 
 export default function App() {
-  const [screen, setScreen] = useState(CRM_PARAM ? 'crm' : 'gate')
-  const [lang, setLang]     = useState('he')
+  const [screen, setScreen]   = useState(IS_CRM ? 'crm' : 'gate')
+  const [lang, setLang]       = useState('he')
   const [session, setSession] = useState(null)
+  const [loadingAuth, setLoadingAuth] = useState(IS_CRM)
 
-  // CRM flow
-  if (screen === 'crm') {
+  useEffect(() => {
+    if (!IS_CRM) return
+    getSession().then(s => {
+      setSession(s)
+      setLoadingAuth(false)
+    })
+    const { data: { subscription } } = onAuthChange(s => setSession(s))
+    return () => subscription.unsubscribe()
+  }, [])
+
+  // ── CRM (staff portal) ───────────────────────────────────────────────────
+  if (IS_CRM) {
+    if (loadingAuth) return (
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', fontFamily:"'Outfit',sans-serif", color:'#9CA3AF', fontSize:14 }}>
+        טוען...
+      </div>
+    )
     if (!session) return <LoginScreen onLogin={s => setSession(s)} />
-    return <CRM session={session} onLogout={() => setSession(null)} />
+    return <CRM session={session} onLogout={async () => { const { signOut } = await import('./lib/supabase.js'); await signOut(); setSession(null) }} />
   }
 
-  // Public registration flow
-  if (screen === 'form') return <RegistrationForm lang={lang} onDone={() => setScreen('gate')} />
-  return <GateFlow onYes={(l) => { setLang(l); setScreen('form') }} />
+  // ── PUBLIC REGISTRATION FLOW ─────────────────────────────────────────────
+  if (screen === 'form') {
+    return (
+      <RegistrationForm
+        lang={lang}
+        onDone={() => setScreen('gate')}
+      />
+    )
+  }
+
+  return (
+    <GateFlow
+      onYes={(selectedLang) => {
+        setLang(selectedLang)
+        setScreen('form')
+      }}
+    />
+  )
 }
