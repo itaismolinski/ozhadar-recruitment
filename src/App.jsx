@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { GateFlow } from './components/GateScreen.jsx'
-import RegistrationForm from './components/RegistrationForm.jsx'
-import CRM from './components/CRM.jsx'
-import LoginScreen from './components/LoginScreen.jsx'
+import { GateFlow } from './features/gate/GateScreen.jsx'
+import RegistrationForm from './features/registration/RegistrationForm.jsx'
+import CRM from './features/crm/CRM.jsx'
+import LoginScreen from './features/crm/LoginScreen.jsx'
 import { getSession, onAuthChange } from './lib/supabase.js'
 
 const IS_CRM = new URLSearchParams(window.location.search).has('crm')
@@ -23,7 +23,6 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  // ── CRM (staff portal) ───────────────────────────────────────────────────
   if (IS_CRM) {
     if (loadingAuth) return (
       <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', fontFamily:"'Outfit',sans-serif", color:'#9CA3AF', fontSize:14 }}>
@@ -34,7 +33,6 @@ export default function App() {
     return <CRM session={session} onLogout={async () => { const { signOut } = await import('./lib/supabase.js'); await signOut(); setSession(null) }} />
   }
 
-  // ── PUBLIC REGISTRATION FLOW ─────────────────────────────────────────────
   if (screen === 'form') {
     return (
       <RegistrationForm
