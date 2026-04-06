@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { insertCandidate, uploadDoc } from '../lib/supabase.js'
+import { insertCandidate, uploadDoc } from '../../lib/supabase.js'
 import { SECTORS, PROFESSIONS, PERMITS, COUNTRIES, CITIES, DOC_FIELDS, EMPTY_FORM } from '../../constants.js'
 import { T } from '../../translations.js'
 
