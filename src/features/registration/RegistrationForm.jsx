@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { insertCandidate, uploadDoc } from '../lib/supabase.js'
-import { SECTORS, PROFESSIONS, PERMITS, COUNTRIES, CITIES, DOC_FIELDS, EMPTY_FORM } from '../constants.js'
-import { T } from '../translations.js'
+import { SECTORS, PROFESSIONS, PERMITS, COUNTRIES, CITIES, DOC_FIELDS, EMPTY_FORM } from '../../constants.js'
+import { T } from '../../translations.js'
 
 const SANS    = "'Outfit', system-ui, Arial, sans-serif"
 const DISPLAY = "'Syne', 'Outfit', Arial, sans-serif"
