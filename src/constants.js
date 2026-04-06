@@ -3,7 +3,9 @@ export const SECTORS = [
   { v: 'industry',     he: 'תעשייה',   en: 'Industry'      },
   { v: 'commerce',     he: 'מסחר',     en: 'Commerce'      },
   { v: 'agriculture',  he: 'חקלאות',   en: 'Agriculture'   },
-  { v: 'other',        he: 'אחר',      en: 'Other'         },
+  { v: 'restaurant',   he: 'מסעדנות',  en: 'F&B / Restaurant' },
+  { v: 'hospitality',  he: 'מלונאות',   en: 'Hospitality'    },
+  { v: 'other',        he: 'אחר',       en: 'Other'          },
 ]
 
 export const PROFESSIONS = {
@@ -11,6 +13,8 @@ export const PROFESSIONS = {
   industry:     ['רתך / Welder','מפעיל מכונות / Machine Operator','עובד מחסן / Warehouse Worker','עובד ייצור / Production Worker','מנהל מחסן / Warehouse Manager','אחר / Other'],
   commerce:     ['מוכרן / Salesperson','קופאי / Cashier','מחסנאי / Stock Clerk','שליח / Delivery','אחר / Other'],
   agriculture:  ['קוטף / Picker','עובד חקלאי / Farm Worker','נהג טרקטור / Tractor Driver','אחר / Other'],
+  restaurant: ['טבח / Cook','שף / Chef','מלצר / Waiter','ברמן / Bartender','עובד מטבח / Kitchen Worker','מנהל משמרת / Shift Manager','מארח/ת / Host','כלבן / Dishwasher','אחר / Other'],
+  hospitality: ['קבלן / Front Desk','פקיד קבלה / Receptionist','מנקה / Cleaner','עובד חדרים / Housekeeping','מנהל קומה / Floor Manager','קונסיירז / Concierge','עובד ספא / Spa Staff','אחר / Other'],
   other:        ['אחר / Other'],
 }
 
