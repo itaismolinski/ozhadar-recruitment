@@ -1,0 +1,63 @@
+import { createContext, useContext, useState, useEffect } from 'react';
+import { getSession, onAuthChange, signOut as supabaseSignOut } from '../lib/supabase.js';
+
+const AuthContext = createContext(null);
+
+export function AuthProvider({ children, isCRM = false }) {
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(isCRM);
+
+  useEffect(() => {
+    // רק ב-CRM mode אנחנו צריכים לטעון session
+    if (!isCRM) {
+      setLoading(false);
+      return;
+    }
+
+    // טעינת session ראשונית
+    getSession()
+      .then((s) => setSession(s))
+      .finally(() => setLoading(false));
+
+    // האזנה לשינויים ב-auth
+    const { data: { subscription } } = onAuthChange((newSession) => {
+      setSession(newSession);
+    });
+
+    // Cleanup
+    return () => {
+      subscription?.unsubscribe();
+    };
+  }, [isCRM]);
+
+  const signOut = async () => {
+    try {
+      await supabaseSignOut();
+      setSession(null);
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  const value = {
+    session,
+    loading,
+    signOut,
+    isAuthenticated: !!session,
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+// Custom Hook
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === null) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
