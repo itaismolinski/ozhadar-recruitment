@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { fetchCandidates, updateCandidate, deleteCandidate, getDocUrl, uploadDoc } from '../lib/supabase.js'
+import { fetchCandidates, updateCandidate, deleteCandidate, getDocUrl, uploadDoc, fetchTasks, insertTask, updateTask, deleteTask, fetchNotes, insertNote, deleteNote } from '../lib/supabase.js'
 import { SECTORS, PERMITS, STATUSES, DOC_FIELDS } from '../constants.js'
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
@@ -53,6 +53,104 @@ function ConfirmDelete({ name, onConfirm, onCancel }) {
           </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+
+// ─── NOTES TAB ────────────────────────────────────────────────────────────────
+
+function NotesTab({ candidateId }) {
+  const [notes, setNotes]     = useState([])
+  const [loading, setLoading] = useState(true)
+  const [text, setText]       = useState('')
+  const [date, setDate]       = useState(new Date().toISOString().split('T')[0])
+  const [saving, setSaving]   = useState(false)
+
+  useEffect(() => {
+    fetchNotes(candidateId)
+      .then(d => { setNotes(d); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [candidateId])
+
+  const add = async () => {
+    if (!text.trim()) return
+    setSaving(true)
+    try {
+      const n = await insertNote({ candidate_id: candidateId, note_date: date, text: text.trim() })
+      setNotes(prev => [n, ...prev])
+      setText('')
+      setDate(new Date().toISOString().split('T')[0])
+    } catch(e) { alert('שגיאה בשמירה') }
+    setSaving(false)
+  }
+
+  const remove = async (id) => {
+    await deleteNote(id)
+    setNotes(prev => prev.filter(n => n.id !== id))
+  }
+
+  const INP = { padding: '10px 12px', background: '#F9FAFB', border: '1.5px solid #E5E7EB', borderRadius: 9, color: '#111827', fontFamily: SANS, fontSize: 13, outline: 'none', width: '100%' }
+
+  return (
+    <div style={{ background: 'white', border: '1.5px solid #F3F4F6', borderRadius: 14, padding: '20px', boxShadow: '0 1px 6px rgba(0,0,0,.04)' }}>
+      <div style={{ fontSize: 15, fontWeight: 700, color: '#111827', fontFamily: DISPLAY, marginBottom: 18, paddingBottom: 12, borderBottom: '1.5px solid #F3F4F6' }}>
+        📝 תרשומות
+      </div>
+
+      {/* Add note form */}
+      <div style={{ background: '#F8FAFF', border: '1.5px solid #E0E7FF', borderRadius: 12, padding: '16px', marginBottom: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr', gap: 10, marginBottom: 10 }}>
+          <div>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 4, fontFamily: SANS }}>תאריך</label>
+            <input type="date" value={date} onChange={e => setDate(e.target.value)} style={INP} />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 4, fontFamily: SANS }}>תרשומת</label>
+            <input value={text} onChange={e => setText(e.target.value)}
+              placeholder="כתוב תרשומת חדשה..." style={INP}
+              onKeyDown={e => e.key === 'Enter' && add()} />
+          </div>
+        </div>
+        <button onClick={add} disabled={saving || !text.trim()}
+          style={{ width: '100%', padding: '10px', background: text.trim() ? TEAL : '#E5E7EB', color: text.trim() ? 'white' : '#9CA3AF', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: text.trim() ? 'pointer' : 'default', fontFamily: SANS, transition: 'all .15s' }}>
+          {saving ? 'שומר...' : '+ הוסף תרשומת'}
+        </button>
+      </div>
+
+      {/* Notes list */}
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: 30, color: '#D1D5DB', fontFamily: SANS }}>טוען...</div>
+      ) : notes.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 30, color: '#D1D5DB', fontSize: 13, fontFamily: SANS }}>אין תרשומות עדיין</div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {notes.map(n => (
+            <div key={n.id} style={{ display: 'flex', gap: 14, padding: '13px 16px', background: '#FAFAFA', border: '1.5px solid #F3F4F6', borderRadius: 11, alignItems: 'flex-start' }}>
+              {/* Date badge */}
+              <div style={{ flexShrink: 0, background: 'white', border: '1.5px solid #E5E7EB', borderRadius: 9, padding: '6px 10px', textAlign: 'center', minWidth: 70 }}>
+                <div style={{ fontSize: 11, color: '#9CA3AF', fontFamily: SANS }}>
+                  {new Date(n.note_date).toLocaleDateString('he-IL', { day:'2-digit', month:'2-digit' })}
+                </div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#374151', fontFamily: SANS }}>
+                  {new Date(n.note_date).getFullYear()}
+                </div>
+              </div>
+              {/* Text */}
+              <div style={{ flex: 1, fontSize: 14, color: '#111827', lineHeight: 1.7, direction: 'rtl', fontFamily: SANS }}>
+                {n.text}
+              </div>
+              {/* Delete */}
+              <button onClick={() => remove(n.id)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#FCA5A5', fontSize: 15, padding: '2px 4px', borderRadius: 6, flexShrink: 0, transition: 'color .15s' }}
+                onMouseEnter={e => e.currentTarget.style.color = '#EF4444'}
+                onMouseLeave={e => e.currentTarget.style.color = '#FCA5A5'}>
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -324,18 +422,7 @@ function WorkerCard({ candidate, onUpdate, onDelete, onBack }) {
 
         {/* TAB: NOTES */}
         {tab === 'notes' && (
-          <div style={{ background: 'white', border: '1.5px solid #F3F4F6', borderRadius: 14, padding: '20px', boxShadow: '0 1px 6px rgba(0,0,0,.04)' }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#111827', fontFamily: DISPLAY, marginBottom: 18, paddingBottom: 12, borderBottom: '1.5px solid #F3F4F6' }}>
-              📝 תרשומת
-            </div>
-            <textarea value={form.notes || ''} onChange={e => set('notes', e.target.value)}
-              placeholder="הוסף תרשומת חופשית על המועמד — שיחות, פגישות, הערות פנימיות..."
-              rows={8} style={{ width: '100%', padding: '13px 14px', background: '#F9FAFB', border: '1.5px solid #E5E7EB', borderRadius: 10, fontSize: 14, fontFamily: SANS, outline: 'none', resize: 'vertical', lineHeight: 1.7, color: '#111827', direction: 'rtl' }} />
-            <button onClick={async () => { setSaving(true); await onUpdate(candidate.id, { notes: form.notes }); setSaving(false); }}
-              style={{ marginTop: 12, width: '100%', padding: '12px', background: TEAL, color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: SANS }}>
-              {saving ? 'שומר...' : '💾 שמור תרשומת'}
-            </button>
-          </div>
+          <NotesTab candidateId={candidate.id} />
         )}
       </div>
     </div>
@@ -403,6 +490,217 @@ function AlphonView({ candidates, onSelect }) {
     </div>
   )
 }
+
+
+const STAFF = ['איתי','נציג 1','נציג 2','נציג 3'] // ניתן להוסיף
+
+function TasksPanel({ candidates }) {
+  const [tasks, setTasks]       = useState([])
+  const [loading, setLoading]   = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [filterAssignee, setFilterAssignee] = useState('')
+  const [filterStatus, setFilterStatus]     = useState('open')
+  const [form, setForm] = useState({ title:'', description:'', assigned_to:'', candidate_id:'', due_date:'' })
+
+  useEffect(() => {
+    fetchTasks().then(d => { setTasks(d); setLoading(false) }).catch(() => setLoading(false))
+  }, [])
+
+  const set = (k,v) => setForm(f => ({...f,[k]:v}))
+
+  const add = async () => {
+    if (!form.title.trim()) return
+    const rec = {
+      title: form.title,
+      description: form.description || null,
+      assigned_to: form.assigned_to || null,
+      candidate_id: form.candidate_id || null,
+      due_date: form.due_date || null,
+      status: 'open',
+    }
+    const t = await insertTask(rec)
+    setTasks(prev => [t, ...prev])
+    setForm({ title:'', description:'', assigned_to:'', candidate_id:'', due_date:'' })
+    setShowForm(false)
+  }
+
+  const toggle = async (task) => {
+    const newStatus = task.status === 'open' ? 'done' : 'open'
+    await updateTask(task.id, { status: newStatus })
+    setTasks(prev => prev.map(t => t.id === task.id ? {...t, status: newStatus} : t))
+  }
+
+  const remove = async (id) => {
+    await deleteTask(id)
+    setTasks(prev => prev.filter(t => t.id !== id))
+  }
+
+  const filtered = tasks.filter(t => {
+    return (
+      (!filterAssignee || t.assigned_to === filterAssignee) &&
+      (!filterStatus   || t.status === filterStatus)
+    )
+  })
+
+  const open = tasks.filter(t => t.status === 'open').length
+  const done = tasks.filter(t => t.status === 'done').length
+
+  const INP = { padding: '10px 12px', background: '#F9FAFB', border: '1.5px solid #E5E7EB', borderRadius: 9, color: '#111827', fontFamily: SANS, fontSize: 13, outline: 'none', width: '100%' }
+  const SEL = { ...INP, cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none' }
+  const fmtD = iso => iso ? new Date(iso).toLocaleDateString('he-IL') : null
+  const isOver = d => d && new Date(d) < new Date()
+
+  return (
+    <div style={{ fontFamily: SANS }}>
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', fontFamily: DISPLAY }}>משימות לביצוע</h3>
+          <span style={{ background: '#FEF9C3', color: '#854D0E', padding: '2px 10px', borderRadius: 20, fontSize: 12, fontWeight: 700 }}>{open} פתוחות</span>
+          <span style={{ background: '#F0FDF4', color: '#166534', padding: '2px 10px', borderRadius: 20, fontSize: 12, fontWeight: 700 }}>{done} הושלמו</span>
+        </div>
+        <button onClick={() => setShowForm(s => !s)}
+          style={{ padding: '9px 18px', background: TEAL, color: 'white', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: SANS }}>
+          {showForm ? '✕ סגור' : '+ משימה חדשה'}
+        </button>
+      </div>
+
+      {/* Add form */}
+      {showForm && (
+        <div style={{ background: '#F8FAFF', border: '1.5px solid #E0E7FF', borderRadius: 14, padding: '18px', marginBottom: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+            <div style={{ gridColumn: '1/-1' }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 4 }}>כותרת המשימה *</label>
+              <input value={form.title} onChange={e => set('title', e.target.value)}
+                placeholder="תאר את המשימה בקצרה..." style={INP} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 4 }}>מי מבצע / Assigned to</label>
+              <select value={form.assigned_to} onChange={e => set('assigned_to', e.target.value)} style={SEL}>
+                <option value=''>— בחר —</option>
+                {STAFF.map(s => <option key={s}>{s}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 4 }}>תאריך יעד</label>
+              <input type="date" value={form.due_date} onChange={e => set('due_date', e.target.value)} style={INP} />
+            </div>
+            <div style={{ gridColumn: '1/-1' }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 4 }}>שייך למועמד (אופציונלי)</label>
+              <select value={form.candidate_id} onChange={e => set('candidate_id', e.target.value)} style={SEL}>
+                <option value=''>— ללא שיוך —</option>
+                {candidates.map(c => (
+                  <option key={c.id} value={c.id}>{c.full_name_he || c.full_name_en || c.phone}</option>
+                ))}
+              </select>
+            </div>
+            <div style={{ gridColumn: '1/-1' }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 4 }}>פרטים נוספים</label>
+              <textarea value={form.description} onChange={e => set('description', e.target.value)}
+                placeholder="הוסף פרטים..." rows={2}
+                style={{ ...INP, resize: 'vertical', lineHeight: 1.6 }} />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={add}
+              style={{ flex: 1, padding: '11px', background: TEAL, color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: SANS }}>
+              ✓ הוסף משימה
+            </button>
+            <button onClick={() => setShowForm(false)}
+              style={{ padding: '11px 20px', background: '#F9FAFB', color: '#9CA3AF', border: '1.5px solid #E5E7EB', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: SANS }}>
+              ביטול
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Filters */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
+        {[['open','פתוחות'],['done','הושלמו'],['','הכל']].map(([v,l]) => (
+          <button key={v} onClick={() => setFilterStatus(v)}
+            style={{ padding: '5px 14px', borderRadius: 20, border: `1.5px solid ${filterStatus===v ? TEAL : '#E5E7EB'}`, background: filterStatus===v ? TEAL+'18' : 'white', color: filterStatus===v ? TEAL : '#9CA3AF', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: SANS }}>
+            {l}
+          </button>
+        ))}
+        {STAFF.length > 0 && (
+          <select value={filterAssignee} onChange={e => setFilterAssignee(e.target.value)}
+            style={{ padding: '5px 12px', border: '1.5px solid #E5E7EB', borderRadius: 20, fontSize: 12, color: '#6B7280', fontFamily: SANS, outline: 'none', background: 'white', cursor: 'pointer' }}>
+            <option value=''>כל הנציגים</option>
+            {STAFF.map(s => <option key={s}>{s}</option>)}
+          </select>
+        )}
+      </div>
+
+      {/* Task list */}
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: 40, color: '#D1D5DB' }}>טוען משימות...</div>
+      ) : filtered.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 40, color: '#D1D5DB', fontSize: 14 }}>אין משימות</div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {filtered.map(t => {
+            const cand = candidates.find(c => c.id === t.candidate_id)
+            const over = isOver(t.due_date) && t.status === 'open'
+            const done = t.status === 'done'
+            return (
+              <div key={t.id} style={{
+                background: done ? '#F9FAFB' : 'white',
+                border: `1.5px solid ${over ? '#FECDD3' : done ? '#F3F4F6' : '#F3F4F6'}`,
+                borderRadius: 12, padding: '14px 16px',
+                display: 'flex', alignItems: 'flex-start', gap: 12,
+                opacity: done ? .7 : 1, transition: 'all .15s',
+                boxShadow: done ? 'none' : '0 1px 4px rgba(0,0,0,.04)',
+              }}>
+                {/* Checkbox */}
+                <button onClick={() => toggle(t)}
+                  style={{ width: 22, height: 22, borderRadius: 6, border: `2px solid ${done ? TEAL : '#D1D5DB'}`, background: done ? TEAL : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, marginTop: 1, transition: 'all .15s' }}>
+                  {done && <span style={{ color: 'white', fontSize: 13, lineHeight: 1 }}>✓</span>}
+                </button>
+
+                {/* Content */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: done ? 400 : 600, color: done ? '#9CA3AF' : '#111827', textDecoration: done ? 'line-through' : 'none', marginBottom: 4 }}>
+                    {t.title}
+                  </div>
+                  {t.description && (
+                    <div style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.6, marginBottom: 6, direction: 'rtl' }}>{t.description}</div>
+                  )}
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                    {t.assigned_to && (
+                      <span style={{ fontSize: 11, background: '#EEF2FF', color: '#4F46E5', padding: '2px 9px', borderRadius: 20, fontWeight: 600 }}>
+                        👤 {t.assigned_to}
+                      </span>
+                    )}
+                    {cand && (
+                      <span style={{ fontSize: 11, background: '#F0FDF9', color: TEAL, padding: '2px 9px', borderRadius: 20, fontWeight: 600 }}>
+                        🔗 {cand.full_name_he || cand.full_name_en}
+                      </span>
+                    )}
+                    {t.due_date && (
+                      <span style={{ fontSize: 11, background: over ? '#FFF1F2' : '#F9FAFB', color: over ? '#BE123C' : '#9CA3AF', padding: '2px 9px', borderRadius: 20, fontWeight: over ? 700 : 400 }}>
+                        📅 {fmtD(t.due_date)} {over ? '⚠️ עבר המועד' : ''}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Delete */}
+                <button onClick={() => remove(t.id)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#FCA5A5', fontSize: 15, padding: '2px', borderRadius: 6, flexShrink: 0, transition: 'color .15s' }}
+                  onMouseEnter={e => e.currentTarget.style.color = '#EF4444'}
+                  onMouseLeave={e => e.currentTarget.style.color = '#FCA5A5'}>
+                  ✕
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 
 // ─── MAIN CRM ─────────────────────────────────────────────────────────────────
 
