@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { fetchCandidates, updateCandidate, deleteCandidate, getDocUrl, uploadDoc, fetchTasks, insertTask, updateTask, deleteTask, fetchNotes, insertNote, deleteNote } from '../lib/supabase.js'
-import { SECTORS, PERMITS, STATUSES, DOC_FIELDS } from '../constants.js'
+import { fetchCandidates, updateCandidate, deleteCandidate, getDocUrl, uploadDoc, fetchTasks, insertTask, updateTask, deleteTask, fetchNotes, insertNote, deleteNote } from '../../lib/supabase.js'
+import { SECTORS, PERMITS, STATUSES, DOC_FIELDS } from '../../constants.js'
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 

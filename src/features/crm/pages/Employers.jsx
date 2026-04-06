@@ -5,8 +5,8 @@ import {
   fetchEmployerHistory, logEmployerEvent,
   uploadEmployerDoc, fetchEmployerDocList, getEmployerDocUrl,
   fetchCandidates
-} from '../lib/supabase.js'
-import { SECTORS } from '../constants.js'
+} from '../../lib/supabase.js'
+import { SECTORS } from '../../constants.js'
 
 const SANS    = "'Outfit', system-ui, Arial, sans-serif"
 const DISPLAY = "'Syne', 'Outfit', Arial, sans-serif"

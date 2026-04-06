@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { T } from '../translations.js'
+import { T } from '../../translations.js'
 
 const SANS    = "'Outfit', system-ui, Arial, sans-serif"
 const DISPLAY = "'Syne', 'Outfit', Arial, sans-serif"

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { signIn } from '../lib/supabase.js'
+import { signIn } from '../../lib/supabase.js'
 
 export default function LoginScreen({ onLogin }) {
   const [email, setEmail]       = useState('')
