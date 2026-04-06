@@ -1,4 +1,4 @@
-import { useState, useEffect } from  'react'
+import { useState, useEffect } from 'react' // v2
 import { GateFlow } from './components/GateScreen.jsx'
 import RegistrationForm from './components/RegistrationForm.jsx'
 import CRM from './components/CRM.jsx'
