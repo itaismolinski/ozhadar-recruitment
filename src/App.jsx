@@ -1,65 +1,55 @@
-import { GateFlow } from './features/gate/GateScreen.jsx'
-import RegistrationForm from './features/registration/RegistrationForm.jsx'
-import CRM from './features/crm/CRM.jsx'
-import LoginScreen from './features/crm/LoginScreen.jsx'
+import { useState, useEffect } from 'react'
+import { GateFlow } from './components/GateScreen.jsx'
+import RegistrationForm from './components/RegistrationForm.jsx'
+import CRM from './components/CRM.jsx'
+import LoginScreen from './components/LoginScreen.jsx'
+import { getSession, onAuthChange } from './lib/supabase.js'
 
-const IS_CRM = new URLSearchParams(window.location.search).has('crm');
+const IS_CRM = new URLSearchParams(window.location.search).has('crm')
 
-function AppContent() {
-  const { session, loading, signOut } = useAuth();
-  
-  const [screen, setScreen] = useState('gate');
-  const [lang, setLang] = useState('he');
+export default function App() {
+  const [screen, setScreen]   = useState(IS_CRM ? 'crm' : 'gate')
+  const [lang, setLang]       = useState('he')
+  const [session, setSession] = useState(null)
+  const [loadingAuth, setLoadingAuth] = useState(IS_CRM)
 
-  // ── CRM (Staff Portal) ───────────────────────────────────────────────────
+  useEffect(() => {
+    if (!IS_CRM) return
+    getSession().then(s => {
+      setSession(s)
+      setLoadingAuth(false)
+    })
+    const { data: { subscription } } = onAuthChange(s => setSession(s))
+    return () => subscription.unsubscribe()
+  }, [])
+
+  // ── CRM (staff portal) ───────────────────────────────────────────────────
   if (IS_CRM) {
-    if (loading) {
-      return (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100vh',
-          fontFamily: "'Outfit', sans-serif",
-          color: '#9CA3AF',
-          fontSize: '14px'
-        }}>
-          טוען...
-        </div>
-      );
-    }
-
-    if (!session) {
-      return <LoginScreen />;
-    }
-
-    return <CRM session={session} onLogout={signOut} />;
+    if (loadingAuth) return (
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', fontFamily:"'Outfit',sans-serif", color:'#9CA3AF', fontSize:14 }}>
+        טוען...
+      </div>
+    )
+    if (!session) return <LoginScreen onLogin={s => setSession(s)} />
+    return <CRM session={session} onLogout={async () => { const { signOut } = await import('./lib/supabase.js'); await signOut(); setSession(null) }} />
   }
 
-  // ── Public Registration Flow ─────────────────────────────────────────────
+  // ── PUBLIC REGISTRATION FLOW ─────────────────────────────────────────────
   if (screen === 'form') {
     return (
       <RegistrationForm
         lang={lang}
         onDone={() => setScreen('gate')}
       />
-    );
+    )
   }
 
   return (
     <GateFlow
       onYes={(selectedLang) => {
-        setLang(selectedLang);
-        setScreen('form');
+        setLang(selectedLang)
+        setScreen('form')
       }}
     />
-  );
-}
-
-export default function App() {
-  return (
-    <AuthProvider isCRM={IS_CRM}>
-      <AppContent />
-    </AuthProvider>
-  );
+  )
 }
