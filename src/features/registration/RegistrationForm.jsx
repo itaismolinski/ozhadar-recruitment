@@ -4,7 +4,7 @@ import { SECTORS, PROFESSIONS, PERMITS, COUNTRIES, CITIES, DOC_FIELDS, EMPTY_FOR
 import { T } from '../../translations.js'
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
-const F = "-apple-system, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif"
+const F = "'Heebo', -apple-system, 'Arial Hebrew', Arial, sans-serif"
 const BLUE  = '#0071E3'
 const DARK  = '#1D1D1F'
 const GRAY  = '#6E6E73'
@@ -19,7 +19,7 @@ function useGlobalStyles() {
     const s = document.createElement('style')
     s.id = 'apple-reg-styles'
     s.textContent = `
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap');
 
       @keyframes fadeUp {
         from { opacity: 0; transform: translateY(24px); }
@@ -414,9 +414,9 @@ export default function RegistrationForm({ lang = 'he', onDone }) {
             🌐 Oz Hadar Group
           </div>
           <h1 style={{ fontSize: 'clamp(34px, 6vw, 52px)', fontWeight: 700, color: DARK, letterSpacing: '-1px', lineHeight: 1.05, marginBottom: 14 }}>
-            {lang === 'he' ? <>מצאנו לך<br/><span style={{ color: BLUE }}>עבודה מחכה.</span></> :
-             lang === 'ar' ? <>وجدنا لك<br/><span style={{ color: BLUE }}>عملاً ينتظرك.</span></> :
-             <>We found you<br/><span style={{ color: BLUE }}>work waiting.</span></>}
+            {lang === 'he' ? <>מצאנו לך<br/><span style={{ color: BLUE }}>עבודה.</span></> :
+             lang === 'ar' ? <>وجدنا لك<br/><span style={{ color: BLUE }}>عمل.</span></> :
+             <>We found<br/><span style={{ color: BLUE }}>you work.</span></>}
           </h1>
           <p style={{ fontSize: 17, color: GRAY, lineHeight: 1.6, fontWeight: 400 }}>
             {lang === 'he' ? 'מלא את הפרטים ונחזור אליך תוך 24 שעות.' :
