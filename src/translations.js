@@ -1,18 +1,9 @@
-// ─── TRANSLATIONS ─────────────────────────────────────────────────────────────
+// ─── TRANSLATIONS ────────────────────────────────────────────────────────────
 // Professional translations for Hebrew, English, Arabic
-
 export const T = {
-
   he: {
-    dir: 'rtl',
-    flag: '🇮🇱',
-    label: 'עברית',
-
-    // Language picker
-    pick_lang: 'בחר שפה',
-    pick_sub: 'Select language · اختر اللغة',
-
-    // Gate screen
+    dir: 'rtl', flag: '🇮🇱', label: 'עברית',
+    pick_lang: 'בחר שפה', pick_sub: 'Select language · اختر اللغة',
     gate_headline: 'מחפש עבודה?',
     gate_sub: 'יש לנו עבודה — בנייה, תעשייה, מסחר, מסעדנות ומלונאות.',
     gate_sub2: 'מלא את הטופס ונחזור אליך בהקדם.',
@@ -21,11 +12,9 @@ export const T = {
     gate_yes: 'כן, אני מחפש עבודה ✓',
     gate_no: 'לא תודה',
     gate_change_lang: '🌐 שנה שפה',
-
-    // About screen
     about_badge: 'קבוצת עוז הדר',
-    about_headline: 'אנחנו כאן בשבילך',
-    about_headline2: 'מהיום הראשון ועד האחרון',
+    about_headline: 'כאן בשבילך',
+    about_headline2: 'מהיום הראשון ולתמיד',
     about_body: 'קבוצת עוז הדר עוסקת בגיוס ושיבוץ עובדים זרים בישראל כבר שנים רבות. כל עובד מגיע לקבל יחס מכבד, תנאים הוגנים, ומישהו שידאג לו.',
     about_cards: [
       ['⚖️', 'זכויות מלאות', 'שכר הוגן, ביטוח וחופשות לפי חוק העבודה הישראלי.'],
@@ -34,85 +23,39 @@ export const T = {
       ['📞', 'תמיד זמינים', 'נציג שדובר את שפתך, זמין לכל שאלה.'],
     ],
     about_cta: 'המשך למילוי הטופס →',
-
-    // Form steps
-    step_personal: 'פרטים אישיים',
-    step_work: 'מקצועי',
-    step_visa: 'ויזה',
-    step_docs: 'מסמכים',
-
-    // Personal fields
-    f_name_he: 'שם מלא בעברית',
-    f_name_en: 'שם מלא באנגלית',
-    f_phone: 'טלפון',
-    f_email: 'אימייל',
-    f_dob: 'תאריך לידה',
-    f_country: 'מדינת מוצא',
-    f_city: 'עיר מגורים',
-    f_select: '— בחר —',
-    f_required: 'שדה חובה',
-
-    // Work fields
+    step_personal: 'פרטים אישיים', step_work: 'מקצועי', step_visa: 'ויזה', step_docs: 'מסמכים',
+    f_name_he: 'שם מלא בעברית', f_name_en: 'שם מלא באנגלית', f_phone: 'טלפון', f_email: 'אימייל',
+    f_dob: 'תאריך לידה', f_country: 'מדינת מוצא', f_city: 'עיר מגורים',
+    f_select: '— בחר —', f_required: 'שדה חובה',
     work_note: '💡 אין חובה למלא — לחץ המשך אם אינך מוצא את התחום שלך.',
-    f_sector: 'ענף',
-    f_profession: 'מקצוע',
-    f_profession_first: '— בחר ענף תחילה —',
-    f_experience: 'שנות ניסיון',
-    f_employer_current: 'מקום עבודה נוכחי',
-    f_employer_last: 'מקום עבודה אחרון',
-
-    // Visa fields
-    f_permit_type: 'סוג ויזה / היתר',
-    f_permit_number: 'מספר היתר / דרכון',
-    f_permit_expiry: 'תוקף ויזה',
-    f_entry_date: 'תאריך כניסה לישראל',
-
-    // Docs
+    f_sector: 'ענף', f_profession: 'מקצוע', f_profession_first: '— בחר ענף תחילה —',
+    f_experience: 'שנות ניסיון', f_employer_current: 'מקום עבודה נוכחי', f_employer_last: 'מקום עבודה אחרון',
+    f_permit_type: 'סוג ויזה / היתר', f_permit_number: 'מספר היתר / דרכון',
+    f_permit_expiry: 'תוקף ויזה', f_entry_date: 'תאריך כניסה לישראל',
     docs_note: 'ניתן לדלג על שדות שאינם רלוונטיים.',
-    f_doc_passport: 'דרכון / ת"ז',
-    f_doc_permit: 'היתר עבודה',
-    f_doc_license: 'רישיון מקצועי',
-    f_doc_other: 'מסמך נוסף',
-    doc_upload: 'לחץ להעלאה',
-    doc_selected: 'קובץ נבחר',
-    doc_limit: 'PDF · JPG · PNG — עד 25MB',
-
-    // Navigation
-    btn_next: 'המשך →',
-    btn_back: '← חזרה',
-    btn_submit: 'שלח פרטים ✓',
-    btn_submitting: 'שולח...',
-    btn_new_reg: 'הרשמה נוספת',
-
-    // Success
-    success_title: 'הפרטים נשמרו!',
-    success_sub: 'ניצור קשר בהקדם',
+    f_doc_passport: 'דרכון / ת"ז', f_doc_permit: 'היתר עבודה',
+    f_doc_license: 'רישיון מקצועי', f_doc_other: 'מסמך נוסף',
+    doc_upload: 'לחץ להעלאה', doc_selected: 'קובץ נבחר', doc_limit: 'PDF · JPG · PNG — עד 25MB',
+    btn_next: 'המשך →', btn_back: '← חזרה', btn_submit: 'שלח פרטים ✓',
+    btn_submitting: 'שולח...', btn_new_reg: 'הרשמה נוספת',
+    success_title: 'הפרטים נשמרו!', success_sub: 'ניצור קשר בהקדם',
     step_of: (s, t) => `שלב ${s} מתוך ${t}`,
-
-    // Footer
     footer: 'Oz Hadar Group · מערכת גיוס עובדים זרים',
   },
-
   en: {
-    dir: 'ltr',
-    flag: '🇬🇧',
-    label: 'English',
-
-    pick_lang: 'Choose Language',
-    pick_sub: 'בחר שפה · اختر اللغة',
-
+    dir: 'ltr', flag: '🇬🇧', label: 'English',
+    pick_lang: 'Choose Language', pick_sub: 'בחר שפה · اختر اللغة',
     gate_headline: 'Looking for a job?',
     gate_sub: 'We have jobs — construction, industry, commerce, restaurants & hotels.',
     gate_sub2: 'Fill in the form and we will get back to you shortly.',
-    gate_noexp_title: "💡 No professional experience? No problem",
+    gate_noexp_title: '💡 No professional experience? No problem',
     gate_noexp_body: "If you don't find your field in the list, just fill in your personal details.",
     gate_yes: "Yes, I'm looking for work ✓",
     gate_no: 'No thanks',
     gate_change_lang: '🌐 Change language',
-
     about_badge: 'Oz Hadar Group',
-    about_headline: 'We are here for you',
-    about_headline2: 'From day one to the last',
+    about_headline: 'Here for you',
+    about_headline2: 'From day one and forever',
     about_body: 'Oz Hadar Group has been placing foreign workers in Israel for many years. Every worker deserves respect, fair conditions, and someone genuinely looking out for them.',
     about_cards: [
       ['⚖️', 'Full rights', 'Fair wages, insurance and leave by Israeli labor law.'],
@@ -121,65 +64,29 @@ export const T = {
       ['📞', 'Always available', 'A rep who speaks your language, available any time.'],
     ],
     about_cta: 'Continue to Form →',
-
-    step_personal: 'Personal',
-    step_work: 'Work',
-    step_visa: 'Visa',
-    step_docs: 'Documents',
-
-    f_name_he: 'Full Name (Hebrew)',
-    f_name_en: 'Full Name (Latin)',
-    f_phone: 'Phone',
-    f_email: 'Email',
-    f_dob: 'Date of Birth',
-    f_country: 'Country of Origin',
-    f_city: 'City of Residence',
-    f_select: '— Select —',
-    f_required: 'Required',
-
+    step_personal: 'Personal', step_work: 'Work', step_visa: 'Visa', step_docs: 'Documents',
+    f_name_he: 'Full Name (Hebrew)', f_name_en: 'Full Name (Latin)',
+    f_phone: 'Phone', f_email: 'Email', f_dob: 'Date of Birth',
+    f_country: 'Country of Origin', f_city: 'City of Residence',
+    f_select: '— Select —', f_required: 'Required',
     work_note: '💡 Optional — click Continue if you do not find your field.',
-    f_sector: 'Sector',
-    f_profession: 'Profession',
-    f_profession_first: '— Select sector first —',
-    f_experience: 'Years of Experience',
-    f_employer_current: 'Current Employer',
-    f_employer_last: 'Last Employer',
-
-    f_permit_type: 'Visa / Permit Type',
-    f_permit_number: 'Permit / Passport No.',
-    f_permit_expiry: 'Permit Expiry',
-    f_entry_date: 'Date of Entry to Israel',
-
+    f_sector: 'Sector', f_profession: 'Profession', f_profession_first: '— Select sector first —',
+    f_experience: 'Years of Experience', f_employer_current: 'Current Employer', f_employer_last: 'Last Employer',
+    f_permit_type: 'Visa / Permit Type', f_permit_number: 'Permit / Passport No.',
+    f_permit_expiry: 'Permit Expiry', f_entry_date: 'Date of Entry to Israel',
     docs_note: 'You may skip fields that are not relevant.',
-    f_doc_passport: 'Passport / ID',
-    f_doc_permit: 'Work Permit / Visa',
-    f_doc_license: 'Professional License',
-    f_doc_other: 'Additional Document',
-    doc_upload: 'Click to upload',
-    doc_selected: 'File selected',
-    doc_limit: 'PDF · JPG · PNG — up to 25MB',
-
-    btn_next: 'Continue →',
-    btn_back: '← Back',
-    btn_submit: 'Submit ✓',
-    btn_submitting: 'Submitting...',
-    btn_new_reg: 'New Registration',
-
-    success_title: 'Details submitted!',
-    success_sub: "We'll be in touch soon",
+    f_doc_passport: 'Passport / ID', f_doc_permit: 'Work Permit / Visa',
+    f_doc_license: 'Professional License', f_doc_other: 'Additional Document',
+    doc_upload: 'Click to upload', doc_selected: 'File selected', doc_limit: 'PDF · JPG · PNG — up to 25MB',
+    btn_next: 'Continue →', btn_back: '← Back', btn_submit: 'Submit ✓',
+    btn_submitting: 'Submitting...', btn_new_reg: 'New Registration',
+    success_title: 'Details submitted!', success_sub: "We'll be in touch soon",
     step_of: (s, t) => `Step ${s} of ${t}`,
-
     footer: 'Oz Hadar Group · Foreign Worker Recruitment',
   },
-
   ar: {
-    dir: 'rtl',
-    flag: '🇸🇦',
-    label: 'العربية',
-
-    pick_lang: 'اختر اللغة',
-    pick_sub: 'Choose language · בחר שפה',
-
+    dir: 'rtl', flag: '🇸🇦', label: 'العربية',
+    pick_lang: 'اختر اللغة', pick_sub: 'Choose language · בחר שפה',
     gate_headline: 'هل تبحث عن عمل؟',
     gate_sub: 'لدينا وظائف — بناء، صناعة، تجارة، مطاعم وفنادق.',
     gate_sub2: 'أكمل الاستمارة وسنتواصل معك في أقرب وقت.',
@@ -188,10 +95,9 @@ export const T = {
     gate_yes: 'نعم، أنا أبحث عن عمل ✓',
     gate_no: 'لا، شكراً',
     gate_change_lang: '🌐 تغيير اللغة',
-
     about_badge: 'مجموعة أوز هدار',
-    about_headline: 'نحن هنا من أجلك',
-    about_headline2: 'من اليوم الأول حتى الأخير',
+    about_headline: 'هنا من أجلك',
+    about_headline2: 'من اليوم الأول وإلى الأبد',
     about_body: 'تعمل مجموعة أوز هدار في توظيف العمال الأجانب في إسرائيل منذ سنوات طويلة. كل عامل يستحق معاملة كريمة، وظروف عمل عادلة، وشخصاً يهتم بمصلحته.',
     about_cards: [
       ['⚖️', 'حقوق كاملة', 'أجر عادل، تأمين وإجازات وفق قانون العمل الإسرائيلي.'],
@@ -200,54 +106,24 @@ export const T = {
       ['📞', 'دائماً متاحون', 'ممثل يتحدث لغتك، متاح للإجابة على أي سؤال.'],
     ],
     about_cta: 'متابعة لملء الاستمارة →',
-
-    step_personal: 'البيانات الشخصية',
-    step_work: 'المهنة',
-    step_visa: 'التأشيرة',
-    step_docs: 'المستندات',
-
-    f_name_he: 'الاسم الكامل بالعبرية',
-    f_name_en: 'الاسم الكامل بالأحرف اللاتينية',
-    f_phone: 'رقم الهاتف',
-    f_email: 'البريد الإلكتروني',
-    f_dob: 'تاريخ الميلاد',
-    f_country: 'بلد المنشأ',
-    f_city: 'مدينة الإقامة',
-    f_select: '— اختر —',
-    f_required: 'حقل إلزامي',
-
+    step_personal: 'البيانات الشخصية', step_work: 'المهنة', step_visa: 'التأشيرة', step_docs: 'المستندات',
+    f_name_he: 'الاسم الكامل بالعبرية', f_name_en: 'الاسم الكامل بالأحرف اللاتينية',
+    f_phone: 'رقم الهاتف', f_email: 'البريد الإلكتروني', f_dob: 'تاريخ الميلاد',
+    f_country: 'بلد المنشأ', f_city: 'مدينة الإقامة',
+    f_select: '— اختر —', f_required: 'حقل إلزامي',
     work_note: '💡 اختياري — انقر على "متابعة" إذا لم تجد مجالك.',
-    f_sector: 'القطاع',
-    f_profession: 'المهنة',
-    f_profession_first: '— اختر القطاع أولاً —',
-    f_experience: 'سنوات الخبرة',
-    f_employer_current: 'صاحب العمل الحالي',
-    f_employer_last: 'صاحب العمل السابق',
-
-    f_permit_type: 'نوع التأشيرة / التصريح',
-    f_permit_number: 'رقم التصريح / جواز السفر',
-    f_permit_expiry: 'انتهاء صلاحية التأشيرة',
-    f_entry_date: 'تاريخ الدخول إلى إسرائيل',
-
+    f_sector: 'القطاع', f_profession: 'المهنة', f_profession_first: '— اختر القطاع أولاً —',
+    f_experience: 'سنوات الخبرة', f_employer_current: 'صاحب العمل الحالي', f_employer_last: 'صاحب العمل السابق',
+    f_permit_type: 'نوع التأشيرة / التصريح', f_permit_number: 'رقم التصريح / جواز السفر',
+    f_permit_expiry: 'انتهاء صلاحية التأشيرة', f_entry_date: 'تاريخ الدخول إلى إسرائيل',
     docs_note: 'يمكنك تجاوز الحقول غير ذات الصلة.',
-    f_doc_passport: 'جواز السفر / بطاقة الهوية',
-    f_doc_permit: 'تصريح العمل / التأشيرة',
-    f_doc_license: 'الرخصة المهنية',
-    f_doc_other: 'مستند إضافي',
-    doc_upload: 'انقر للرفع',
-    doc_selected: 'تم اختيار الملف',
-    doc_limit: 'PDF · JPG · PNG — حتى 25 ميغابايت',
-
-    btn_next: 'متابعة →',
-    btn_back: '← رجوع',
-    btn_submit: 'إرسال البيانات ✓',
-    btn_submitting: 'جارٍ الإرسال...',
-    btn_new_reg: 'تسجيل جديد',
-
-    success_title: 'تم حفظ البيانات!',
-    success_sub: 'سنتواصل معك قريباً',
+    f_doc_passport: 'جواز السفر / بطاقة الهوية', f_doc_permit: 'تصريح العمل / التأشيرة',
+    f_doc_license: 'الرخصة المهنية', f_doc_other: 'مستند إضافي',
+    doc_upload: 'انقر للرفع', doc_selected: 'تم اختيار الملف', doc_limit: 'PDF · JPG · PNG — حتى 25 ميغابايت',
+    btn_next: 'متابعة →', btn_back: '← رجوع', btn_submit: 'إرسال البيانات ✓',
+    btn_submitting: 'جارٍ الإرسال...', btn_new_reg: 'تسجيل جديد',
+    success_title: 'تم حفظ البيانات!', success_sub: 'سنتواصل معك قريباً',
     step_of: (s, t) => `الخطوة ${s} من ${t}`,
-
     footer: 'مجموعة أوز هدار · نظام توظيف العمال الأجانب',
   },
 }
