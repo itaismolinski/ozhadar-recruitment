@@ -270,7 +270,7 @@ function useStyles() {
       .anim-up   { animation: fadeInUp .25s ease both; }
       .anim-slide { animation: slideIn .22s ease both; }
       .pulse     { animation: pulse 1.8s ease infinite; }
-    \`
+    `
     document.head.appendChild(s)
   }, [])
 }
