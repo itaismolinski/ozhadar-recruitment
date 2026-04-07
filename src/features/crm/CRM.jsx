@@ -21,6 +21,16 @@ const SIDEBAR_ACTIVE = 'rgba(0,113,227,0.18)'
 
 const STAFF = ['איתי', 'דוד', 'הודיה', 'מור']
 
+// Extended worker statuses (override constants)
+const WORKER_STATUS_LIST = [
+  { v: 'active',       he: '✅ פעיל',      bg: '#F0FDF9', fg: '#0F766E' },
+  { v: 'new',          he: '🆕 חדש',       bg: '#EEF2FF', fg: '#4F46E5' },
+  { v: 'in_treatment', he: '🏥 בטיפול',    bg: '#EFF6FF', fg: '#1D4ED8' },
+  { v: 'injured',      he: '🩹 פצוע',      bg: '#FFF7ED', fg: '#C2410C' },
+  { v: 'escaped',      he: '🚨 ברחן',      bg: '#FFF1F2', fg: '#BE123C' },
+  { v: 'inactive',     he: '⭕ לא פעיל',   bg: '#F5F5F7', fg: '#6E6E73' },
+]
+
 const fmtDate   = iso => iso ? new Date(iso).toLocaleDateString('he-IL') : '—'
 const isExpired = d => d && new Date(d) < new Date()
 const isSoon    = d => { if (!d) return false; const diff = (new Date(d) - new Date()) / 864e5; return diff >= 0 && diff < 45 }
@@ -179,8 +189,9 @@ function Dashboard({ candidates, tasks, apartments, onNavigate, currentUser }) {
   }, [])
   const hour = now.getHours()
   const greeting = hour < 12 ? 'בוקר טוב,' : hour < 15 ? 'צהריים טובים,' : hour < 19 ? 'אחר הצהריים טובים,' : 'ערב טוב,'
-  const workers = candidates.filter(c => c.status !== 'new')
-  const newApplicants = candidates.filter(c => c.status === 'new')
+  const WORKER_STATUSES = ['active', 'in_treatment', 'placed']
+  const workers = candidates.filter(c => c.placement || WORKER_STATUSES.includes(c.status))
+  const newApplicants = candidates.filter(c => !c.placement && !WORKER_STATUSES.includes(c.status))
   const expiringVisa = candidates.filter(c => isSoon(c.permit_expiry))
   const expiredVisa = candidates.filter(c => isExpired(c.permit_expiry))
   const openTasks = tasks.filter(t => t.status === 'open')
@@ -297,7 +308,11 @@ function ApplicantsModule({ candidates, onUpdate, onDelete, currentUser }) {
     }
   }, [selected, tab])
 
-  const filtered = candidates.filter(c => {
+  // Applicants = candidates without placement and not yet active workers
+  const WORKER_STATUSES = ['active', 'in_treatment', 'placed']
+  const allApplicants = candidates.filter(c => !c.placement && !WORKER_STATUSES.includes(c.status))
+
+  const filtered = allApplicants.filter(c => {
     const q = search.toLowerCase()
     return (!q || [c.full_name_he, c.full_name_en, c.phone, c.sector].some(v => (v || '').toLowerCase().includes(q)))
       && (!filterStatus || c.status === filterStatus)
@@ -339,13 +354,26 @@ function ApplicantsModule({ candidates, onUpdate, onDelete, currentUser }) {
         </div>
 
         {/* Status changer */}
-        <div style={{ padding: '14px 24px 0', display: 'flex', gap: 7, flexWrap: 'wrap' }}>
+        <div style={{ padding: '14px 24px 0', display: 'flex', gap: 7, flexWrap: 'wrap', alignItems: 'center' }}>
           {APPLICANT_STATUSES.map(s => (
             <button key={s.v} onClick={() => setApplicantStatus(selected.id, s.v)}
               style={{ padding: '6px 14px', borderRadius: 20, border: `1.5px solid ${selected.status === s.v ? s.fg : BORDER}`, background: selected.status === s.v ? s.bg : WHITE, color: selected.status === s.v ? s.fg : GRAY, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: F }}>
               {s.label}
             </button>
           ))}
+          <div style={{ flex: 1 }} />
+          <button
+            onClick={async () => {
+              const employer = window.prompt('שם המעסיק / מקום עבודה:')
+              if (!employer) return
+              await onUpdate(selected.id, { placement: employer, placement_date: new Date().toISOString().split('T')[0], status: 'active' })
+              setSelected(s => ({ ...s, placement: employer, status: 'active' }))
+              alert(`✅ ${selected.full_name_he || selected.full_name_en} שובץ אצל ${employer} והועבר למודול עובדים`)
+              setSelected(null)
+            }}
+            style={{ padding: '8px 16px', background: '#0F766E', color: WHITE, border: 'none', borderRadius: 20, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: F, display: 'flex', alignItems: 'center', gap: 6 }}>
+            👷 שבץ → העבר לעובדים
+          </button>
         </div>
 
         <div style={{ background: WHITE, borderBottom: `1.5px solid #E5E5EA`, padding: '0 24px', display: 'flex', gap: 2, overflowX: 'auto', marginTop: 14 }}>
@@ -428,6 +456,12 @@ function ApplicantsModule({ candidates, onUpdate, onDelete, currentUser }) {
                   <td style={{ fontSize: 12, color: GRAY }}>{PERMITS.find(p => p.v === c.permit_type)?.l || '—'}</td>
                   <td>{as && <span className="badge" style={{ background: as.bg, color: as.fg }}>{as.label}</span>}</td>
                   <td style={{ color: GRAY, fontSize: 12, whiteSpace: 'nowrap' }}>{fmtDate(c.created_at)}</td>
+                  <td style={{ textAlign: 'center', width: 48 }}>
+                    <button onClick={e => { e.stopPropagation(); if (window.confirm(`למחוק את ${c.full_name_he || c.full_name_en}?`)) onDelete(c.id) }}
+                      style={{ background: '#FFF1F2', border: '1px solid #FECDD3', borderRadius: 8, padding: '5px 9px', cursor: 'pointer', color: '#BE123C', fontSize: 13, fontFamily: 'inherit' }}>
+                      🗑️
+                    </button>
+                  </td>
                 </tr>
               )
             })}
@@ -520,7 +554,11 @@ function WorkersModule({ candidates, onUpdate, onDelete, currentUser }) {
     }
   }, [selected, tab])
 
-  const filtered = candidates.filter(c => {
+  // Workers = candidates who have a placement OR status is active/in-treatment
+  const WORKER_STATUSES = ['active', 'in_treatment', 'placed']
+  const allWorkers = candidates.filter(c => c.placement || WORKER_STATUSES.includes(c.status))
+
+  const filtered = allWorkers.filter(c => {
     const q = search.toLowerCase()
     return (!q || [c.full_name_he, c.full_name_en, c.phone, c.permit_number, c.placement].some(v => (v || '').toLowerCase().includes(q)))
       && (!filterSector || c.sector === filterSector)
@@ -554,22 +592,39 @@ function WorkersModule({ candidates, onUpdate, onDelete, currentUser }) {
               <a href={`tel:${selected.phone}`} className="v2-btn v2-btn-ghost" style={{ textDecoration: 'none', fontSize: 13, padding: '7px 13px' }}>📞</a>
               <a href={`https://wa.me/${selected.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="v2-btn v2-btn-ghost" style={{ textDecoration: 'none', fontSize: 13, padding: '7px 13px' }}>💬 WA</a>
             </>}
-            <button className="v2-btn v2-btn-danger" style={{ fontSize: 12 }} onClick={() => { if (window.confirm(`למחוק את ${name}?`)) { onDelete(selected.id); setSelected(null) } }}>🗑️</button>
+            <button className="v2-btn v2-btn-danger" style={{ fontSize: 13, padding: '8px 14px' }}
+              onClick={() => { if (window.confirm(`⚠️ מחיקת עובד\n\nהאם למחוק את ${name}?\nכל הנתונים, תרשומות ומסמכים יימחקו.\nפעולה זו אינה הפיכה.`)) { onDelete(selected.id); setSelected(null) } }}>
+              🗑️ מחק עובד
+            </button>
           </div>
         </div>
 
         {/* Status quick change */}
         <div style={{ padding: '12px 24px 0', display: 'flex', gap: 7, flexWrap: 'wrap' }}>
-          {STATUSES.map(s => (
-            <button key={s.v} onClick={async () => { set('status', s.v); await onUpdate(selected.id, { status: s.v }); setSelected(c => ({ ...c, status: s.v })) }}
+          {WORKER_STATUS_LIST.map(s => (
+            <button key={s.v} onClick={async () => {
+              if (s.v === 'inactive') { setShowInactiveModal(true); return }
+              const updates = { status: s.v }
+              if (s.v === 'escaped' && !selected.escaped_at) updates.escaped_at = new Date().toISOString().split('T')[0]
+              if (s.v === 'injured' && !selected.injured_at) updates.injured_at = new Date().toISOString().split('T')[0]
+              set('status', s.v)
+              await onUpdate(selected.id, updates)
+              setSelected(c => ({ ...c, ...updates }))
+            }}
               style={{ padding: '5px 13px', borderRadius: 20, border: `1.5px solid ${(form.status || selected.status) === s.v ? s.fg : BORDER}`, background: (form.status || selected.status) === s.v ? s.bg : WHITE, color: (form.status || selected.status) === s.v ? s.fg : GRAY, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: F }}>
               {s.he}
             </button>
           ))}
         </div>
 
-        <div style={{ background: WHITE, borderBottom: `1.5px solid #E5E5EA`, padding: '0 24px', display: 'flex', gap: 2, overflowX: 'auto', marginTop: 12 }}>
-          {[['info', '📋 פרטים'], ['placement', '🏢 שיבוץ'], ['finances', '💰 פיננסים'], ['docs', '📁 מסמכים'], ['notes', '📝 תרשומות']].map(([k, l]) => (
+        {showInactiveModal && (
+        <InactiveModal candidate={selected}
+          onSave={async (updates) => { await onUpdate(selected.id, updates); setSelected(s => ({ ...s, ...updates })) }}
+          onClose={() => setShowInactiveModal(false)} />
+      )}
+
+      <div style={{ background: WHITE, borderBottom: `1.5px solid #E5E5EA`, padding: '0 24px', display: 'flex', gap: 2, overflowX: 'auto', marginTop: 12 }}>
+          {[['info', '📋 פרטים'], ['placement', '🏢 שיבוץ'], ['finances', '💰 פיננסים'], ['events', '📅 אירועים'], ['docs', '📁 מסמכים'], ['notes', '📝 תרשומות']].map(([k, l]) => (
             <button key={k} className={`tab-btn${tab === k ? ' active' : ''}`} onClick={() => setTab(k)}>{l}</button>
           ))}
         </div>
@@ -588,7 +643,7 @@ function WorkersModule({ candidates, onUpdate, onDelete, currentUser }) {
                   {[['שם עברית', 'full_name_he'], ['שם אנגלית', 'full_name_en'], ['טלפון', 'phone'], ['אימייל', 'email'], ['מדינה', 'country'], ['עיר', 'city'], ['ענף', 'sector'], ['מקצוע', 'profession'], ['ניסיון', 'experience'], ['מעסיק נוכחי', 'current_employer'], ['מעסיק אחרון', 'last_employer'], ['מספר היתר', 'permit_number']].map(([label, k]) => (
                     <div key={k}><label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: GRAY, marginBottom: 4 }}>{label}</label><input value={form[k] || ''} onChange={e => set(k, e.target.value)} style={INP_S} /></div>
                   ))}
-                  {[['תוקף ויזה', 'permit_expiry'], ['כניסה לישראל', 'entry_date'], ['ת.לידה', 'dob']].map(([label, k]) => (
+                  {[['תוקף ויזה', 'permit_expiry'], ['כניסה לישראל', 'entry_date'], ['ת.לידה', 'dob'], ['תחילת עבודה בפועל', 'work_start_date'], ['תאריך בריחה', 'escaped_at'], ['תאריך פציעה', 'injured_at']].map(([label, k]) => (
                     <div key={k}><label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: GRAY, marginBottom: 4 }}>{label}</label><input type="date" value={form[k] || ''} onChange={e => set(k, e.target.value)} style={INP_S} /></div>
                   ))}
                 </div>
@@ -630,7 +685,18 @@ function WorkersModule({ candidates, onUpdate, onDelete, currentUser }) {
                   <Inp label="מקום עבודה" value={form.placement} onChange={v => set('placement', v)} />
                   <div><label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: GRAY, marginBottom: 5 }}>תאריך שיבוץ</label><input type="date" value={form.placement_date || ''} onChange={e => set('placement_date', e.target.value)} className="v2-input" /></div>
                   <Inp label="הערות" value={form.placement_notes} onChange={v => set('placement_notes', v)} rows={3} />
-                  <button className="v2-btn v2-btn-primary" onClick={async () => { setSaving(true); await onUpdate(selected.id, { placement: form.placement, placement_date: form.placement_date || null, placement_notes: form.placement_notes }); setSelected(s => ({ ...s, placement: form.placement, placement_date: form.placement_date, placement_notes: form.placement_notes })); setSaving(false); setEditMode(false) }}>
+                  <button className="v2-btn v2-btn-primary" onClick={async () => {
+                    setSaving(true)
+                    const updates = { placement: form.placement, placement_date: form.placement_date || null, placement_notes: form.placement_notes }
+                    // Auto-promote to worker when placement assigned
+                    if (form.placement && !['active','in_treatment'].includes(selected.status)) {
+                      updates.status = 'active'
+                    }
+                    await onUpdate(selected.id, updates)
+                    setSelected(s => ({ ...s, ...updates }))
+                    setSaving(false); setEditMode(false)
+                    if (updates.status === 'active') alert('✅ העובד שובץ והועבר אוטומטית למודול עובדים')
+                  }}>
                     {saving ? 'שומר...' : '💾 שמור שיבוץ'}
                   </button>
                 </div>
@@ -729,6 +795,13 @@ function WorkersModule({ candidates, onUpdate, onDelete, currentUser }) {
             </div>
           )}
 
+          {tab === 'events' && (
+            <div className="v2-card fade-in" style={{ padding: 22 }}>
+              <SectionTitle>📅 ציר זמן אירועים</SectionTitle>
+              <EventsTab candidateId={selected.id} currentUser={currentUser} />
+            </div>
+          )}
+
           {tab === 'notes' && (
             <div className="v2-card fade-in" style={{ padding: 22 }}>
               <SectionTitle>📝 תרשומות ומעקב</SectionTitle>
@@ -795,10 +868,14 @@ function WorkersModule({ candidates, onUpdate, onDelete, currentUser }) {
                     </span>
                   </td>
                   <td style={{ color: c.placement ? '#0F766E' : '#D1D5DB', fontWeight: c.placement ? 600 : 400, fontSize: 12 }}>{c.placement || '—'}</td>
-                  <td><Badge status={c.status} /></td>
+                  <td>{(() => { const s = WORKER_STATUS_LIST.find(x=>x.v===c.status) || WORKER_STATUS_LIST[0]; return <span className="badge" style={{background:s.bg,color:s.fg}}>{s.he}</span> })()}</td>
                   <td style={{ color: GRAY, fontSize: 12, whiteSpace: 'nowrap' }}>{fmtDate(c.created_at)}</td>
-                  <td onClick={e => { e.stopPropagation(); if (window.confirm('למחוק?')) onDelete(c.id) }} style={{ cursor: 'pointer', color: '#FCA5A5', textAlign: 'center' }}
-                    onMouseEnter={e => e.currentTarget.style.color = '#EF4444'} onMouseLeave={e => e.currentTarget.style.color = '#FCA5A5'}>🗑️</td>
+                  <td onClick={e => e.stopPropagation()} style={{ textAlign: 'center', width: 48 }}>
+                    <button onClick={e => { e.stopPropagation(); if (window.confirm(`למחוק את ${c.full_name_he || c.full_name_en}?\nפעולה זו אינה הפיכה.`)) onDelete(c.id) }}
+                      style={{ background: '#FFF1F2', border: '1px solid #FECDD3', borderRadius: 8, padding: '5px 9px', cursor: 'pointer', color: '#BE123C', fontSize: 13, fontFamily: 'inherit' }}>
+                      🗑️
+                    </button>
+                  </td>
                 </tr>
               )
             })}
@@ -1524,6 +1601,607 @@ function EmployersModule({ candidates, currentUser }) {
   )
 }
 
+
+
+
+// ─── WORKER EVENTS TAB ───────────────────────────────────────────────────────
+const EVENT_TYPES = [
+  { v: 'employment_start', icon: '🏢', label: 'תחילת העסקה',    color: '#059669', bg: '#F0FDF9' },
+  { v: 'employer_change',  icon: '🔄', label: 'מעבר מעסיק',     color: '#0071E3', bg: '#EFF6FF' },
+  { v: 'injury',           icon: '🩹', label: 'פציעה',           color: '#C2410C', bg: '#FFF7ED' },
+  { v: 'escape',           icon: '🚨', label: 'בריחה',           color: '#BE123C', bg: '#FFF1F2' },
+  { v: 'fired',            icon: '📄', label: 'פיטורין',         color: '#DC2626', bg: '#FFF1F2' },
+  { v: 'resigned',         icon: '✍️', label: 'התפטרות',         color: '#6B7280', bg: '#F5F5F7' },
+  { v: 'hearing',          icon: '⚖️', label: 'שימוע',           color: '#B45309', bg: '#FFFBEB' },
+  { v: 'hospitalization',  icon: '🏥', label: 'אשפוז',           color: '#1D4ED8', bg: '#EFF6FF' },
+  { v: 'permit_renewal',   icon: '🪪', label: 'חידוש היתר',      color: '#7C3AED', bg: '#F5F3FF' },
+  { v: 'salary_change',    icon: '💰', label: 'שינוי שכר',       color: '#0F766E', bg: '#F0FDF9' },
+  { v: 'note',             icon: '📝', label: 'הערה כללית',      color: '#6E6E73', bg: '#F5F5F7' },
+]
+
+function EventsTab({ candidateId, currentUser }) {
+  const [events, setEvents] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [form, setForm] = useState({
+    event_date: new Date().toISOString().split('T')[0],
+    event_type: 'employment_start',
+    employer: '', description: ''
+  })
+  const [docFile, setDocFile] = useState(null)
+  const [confirmDel, setConfirmDel] = useState(null)
+  const fileRef = useRef()
+
+  const sf = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  const load = async () => {
+    const { data } = await supabase.from('worker_events')
+      .select('*').eq('candidate_id', candidateId)
+      .order('event_date', { ascending: false })
+    setEvents(data || [])
+    setLoading(false)
+  }
+
+  useEffect(() => { load() }, [candidateId])
+
+  const addEvent = async () => {
+    if (!form.event_date || !form.event_type) return
+    setSaving(true)
+    let doc_path = null
+    if (docFile) {
+      const path = `${candidateId}/events/${Date.now()}_${docFile.name}`
+      await supabase.storage.from('candidate-docs').upload(path, docFile)
+      doc_path = path
+    }
+    const { data } = await supabase.from('worker_events').insert([{
+      candidate_id: candidateId,
+      event_date: form.event_date,
+      event_type: form.event_type,
+      employer: form.employer || null,
+      description: form.description || null,
+      doc_path,
+      created_by: currentUser,
+    }]).select().single()
+    setEvents(p => [data, ...p])
+    setForm({ event_date: new Date().toISOString().split('T')[0], event_type: 'employment_start', employer: '', description: '' })
+    setDocFile(null)
+    setSaving(false)
+    setShowForm(false)
+  }
+
+  const deleteEvent = async (id) => {
+    await supabase.from('worker_events').delete().eq('id', id)
+    setEvents(p => p.filter(e => e.id !== id))
+    setConfirmDel(null)
+  }
+
+  const viewDoc = async (path) => {
+    const { data } = await supabase.storage.from('candidate-docs').createSignedUrl(path, 60)
+    if (data?.signedUrl) window.open(data.signedUrl, '_blank')
+  }
+
+  const typeInfo = (v) => EVENT_TYPES.find(t => t.v === v) || { icon: '📝', label: v, color: GRAY, bg: LGRAY }
+
+  return (
+    <div>
+      {/* Delete confirm */}
+      {confirmDel && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div style={{ background: WHITE, borderRadius: 16, padding: 24, maxWidth: 320, width: '90%', fontFamily: F }}>
+            <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>מחיקת אירוע</div>
+            <div style={{ fontSize: 13, color: GRAY, marginBottom: 20 }}>האם למחוק את האירוע? פעולה זו אינה הפיכה.</div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="v2-btn v2-btn-ghost" style={{ flex: 1 }} onClick={() => setConfirmDel(null)}>ביטול</button>
+              <button style={{ flex: 1, padding: 10, background: '#EF4444', color: WHITE, border: 'none', borderRadius: 10, fontWeight: 700, cursor: 'pointer', fontFamily: F }}
+                onClick={() => deleteEvent(confirmDel)}>מחק</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add button */}
+      <div style={{ marginBottom: 16 }}>
+        <button className="v2-btn v2-btn-primary" style={{ width: '100%', padding: 11 }}
+          onClick={() => setShowForm(s => !s)}>
+          {showForm ? '✕ סגור' : '+ הוסף אירוע'}
+        </button>
+      </div>
+
+      {/* Add form */}
+      {showForm && (
+        <div style={{ background: '#F0F7FF', border: '1.5px solid #BFDBFE', borderRadius: 14, padding: 18, marginBottom: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+            {/* Event type */}
+            <div style={{ gridColumn: '1/-1' }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: GRAY, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.5px' }}>סוג אירוע</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+                {EVENT_TYPES.map(t => (
+                  <button key={t.v} onClick={() => sf('event_type', t.v)}
+                    style={{ padding: '6px 11px', borderRadius: 20, border: `1.5px solid ${form.event_type === t.v ? t.color : BORDER}`, background: form.event_type === t.v ? t.bg : WHITE, color: form.event_type === t.v ? t.color : GRAY, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: F, whiteSpace: 'nowrap' }}>
+                    {t.icon} {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Date */}
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: GRAY, marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.5px' }}>תאריך</label>
+              <input type="date" value={form.event_date} onChange={e => sf('event_date', e.target.value)} className="v2-input" />
+            </div>
+
+            {/* Employer */}
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: GRAY, marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.5px' }}>מעסיק</label>
+              <input value={form.employer} onChange={e => sf('employer', e.target.value)} placeholder="שם המעסיק" className="v2-input" />
+            </div>
+
+            {/* Description */}
+            <div style={{ gridColumn: '1/-1' }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: GRAY, marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.5px' }}>תיאור / פרטים</label>
+              <textarea value={form.description} onChange={e => sf('description', e.target.value)} rows={3}
+                className="v2-input" style={{ resize: 'vertical', lineHeight: 1.6 }} placeholder="פרטים נוספים על האירוע..." />
+            </div>
+
+            {/* Doc upload */}
+            <div style={{ gridColumn: '1/-1' }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: GRAY, marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.5px' }}>מסמך מצורף</label>
+              <button onClick={() => fileRef.current.click()}
+                style={{ width: '100%', padding: '9px 14px', background: WHITE, border: `1.5px solid ${docFile ? BLUE : BORDER}`, borderRadius: 10, fontSize: 13, color: docFile ? BLUE : GRAY, cursor: 'pointer', fontFamily: F, textAlign: 'right', fontWeight: docFile ? 700 : 400 }}>
+                {docFile ? `📎 ${docFile.name}` : '📎 העלה מסמך (PDF, Word, תמונה)'}
+              </button>
+              <input ref={fileRef} type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" style={{ display: 'none' }}
+                onChange={e => { setDocFile(e.target.files[0]); e.target.value = '' }} />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button className="v2-btn v2-btn-ghost" onClick={() => { setShowForm(false); setDocFile(null) }}>ביטול</button>
+            <button className="v2-btn v2-btn-primary" style={{ flex: 1 }} onClick={addEvent} disabled={saving}>
+              {saving ? 'שומר...' : '✓ שמור אירוע'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Events timeline */}
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: 40, color: GRAY, fontSize: 13 }}>טוען...</div>
+      ) : events.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 40 }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>📋</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: DARK, marginBottom: 6 }}>אין אירועים עדיין</div>
+          <div style={{ fontSize: 13, color: GRAY }}>לחץ "+ הוסף אירוע" כדי לתעד את הראשון</div>
+        </div>
+      ) : (
+        <div style={{ position: 'relative' }}>
+          {/* Timeline line */}
+          <div style={{ position: 'absolute', right: 21, top: 0, bottom: 0, width: 2, background: '#E5E5EA' }} />
+
+          {events.map((ev, i) => {
+            const t = typeInfo(ev.event_type)
+            return (
+              <div key={ev.id} style={{ display: 'flex', gap: 14, marginBottom: 16, position: 'relative' }}>
+                {/* Icon bubble */}
+                <div style={{ flexShrink: 0, width: 44, height: 44, borderRadius: '50%', background: t.bg, border: `2px solid ${t.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, zIndex: 1, boxShadow: '0 2px 8px rgba(0,0,0,.08)' }}>
+                  {t.icon}
+                </div>
+
+                {/* Content */}
+                <div style={{ flex: 1, background: WHITE, border: `1.5px solid ${t.color}30`, borderRadius: 12, padding: '12px 14px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                    <div>
+                      <span className="badge" style={{ background: t.bg, color: t.color, fontSize: 12, marginLeft: 8 }}>{t.icon} {t.label}</span>
+                      {ev.employer && <span style={{ fontSize: 13, fontWeight: 700, color: DARK }}>🏢 {ev.employer}</span>}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 12, color: GRAY, whiteSpace: 'nowrap' }}>
+                        {new Date(ev.event_date).toLocaleDateString('he-IL', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </span>
+                      <button onClick={() => setConfirmDel(ev.id)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#FCA5A5', fontSize: 14, padding: '0 2px' }}
+                        onMouseEnter={e => e.currentTarget.style.color = '#EF4444'} onMouseLeave={e => e.currentTarget.style.color = '#FCA5A5'}>
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+
+                  {ev.description && (
+                    <div style={{ fontSize: 13, color: DARK, lineHeight: 1.7, direction: 'rtl', marginTop: 4 }}>{ev.description}</div>
+                  )}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+                    {ev.created_by && <span style={{ fontSize: 11, color: GRAY }}>👤 הוזן ע"י {ev.created_by}</span>}
+                    {ev.doc_path && (
+                      <button onClick={() => viewDoc(ev.doc_path)}
+                        style={{ background: LGRAY, border: `1px solid ${BORDER}`, borderRadius: 8, padding: '4px 10px', fontSize: 12, color: DARK, cursor: 'pointer', fontFamily: F, fontWeight: 600 }}>
+                        📎 מסמך מצורף — צפה
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── INACTIVE / TERMINATION MODAL ────────────────────────────────────────────
+function InactiveModal({ candidate, onSave, onClose }) {
+  const [type, setType] = useState(candidate.termination_type || '')
+  const [hearing, setHearing] = useState(candidate.hearing_conducted || false)
+  const [date, setDate] = useState(candidate.terminated_at || new Date().toISOString().split('T')[0])
+  const [docFile, setDocFile] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const fileRef = useRef()
+
+  const save = async () => {
+    if (!type) { alert('יש לבחור סיבת סיום'); return }
+    setSaving(true)
+    let hearing_doc_path = candidate.hearing_doc_path || null
+    if (docFile) {
+      const path = `${candidate.id}/hearing_${Date.now()}_${docFile.name}`
+      await supabase.storage.from('candidate-docs').upload(path, docFile)
+      hearing_doc_path = path
+    }
+    await onSave({ status: 'inactive', termination_type: type, hearing_conducted: hearing, terminated_at: date, hearing_doc_path })
+    setSaving(false)
+    onClose()
+  }
+
+  const viewDoc = async () => {
+    if (!candidate.hearing_doc_path) return
+    const { data } = await supabase.storage.from('candidate-docs').createSignedUrl(candidate.hearing_doc_path, 60)
+    if (data?.signedUrl) window.open(data.signedUrl, '_blank')
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, fontFamily: F }}>
+      <div style={{ background: '#FFF', borderRadius: 20, padding: 28, width: 420, maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,.2)' }}>
+        <div style={{ fontSize: 18, fontWeight: 800, color: '#1D1D1F', marginBottom: 4 }}>⭕ סיום העסקה</div>
+        <div style={{ fontSize: 13, color: '#6E6E73', marginBottom: 22 }}>{candidate.full_name_he || candidate.full_name_en}</div>
+
+        {/* Termination type */}
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#6E6E73', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.5px' }}>סיבת סיום *</label>
+          <div style={{ display: 'flex', gap: 10 }}>
+            {[['fired','פיטורין 📄'],['resigned','התפטרות ✍️']].map(([v,l]) => (
+              <button key={v} onClick={() => setType(v)}
+                style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: `2px solid ${type===v?'#DC2626':'#E5E5EA'}`, background: type===v?'#FFF1F2':'#FAFAFA', color: type===v?'#DC2626':'#6E6E73', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: F }}>
+                {l}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Termination date */}
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#6E6E73', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.5px' }}>תאריך סיום</label>
+          <input type="date" value={date} onChange={e => setDate(e.target.value)} className="v2-input" />
+        </div>
+
+        {/* Hearing */}
+        <div style={{ background: '#FFFBEB', border: '1.5px solid #FDE68A', borderRadius: 12, padding: '14px 16px', marginBottom: 16 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#B45309', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '.5px' }}>⚖️ שימוע</div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            {[[true,'בוצע שימוע ✅'],[false,'לא בוצע שימוע ❌']].map(([v,l]) => (
+              <button key={String(v)} onClick={() => setHearing(v)}
+                style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: `2px solid ${hearing===v?'#D97706':'#E5E5EA'}`, background: hearing===v?'#FEF9C3':'#FAFAFA', color: hearing===v?'#92400E':'#6E6E73', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: F }}>
+                {l}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Hearing document */}
+        <div style={{ marginBottom: 22 }}>
+          <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#6E6E73', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.5px' }}>📎 מזכר שימוע</label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => fileRef.current.click()}
+              style={{ flex: 1, padding: '10px 14px', background: '#F5F5F7', border: '1.5px solid #D2D2D7', borderRadius: 10, fontSize: 13, color: '#1D1D1F', cursor: 'pointer', fontFamily: F, textAlign: 'right' }}>
+              {docFile ? `📄 ${docFile.name}` : candidate.hearing_doc_path ? '🔄 החלף מסמך' : '📎 העלה מסמך'}
+            </button>
+            {candidate.hearing_doc_path && !docFile && (
+              <button onClick={viewDoc} style={{ padding: '10px 14px', background: '#EEF2FF', border: '1.5px solid #C7D2FE', borderRadius: 10, fontSize: 13, color: '#4F46E5', cursor: 'pointer', fontFamily: F }}>👁 צפה</button>
+            )}
+            <input ref={fileRef} type="file" accept=".pdf,.doc,.docx,.jpg,.png" style={{ display: 'none' }}
+              onChange={e => { setDocFile(e.target.files[0]); e.target.value = '' }} />
+          </div>
+        </div>
+
+        {/* Buttons */}
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: 12, background: '#F5F5F7', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: F, color: '#1D1D1F' }}>ביטול</button>
+          <button onClick={save} disabled={saving}
+            style={{ flex: 2, padding: 12, background: '#DC2626', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: F, color: '#FFF' }}>
+            {saving ? 'שומר...' : '✓ שמור וסיים העסקה'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
+// ─── EXCEL EXPORT UTILITY ─────────────────────────────────────────────────────
+function exportToExcel(rows, headers, filename) {
+  // Build CSV with BOM for Hebrew support in Excel
+  const bom = '\uFEFF'
+  const csvHeaders = headers.map(h => `"${h.label}"`).join(',')
+  const csvRows = rows.map(row =>
+    headers.map(h => {
+      const val = h.fn ? h.fn(row) : (row[h.key] ?? '')
+      return `"${String(val).replace(/"/g, '""')}"`
+    }).join(',')
+  )
+  const csv = bom + csvHeaders + '\n' + csvRows.join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename + '_' + new Date().toLocaleDateString('he-IL').replace(/\//g, '-') + '.csv'
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+const WORKER_HEADERS_FULL = [
+  { key: 'full_name_he', label: 'שם עברית' },
+  { key: 'full_name_en', label: 'שם אנגלית' },
+  { key: 'phone',        label: 'טלפון' },
+  { key: 'country',      label: 'מדינה' },
+  { key: 'sector',       label: 'ענף', fn: r => ({ construction:'בניין', industry:'תעשייה', commerce:'מסחר', agriculture:'חקלאות', restaurant:'מסעדות', hospitality:'אירוח', other:'אחר' }[r.sector] || r.sector || '') },
+  { key: 'profession',   label: 'מקצוע' },
+  { key: 'status',       label: 'סטטוס', fn: r => ({ active:'פעיל', new:'חדש', in_treatment:'בטיפול', injured:'פצוע', escaped:'ברחן', inactive:'לא פעיל' }[r.status] || r.status || '') },
+  { key: 'placement',    label: 'שיבוץ / מעסיק' },
+  { key: 'work_start_date', label: 'תחילת עבודה', fn: r => r.work_start_date ? new Date(r.work_start_date).toLocaleDateString('he-IL') : '' },
+  { key: 'permit_type',  label: 'סוג ויזה' },
+  { key: 'permit_expiry', label: 'תוקף ויזה', fn: r => r.permit_expiry ? new Date(r.permit_expiry).toLocaleDateString('he-IL') : '' },
+  { key: 'entry_date',   label: 'תאריך כניסה', fn: r => r.entry_date ? new Date(r.entry_date).toLocaleDateString('he-IL') : '' },
+  { key: 'escaped_at',   label: 'תאריך בריחה', fn: r => r.escaped_at ? new Date(r.escaped_at).toLocaleDateString('he-IL') : '' },
+  { key: 'injured_at',   label: 'תאריך פציעה', fn: r => r.injured_at ? new Date(r.injured_at).toLocaleDateString('he-IL') : '' },
+  { key: 'termination_type', label: 'סיבת סיום', fn: r => ({ fired:'פיטורין', resigned:'התפטרות' }[r.termination_type] || '') },
+  { key: 'hearing_conducted', label: 'שימוע בוצע', fn: r => r.termination_type ? (r.hearing_conducted ? 'כן' : 'לא') : '' },
+  { key: 'terminated_at', label: 'תאריך סיום', fn: r => r.terminated_at ? new Date(r.terminated_at).toLocaleDateString('he-IL') : '' },
+  { key: 'created_at',   label: 'תאריך רישום', fn: r => r.created_at ? new Date(r.created_at).toLocaleDateString('he-IL') : '' },
+]
+
+
+// ─── REPORTS MODULE ───────────────────────────────────────────────────────────
+function ReportsModule({ candidates }) {
+  const WORKER_STATUSES_MAP = { active:'✅ פעיל', new:'🆕 חדש', in_treatment:'🏥 בטיפול', injured:'🩹 פצוע', escaped:'🚨 ברחן', inactive:'⭕ לא פעיל' }
+  const SECTOR_MAP = { construction:'בניין', industry:'תעשייה', commerce:'מסחר', agriculture:'חקלאות', restaurant:'מסעדות', hospitality:'אירוח', other:'אחר' }
+
+  const workers = candidates.filter(c => c.placement || ['active','in_treatment','escaped','injured'].includes(c.status))
+  const escaped = candidates.filter(c => c.status === 'escaped')
+  const inactive = candidates.filter(c => c.status === 'inactive')
+  const expiring = candidates.filter(c => isSoon(c.permit_expiry))
+  const expired  = candidates.filter(c => isExpired(c.permit_expiry))
+
+  const byStatus = {}
+  candidates.forEach(c => { byStatus[c.status] = (byStatus[c.status]||0)+1 })
+  const bySector = {}
+  candidates.forEach(c => { if(c.sector) bySector[c.sector] = (bySector[c.sector]||0)+1 })
+  const byCountry = {}
+  candidates.forEach(c => { if(c.country) { const k = c.country.split('/')[0].trim(); byCountry[k] = (byCountry[k]||0)+1 } })
+  const byEmployer = {}
+  candidates.filter(c=>c.placement).forEach(c => { byEmployer[c.placement] = (byEmployer[c.placement]||0)+1 })
+
+  const REPORTS = [
+    {
+      id: 'all_workers',
+      icon: '👥', title: 'כל העובדים', count: workers.length, color: BLUE,
+      desc: 'פרטים מלאים של כל העובדים הפעילים',
+      export: () => exportToExcel(workers, WORKER_HEADERS_FULL, 'עובדים_כל')
+    },
+    {
+      id: 'escaped',
+      icon: '🚨', title: 'ברחנים', count: escaped.length, color: '#DC2626',
+      desc: 'עובדים שברחו + תאריכי בריחה',
+      export: () => exportToExcel(escaped, [
+        { key: 'full_name_he', label: 'שם עברית' },
+        { key: 'full_name_en', label: 'שם אנגלית' },
+        { key: 'phone', label: 'טלפון' },
+        { key: 'country', label: 'מדינה' },
+        { key: 'placement', label: 'מעסיק אחרון' },
+        { key: 'escaped_at', label: 'תאריך בריחה', fn: r => r.escaped_at ? new Date(r.escaped_at).toLocaleDateString('he-IL') : '' },
+        { key: 'work_start_date', label: 'תחילת עבודה', fn: r => r.work_start_date ? new Date(r.work_start_date).toLocaleDateString('he-IL') : '' },
+        { key: 'permit_expiry', label: 'תוקף ויזה', fn: r => r.permit_expiry ? new Date(r.permit_expiry).toLocaleDateString('he-IL') : '' },
+        { key: 'city', label: 'עיר מגורים אחרונה' },
+      ], 'ברחנים')
+    },
+    {
+      id: 'inactive',
+      icon: '⭕', title: 'עובדים לא פעילים', count: inactive.length, color: GRAY,
+      desc: 'פיטורין, התפטרויות ושימועים',
+      export: () => exportToExcel(inactive, [
+        { key: 'full_name_he', label: 'שם עברית' },
+        { key: 'full_name_en', label: 'שם אנגלית' },
+        { key: 'phone', label: 'טלפון' },
+        { key: 'placement', label: 'מעסיק' },
+        { key: 'termination_type', label: 'סיבת סיום', fn: r => ({ fired:'פיטורין', resigned:'התפטרות' }[r.termination_type] || '') },
+        { key: 'hearing_conducted', label: 'שימוע', fn: r => r.hearing_conducted ? 'בוצע' : 'לא בוצע' },
+        { key: 'terminated_at', label: 'תאריך סיום', fn: r => r.terminated_at ? new Date(r.terminated_at).toLocaleDateString('he-IL') : '' },
+        { key: 'work_start_date', label: 'תחילת עבודה', fn: r => r.work_start_date ? new Date(r.work_start_date).toLocaleDateString('he-IL') : '' },
+      ], 'עובדים_לא_פעילים')
+    },
+    {
+      id: 'visa_expiry',
+      icon: '⏱', title: 'ויזות פוקעות / פגות', count: expiring.length + expired.length, color: '#D97706',
+      desc: `${expired.length} פגו, ${expiring.length} קרובות לפוג`,
+      export: () => exportToExcel([...expired,...expiring], [
+        { key: 'full_name_he', label: 'שם עברית' },
+        { key: 'full_name_en', label: 'שם אנגלית' },
+        { key: 'phone', label: 'טלפון' },
+        { key: 'placement', label: 'מעסיק' },
+        { key: 'permit_type', label: 'סוג ויזה' },
+        { key: 'permit_expiry', label: 'תוקף ויזה', fn: r => r.permit_expiry ? new Date(r.permit_expiry).toLocaleDateString('he-IL') : '' },
+        { key: 'permit_number', label: 'מספר היתר' },
+        { key: 'status', label: 'סטטוס', fn: r => WORKER_STATUSES_MAP[r.status] || r.status || '' },
+      ], 'ויזות_פוקעות')
+    },
+    {
+      id: 'distribution',
+      icon: '📊', title: 'התפלגות כללית', count: candidates.length, color: '#7C3AED',
+      desc: 'לפי ענף, מדינה, סטטוס, מעסיק',
+      export: () => {
+        const rows = []
+        rows.push({ cat: '── לפי סטטוס ──', val: '', count: '' })
+        Object.entries(byStatus).forEach(([k,v]) => rows.push({ cat: 'סטטוס', val: WORKER_STATUSES_MAP[k]||k, count: v }))
+        rows.push({ cat: '', val: '', count: '' })
+        rows.push({ cat: '── לפי ענף ──', val: '', count: '' })
+        Object.entries(bySector).sort((a,b)=>b[1]-a[1]).forEach(([k,v]) => rows.push({ cat: 'ענף', val: SECTOR_MAP[k]||k, count: v }))
+        rows.push({ cat: '', val: '', count: '' })
+        rows.push({ cat: '── לפי מדינה ──', val: '', count: '' })
+        Object.entries(byCountry).sort((a,b)=>b[1]-a[1]).forEach(([k,v]) => rows.push({ cat: 'מדינה', val: k, count: v }))
+        rows.push({ cat: '', val: '', count: '' })
+        rows.push({ cat: '── לפי מעסיק ──', val: '', count: '' })
+        Object.entries(byEmployer).sort((a,b)=>b[1]-a[1]).forEach(([k,v]) => rows.push({ cat: 'מעסיק', val: k, count: v }))
+        exportToExcel(rows, [{ key:'cat', label:'קטגוריה' },{ key:'val', label:'ערך' },{ key:'count', label:'כמות' }], 'התפלגות_עובדים')
+      }
+    },
+  ]
+
+  return (
+    <div style={{ padding: '22px 26px' }} className="fade-in">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
+        <h3 style={{ fontSize: 18, fontWeight: 800, color: DARK, letterSpacing: '-0.3px' }}>📈 דוחות וייצוא</h3>
+        <button className="v2-btn v2-btn-primary"
+          onClick={() => exportToExcel(candidates, WORKER_HEADERS_FULL, 'כל_הנתונים')}>
+          ⬇️ ייצוא מלא — הכל
+        </button>
+      </div>
+
+      {/* Report cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14, marginBottom: 30 }}>
+        {REPORTS.map(r => (
+          <div key={r.id} className="v2-card" style={{ padding: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: r.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>{r.icon}</div>
+              <div style={{ fontSize: 28, fontWeight: 900, color: r.color, letterSpacing: '-1px' }}>{r.count}</div>
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: DARK, marginBottom: 4 }}>{r.title}</div>
+            <div style={{ fontSize: 12, color: GRAY, marginBottom: 14 }}>{r.desc}</div>
+            <button onClick={r.export}
+              style={{ width: '100%', padding: '9px 0', background: r.color + '12', border: `1.5px solid ${r.color}33`, borderRadius: 10, fontSize: 13, fontWeight: 700, color: r.color, cursor: 'pointer', fontFamily: F }}>
+              ⬇️ הורד Excel (.csv)
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Distribution tables inline */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+        {/* By sector */}
+        <div className="v2-card" style={{ padding: 18 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: DARK, marginBottom: 12 }}>⚙️ לפי ענף</div>
+          {Object.entries(bySector).sort((a,b)=>b[1]-a[1]).map(([k,v]) => (
+            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: '1px solid #F3F4F6', alignItems: 'center' }}>
+              <span style={{ fontSize: 13, color: DARK }}>{SECTOR_MAP[k]||k}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: Math.round((v/candidates.length)*80), height: 6, background: BLUE + '60', borderRadius: 3 }} />
+                <span style={{ fontSize: 13, fontWeight: 700, color: BLUE, minWidth: 24, textAlign: 'right' }}>{v}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* By status */}
+        <div className="v2-card" style={{ padding: 18 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: DARK, marginBottom: 12 }}>📊 לפי סטטוס</div>
+          {Object.entries(byStatus).sort((a,b)=>b[1]-a[1]).map(([k,v]) => {
+            const s = WORKER_STATUS_LIST.find(x=>x.v===k) || { he: k, bg: LGRAY, fg: GRAY }
+            return (
+              <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: '1px solid #F3F4F6', alignItems: 'center' }}>
+                <span className="badge" style={{ background: s.bg, color: s.fg, fontSize: 12 }}>{s.he}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: Math.round((v/candidates.length)*80), height: 6, background: s.fg + '60', borderRadius: 3 }} />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: s.fg, minWidth: 24, textAlign: 'right' }}>{v}</span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* By country */}
+        <div className="v2-card" style={{ padding: 18 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: DARK, marginBottom: 12 }}>🌍 לפי מדינה</div>
+          {Object.entries(byCountry).sort((a,b)=>b[1]-a[1]).map(([k,v]) => (
+            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: '1px solid #F3F4F6', alignItems: 'center' }}>
+              <span style={{ fontSize: 13, color: DARK }}>{k}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: Math.round((v/candidates.length)*80), height: 6, background: '#7C3AED60', borderRadius: 3 }} />
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#7C3AED', minWidth: 24, textAlign: 'right' }}>{v}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* By employer */}
+        <div className="v2-card" style={{ padding: 18 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: DARK, marginBottom: 12 }}>🏢 לפי מעסיק</div>
+          {Object.entries(byEmployer).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([k,v]) => (
+            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: '1px solid #F3F4F6', alignItems: 'center' }}>
+              <span style={{ fontSize: 13, color: DARK, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{k}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: Math.round((v/candidates.length)*80), height: 6, background: '#05966960', borderRadius: 3 }} />
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#059669', minWidth: 24, textAlign: 'right' }}>{v}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── TOP BAR WITH CLOCK + GREETING ───────────────────────────────────────────
+function TopBar({ module, currentUser, onRefresh }) {
+  const [now, setNow] = useState(new Date())
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(t)
+  }, [])
+
+  const h = now.getHours()
+  const greeting =
+    h >= 5  && h < 10 ? `בוקר טוב, ${currentUser} ☀️` :
+    h >= 10 && h < 12 ? `זמן קפה? ☕` :
+    h >= 12 && h < 14 ? `צהריים טובים, ${currentUser} 🍽️` :
+    h >= 14 && h < 17 ? `אחר הצהריים טובים 🌤️` :
+    h >= 17 && h < 21 ? `ערב טוב, ${currentUser} 🌆` :
+    h >= 21            ? `לילה טוב 🌙` :
+                         `טוב שחזרת.. 🦉`
+
+  const NAV_LABELS = { dashboard:'📊 דשבורד', applicants:'🎯 מועמדים', workers:'👥 עובדים', apartments:'🏠 דירות', employers:'🏢 מעסיקים', tasks:'✅ משימות', documents:'📋 מסמכים' }
+
+  return (
+    <div style={{ background: WHITE, borderBottom: `1px solid #E5E5EA`, padding: '0 24px', display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 0, zIndex: 100, height: 54 }}>
+      {/* Module title */}
+      <div style={{ fontSize: 14, fontWeight: 700, color: DARK }}>{NAV_LABELS[module] || ''}</div>
+
+      <div style={{ flex: 1 }} />
+
+      {/* Greeting */}
+      <div style={{ fontSize: 13, color: GRAY, fontWeight: 500 }}>{greeting}</div>
+
+      {/* Live Clock */}
+      <div style={{ background: DARK, color: WHITE, borderRadius: 9, padding: '5px 13px', fontSize: 15, fontWeight: 700, letterSpacing: '1.5px', fontVariantNumeric: 'tabular-nums', minWidth: 86, textAlign: 'center' }}>
+        {now.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+      </div>
+
+      <button className="v2-btn v2-btn-ghost" style={{ fontSize: 12, padding: '6px 12px' }} onClick={onRefresh}>↻ רענן</button>
+
+      <div style={{ width: 32, height: 32, borderRadius: 10, background: BLUE, display: 'flex', alignItems: 'center', justifyContent: 'center', color: WHITE, fontSize: 13, fontWeight: 700 }}>
+        {currentUser?.[0] || 'א'}
+      </div>
+    </div>
+  )
+}
+
 // ─── MAIN CRM ─────────────────────────────────────────────────────────────────
 export default function CRM({ session, onLogout }) {
   useStyles()
@@ -1533,12 +2211,47 @@ export default function CRM({ session, onLogout }) {
   const [apartments, setApartments] = useState([])
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState('')
+  const [toast, setToast] = useState(null)
 
   const userEmail = session?.user?.email || ''
   useEffect(() => {
     const name = STAFF.find(s => userEmail.toLowerCase().includes(s)) || userEmail.split('@')[0]
     setCurrentUser(name || 'נציג')
   }, [userEmail])
+
+  // Request browser notification permission
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission()
+    }
+  }, [])
+
+  // Supabase Realtime — listen for new tasks and notify assigned user
+  useEffect(() => {
+    if (!currentUser) return
+    const channel = supabase
+      .channel('tasks-notifications')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'tasks' }, (payload) => {
+        const task = payload.new
+        if (task.assigned_to === currentUser) {
+          // In-app toast
+          setToast({ msg: `משימה חדשה: ${task.title}`, type: 'task' })
+          setTimeout(() => setToast(null), 5000)
+          // Browser notification
+          if (Notification.permission === 'granted') {
+            new Notification('Oz Hadar CRM — משימה חדשה 📋', {
+              body: `${task.title}\nמוגדר לך ע"י ${task.created_by || 'צוות'}`,
+              icon: '/favicon.ico',
+              tag: task.id,
+            })
+          }
+          // Reload tasks if on tasks module
+          loadAll()
+        }
+      })
+      .subscribe()
+    return () => supabase.removeChannel(channel)
+  }, [currentUser])
 
   const loadAll = useCallback(async () => {
     try {
@@ -1574,6 +2287,7 @@ export default function CRM({ session, onLogout }) {
     { k: 'employers',  icon: '🏢', label: 'מעסיקים' },
     { k: 'tasks',      icon: '✅', label: 'משימות', badge: tasks.filter(t => t.status === 'open').length },
     { k: 'documents',  icon: '📋', label: 'מסמכים' },
+    { k: 'reports',    icon: '📈', label: 'דוחות' },
   ]
 
   if (loading) {
@@ -1586,6 +2300,18 @@ export default function CRM({ session, onLogout }) {
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', fontFamily: F, direction: 'rtl' }}>
+
+      {/* Toast notification */}
+      {toast && (
+        <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 9999, background: DARK, color: WHITE, borderRadius: 14, padding: '14px 20px', boxShadow: '0 8px 32px rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', gap: 12, fontFamily: F, maxWidth: 340, animation: 'fadeIn .3s ease' }}>
+          <span style={{ fontSize: 22 }}>📋</span>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700 }}>משימה חדשה שובצה אליך</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,.65)', marginTop: 2 }}>{toast.msg}</div>
+          </div>
+          <button onClick={() => setToast(null)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,.5)', cursor: 'pointer', fontSize: 16, marginRight: 4 }}>✕</button>
+        </div>
+      )}
 
       {/* ── SIDEBAR ── */}
       <div style={{ width: 220, background: SIDEBAR_BG, display: 'flex', flexDirection: 'column', flexShrink: 0, padding: '18px 10px', overflowY: 'auto' }}>
@@ -1630,16 +2356,7 @@ export default function CRM({ session, onLogout }) {
       <div style={{ flex: 1, overflow: 'auto', background: CREAM }}>
 
         {/* Top bar */}
-        <div style={{ background: WHITE, borderBottom: `1px solid #E5E5EA`, padding: '12px 26px', display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 0, zIndex: 100 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: DARK }}>
-            {NAV.find(n => n.k === module)?.icon} {NAV.find(n => n.k === module)?.label}
-          </div>
-          <div style={{ flex: 1 }} />
-          <button className="v2-btn v2-btn-ghost" style={{ fontSize: 12 }} onClick={loadAll}>↻ רענן</button>
-          <div style={{ width: 32, height: 32, borderRadius: 10, background: BLUE, display: 'flex', alignItems: 'center', justifyContent: 'center', color: WHITE, fontSize: 13, fontWeight: 700 }}>
-            {currentUser?.[0] || 'א'}
-          </div>
-        </div>
+        <TopBar module={module} currentUser={currentUser} onRefresh={loadAll} />
 
         {/* Module content */}
         {module === 'dashboard' && <Dashboard candidates={candidates} tasks={tasks} apartments={apartments} onNavigate={setModule} currentUser={currentUser} />}
@@ -1648,6 +2365,7 @@ export default function CRM({ session, onLogout }) {
         {module === 'apartments' && <ApartmentsModule candidates={candidates} currentUser={currentUser} />}
         {module === 'tasks'      && <TasksModule      candidates={candidates} currentUser={currentUser} />}
         {module === 'documents'  && <DocumentsModule  candidates={candidates} currentUser={currentUser} />}
+        {module === 'reports'    && <ReportsModule    candidates={candidates} />}
         {module === 'employers'  && <EmployersModule candidates={candidates} currentUser={currentUser} />}
       </div>
     </div>
