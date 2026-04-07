@@ -171,8 +171,14 @@ function NotesWidget({ notes, loading, onAdd, onDelete, currentUser }) {
 }
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
-function Dashboard({ candidates, tasks, apartments, onNavigate }) {
-  const now = new Date()
+function Dashboard({ candidates, tasks, apartments, onNavigate, currentUser }) {
+  const [now, setNow] = useState(new Date())
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(timer)
+  }, [])
+  const hour = now.getHours()
+  const greeting = hour < 12 ? 'בוקר טוב,' : hour < 15 ? 'צהריים טובים,' : hour < 19 ? 'אחר הצהריים טובים,' : 'ערב טוב,'
   const workers = candidates.filter(c => c.status !== 'new')
   const newApplicants = candidates.filter(c => c.status === 'new')
   const expiringVisa = candidates.filter(c => isSoon(c.permit_expiry))
@@ -1121,6 +1127,274 @@ function DocumentsModule({ candidates, currentUser }) {
   )
 }
 
+
+// ─── EMPLOYERS MODULE ─────────────────────────────────────────────────────────
+function EmployersModule({ candidates, currentUser }) {
+  const [employers, setEmployers] = useState([])
+  const [loading, setLoading]     = useState(true)
+  const [selected, setSelected]   = useState(null)
+  const [showForm, setShowForm]   = useState(false)
+  const [editEmp, setEditEmp]     = useState(null)
+  const [search, setSearch]       = useState('')
+  const [tab, setTab]             = useState('info')
+  const [notes, setNotes]         = useState([])
+  const [notesLoading, setNotesLoading] = useState(false)
+
+  const SECTOR_COLORS = { construction:'#0F766E', industry:'#1D4ED8', commerce:'#7C3AED', agriculture:'#22C55E', restaurant:'#D97706', hospitality:'#DC2626', other:'#9CA3AF' }
+  const EMPTY = { name:'', company_id:'', sector:'', address:'', city:'', phone:'', email:'', website:'', contact_name:'', contact_role:'', contact_phone:'', contact_email:'', workers_quota:'', status:'active' }
+
+  const load = async () => {
+    const { data } = await supabase.from('employers').select('*').order('created_at', { ascending: false })
+    setEmployers(data || []); setLoading(false)
+  }
+  useEffect(() => { load() }, [])
+
+  useEffect(() => {
+    if (!selected || tab !== 'notes') return
+    setNotesLoading(true)
+    supabase.from('employer_notes').select('*').eq('employer_id', selected.id).order('note_date', { ascending: false })
+      .then(({ data }) => { setNotes(data || []); setNotesLoading(false) })
+  }, [selected, tab])
+
+  const myWorkers = selected ? candidates.filter(c => c.placement === selected.name) : []
+
+  const filtered = employers.filter(e => {
+    const q = search.toLowerCase()
+    return !q || [e.name, e.company_id, e.city, e.contact_name].some(v => (v || '').toLowerCase().includes(q))
+  })
+
+  // ── FORM ──
+  if (showForm) {
+    const f = editEmp || {}
+    const [lf, setLf] = useState({ ...EMPTY, ...f })
+    const sl = (k, v) => setLf(p => ({ ...p, [k]: v }))
+    return (
+      <div style={{ maxWidth: 620, margin: '0 auto', padding: '22px 20px' }} className="fade-in">
+        <div className="v2-card" style={{ padding: 22 }}>
+          <SectionTitle action={<button className="v2-btn v2-btn-ghost" onClick={() => { setShowForm(false); setEditEmp(null) }}>ביטול</button>}>
+            {editEmp ? 'עריכת מעסיק' : '+ מעסיק חדש'}
+          </SectionTitle>
+          <div style={{ marginBottom: 12, fontWeight: 700, color: DARK, fontSize: 13 }}>פרטי העסק</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div style={{ gridColumn: '1/-1' }}><Inp label="שם העסק *" value={lf.name} onChange={v => sl('name', v)} /></div>
+            <Inp label="ח.פ / ע.מ" value={lf.company_id} onChange={v => sl('company_id', v)} />
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: GRAY, marginBottom: 5 }}>ענף</label>
+              <div style={{ position: 'relative' }}>
+                <select value={lf.sector || ''} onChange={e => sl('sector', e.target.value)} className="v2-input v2-select" style={{ paddingLeft: 32 }}>
+                  <option value=''>— בחר —</option>
+                  {SECTORS.map(s => <option key={s.v} value={s.v}>{s.he} / {s.en}</option>)}
+                </select>
+                <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: GRAY, fontSize: 10 }}>▼</span>
+              </div>
+            </div>
+            <Inp label="טלפון" value={lf.phone} onChange={v => sl('phone', v)} type="tel" />
+            <Inp label="אימייל" value={lf.email} onChange={v => sl('email', v)} type="email" />
+            <Inp label="כתובת" value={lf.address} onChange={v => sl('address', v)} />
+            <Inp label="עיר" value={lf.city} onChange={v => sl('city', v)} />
+            <Inp label="אתר אינטרנט" value={lf.website} onChange={v => sl('website', v)} />
+            <Inp label="מכסת עובדים" value={lf.workers_quota} onChange={v => sl('workers_quota', v)} type="number" />
+          </div>
+          <div style={{ marginBottom: 12, marginTop: 6, fontWeight: 700, color: DARK, fontSize: 13 }}>איש קשר</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <Inp label="שם איש קשר" value={lf.contact_name} onChange={v => sl('contact_name', v)} />
+            <Inp label="תפקיד" value={lf.contact_role} onChange={v => sl('contact_role', v)} />
+            <Inp label="טלפון ישיר" value={lf.contact_phone} onChange={v => sl('contact_phone', v)} type="tel" />
+            <Inp label="אימייל ישיר" value={lf.contact_email} onChange={v => sl('contact_email', v)} type="email" />
+          </div>
+          <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
+            {[['active','פעיל'],['inactive','לא פעיל']].map(([v, l]) => (
+              <button key={v} onClick={() => sl('status', v)}
+                style={{ flex: 1, padding: 10, borderRadius: 10, border: `1.5px solid ${lf.status === v ? BLUE : BORDER}`, background: lf.status === v ? BLUE + '18' : WHITE, color: lf.status === v ? BLUE : GRAY, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: F }}>
+                {l}
+              </button>
+            ))}
+          </div>
+          <button className="v2-btn v2-btn-primary" style={{ width: '100%' }}
+            onClick={async () => {
+              if (!lf.name.trim()) { alert('שם העסק הוא שדה חובה'); return }
+              if (editEmp) {
+                await supabase.from('employers').update(lf).eq('id', editEmp.id)
+                setEmployers(p => p.map(e => e.id === editEmp.id ? { ...e, ...lf } : e))
+                if (selected?.id === editEmp.id) setSelected(s => ({ ...s, ...lf }))
+              } else {
+                const { data } = await supabase.from('employers').insert([lf]).select().single()
+                setEmployers(p => [data, ...p])
+              }
+              setShowForm(false); setEditEmp(null)
+            }}>
+            {editEmp ? '💾 שמור שינויים' : '+ הוסף מעסיק'}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── EMPLOYER DETAIL ──
+  if (selected) {
+    const color = SECTOR_COLORS[selected.sector] || '#9CA3AF'
+    const row = (icon, label, val) => val ? (
+      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #F9FAFB' }}>
+        <span style={{ fontSize: 12, color: GRAY }}>{icon} {label}</span>
+        <span style={{ fontSize: 13, color: DARK, fontWeight: 500 }}>{val}</span>
+      </div>
+    ) : null
+    return (
+      <div className="fade-in" style={{ background: CREAM, minHeight: 'calc(100vh - 54px)' }}>
+        <div style={{ background: WHITE, borderBottom: `1.5px solid #E5E5EA`, padding: '13px 24px', display: 'flex', alignItems: 'center', gap: 13, flexWrap: 'wrap' }}>
+          <button className="v2-btn v2-btn-ghost" onClick={() => setSelected(null)}>← חזרה</button>
+          <div style={{ width: 42, height: 42, borderRadius: 12, background: color + '18', border: `1.5px solid ${color}33`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 900, color }}>
+            {selected.name[0]}
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 17, fontWeight: 800, color: DARK }}>{selected.name}</div>
+            <div style={{ fontSize: 12, color: GRAY }}>
+              {selected.company_id && `ח.פ ${selected.company_id} · `}
+              {SECTORS.find(s => s.v === selected.sector)?.he}
+              {selected.city && ` · ${selected.city}`}
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 7 }}>
+            <span className="badge" style={{ background: selected.status === 'active' ? '#F0FDF9' : LGRAY, color: selected.status === 'active' ? '#0F766E' : GRAY }}>
+              {selected.status === 'active' ? '● פעיל' : '○ לא פעיל'}
+            </span>
+            {selected.phone && <a href={`tel:${selected.phone}`} className="v2-btn v2-btn-ghost" style={{ textDecoration: 'none', fontSize: 13 }}>📞</a>}
+            {selected.contact_phone && <a href={`https://wa.me/${selected.contact_phone.replace(/[^0-9]/g,'')}`} target="_blank" rel="noreferrer" className="v2-btn v2-btn-ghost" style={{ textDecoration: 'none', fontSize: 13 }}>💬 WA</a>}
+            <button className="v2-btn v2-btn-ghost" onClick={() => { setEditEmp(selected); setShowForm(true) }}>✏️ ערוך</button>
+            <button className="v2-btn v2-btn-danger" style={{ fontSize: 12 }} onClick={async () => { if (window.confirm('למחוק?')) { await supabase.from('employers').delete().eq('id', selected.id); setEmployers(p => p.filter(e => e.id !== selected.id)); setSelected(null) } }}>🗑️</button>
+          </div>
+        </div>
+
+        <div style={{ background: WHITE, borderBottom: `1.5px solid #E5E5EA`, padding: '0 24px', display: 'flex', gap: 2, overflowX: 'auto' }}>
+          {[['info','📋 פרטים'],[`workers`,`👥 עובדים משובצים (${myWorkers.length})`],['notes','📝 תרשומות']].map(([k,l]) => (
+            <button key={k} className={`tab-btn${tab===k?' active':''}`} onClick={() => setTab(k)}>{l}</button>
+          ))}
+        </div>
+
+        <div style={{ maxWidth: 700, margin: '22px auto', padding: '0 20px 60px' }}>
+          {tab === 'info' && (
+            <div className="v2-card fade-in" style={{ padding: 22 }}>
+              <SectionTitle>פרטי העסק</SectionTitle>
+              {row('🏢','שם',selected.name)}
+              {row('🆔','ח.פ / ע.מ',selected.company_id)}
+              {row('⚙️','ענף',SECTORS.find(s=>s.v===selected.sector)?.he)}
+              {row('📍','כתובת',[selected.address,selected.city].filter(Boolean).join(', '))}
+              {row('📞','טלפון',selected.phone)}
+              {row('📧','אימייל',selected.email)}
+              {row('🌐','אתר',selected.website)}
+              {row('👷','מכסת עובדים',selected.workers_quota?`${selected.workers_quota} עובדים`:null)}
+              <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1.5px solid #F3F4F6', fontSize: 12, fontWeight: 700, color: GRAY, marginBottom: 10, textTransform: 'uppercase', letterSpacing: '.5px' }}>איש קשר</div>
+              {row('👤','שם',selected.contact_name)}
+              {row('💼','תפקיד',selected.contact_role)}
+              {row('📱','טלפון',selected.contact_phone)}
+              {row('📧','אימייל',selected.contact_email)}
+              <div style={{ marginTop: 10, fontSize: 11, color: '#D1D5DB', textAlign: 'center' }}>נוצר {fmtDate(selected.created_at)} · #{selected.id.slice(0,8)}</div>
+            </div>
+          )}
+
+          {tab === 'workers' && (
+            <div className="v2-card fade-in" style={{ padding: 22 }}>
+              <SectionTitle>👥 עובדים משובצים ({myWorkers.length})</SectionTitle>
+              {myWorkers.length === 0
+                ? <div style={{ textAlign: 'center', padding: 40, color: '#D1D5DB', fontSize: 13 }}>אין עובדים משובצים למעסיק זה</div>
+                : myWorkers.map(w => (
+                  <div key={w.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 14px', background: LGRAY, borderRadius: 10, marginBottom: 8 }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: DARK }}>{w.full_name_he || w.full_name_en}</div>
+                      <div style={{ fontSize: 11, color: GRAY }}>{w.phone} · {SECTORS.find(s=>s.v===w.sector)?.he}</div>
+                    </div>
+                    <div style={{ fontSize: 12, color: GRAY }}>
+                      {w.placement_date && `מאז ${fmtDate(w.placement_date)}`}
+                    </div>
+                  </div>
+                ))}
+              <div style={{ marginTop: 16, padding: '12px 14px', background: '#F0F7FF', border: '1px solid #BFDBFE', borderRadius: 10, fontSize: 13, color: BLUE }}>
+                💡 שיבוץ עובדים נעשה מתוך כרטיס העובד ← לשונית שיבוץ
+              </div>
+            </div>
+          )}
+
+          {tab === 'notes' && (
+            <div className="v2-card fade-in" style={{ padding: 22 }}>
+              <SectionTitle>📝 תרשומות</SectionTitle>
+              <NotesWidget notes={notes} loading={notesLoading} currentUser={currentUser}
+                onAdd={async (fields) => {
+                  const { data } = await supabase.from('employer_notes').insert([{ employer_id: selected.id, ...fields }]).select().single()
+                  setNotes(p => [data, ...p])
+                }}
+                onDelete={async (id) => {
+                  await supabase.from('employer_notes').delete().eq('id', id)
+                  setNotes(p => p.filter(n => n.id !== id))
+                }}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // ── EMPLOYERS LIST ──
+  return (
+    <div style={{ padding: '22px 26px' }} className="fade-in">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, flexWrap: 'wrap', gap: 10 }}>
+        <h3 style={{ fontSize: 18, fontWeight: 800, color: DARK, letterSpacing: '-0.3px' }}>🏢 מעסיקים ({filtered.length})</h3>
+        <div style={{ display: 'flex', gap: 9 }}>
+          <input placeholder="🔍 חיפוש שם, עיר..." value={search} onChange={e => setSearch(e.target.value)}
+            className="v2-input" style={{ minWidth: 200, fontSize: 13 }} />
+          <button className="v2-btn v2-btn-primary" onClick={() => { setEditEmp(null); setShowForm(true) }}>+ מעסיק חדש</button>
+        </div>
+      </div>
+
+      {loading ? <div style={{ textAlign: 'center', padding: 60, color: GRAY }}>טוען...</div>
+        : filtered.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: 60 }}>
+            <div style={{ fontSize: 48, marginBottom: 14 }}>🏢</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: DARK, marginBottom: 8 }}>אין מעסיקים עדיין</div>
+            <button className="v2-btn v2-btn-primary" onClick={() => { setEditEmp(null); setShowForm(true) }}>+ הוסף מעסיק</button>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
+            {filtered.map(e => {
+              const color = SECTOR_COLORS[e.sector] || '#9CA3AF'
+              const workerCount = candidates.filter(c => c.placement === e.name).length
+              return (
+                <div key={e.id} onClick={() => { setSelected(e); setTab('info') }}
+                  className="v2-card" style={{ padding: 18, cursor: 'pointer', transition: 'all .2s' }}
+                  onMouseEnter={ev => { ev.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,.1)'; ev.currentTarget.style.transform = 'translateY(-2px)' }}
+                  onMouseLeave={ev => { ev.currentTarget.style.boxShadow = ''; ev.currentTarget.style.transform = '' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                    <div style={{ width: 42, height: 42, borderRadius: 12, background: color + '18', border: `1.5px solid ${color}33`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 900, color }}>
+                      {e.name[0]}
+                    </div>
+                    <span className="badge" style={{ background: e.status === 'active' ? '#F0FDF9' : LGRAY, color: e.status === 'active' ? '#0F766E' : GRAY }}>
+                      {e.status === 'active' ? '● פעיל' : '○ לא פעיל'}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: DARK, marginBottom: 3 }}>{e.name}</div>
+                  {e.company_id && <div style={{ fontSize: 11, color: GRAY, marginBottom: 6 }}>ח.פ {e.company_id}</div>}
+                  <div style={{ fontSize: 12, color: GRAY, display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 10 }}>
+                    {e.city && <span>📍 {e.city}</span>}
+                    {e.contact_name && <span>👤 {e.contact_name}{e.contact_role ? ` · ${e.contact_role}` : ''}</span>}
+                    {e.phone && <span>📞 {e.phone}</span>}
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid #F3F4F6`, paddingTop: 10 }}>
+                    <span style={{ background: color + '18', color, padding: '2px 9px', borderRadius: 20, fontSize: 10, fontWeight: 700 }}>
+                      {SECTORS.find(s => s.v === e.sector)?.he || 'ענף'}
+                    </span>
+                    {workerCount > 0
+                      ? <span style={{ fontSize: 13, fontWeight: 700, color: '#0F766E' }}>👥 {workerCount} עובדים</span>
+                      : <span style={{ fontSize: 12, color: '#D1D5DB' }}>אין עובדים</span>}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+    </div>
+  )
+}
+
 // ─── MAIN CRM ─────────────────────────────────────────────────────────────────
 export default function CRM({ session, onLogout }) {
   useStyles()
@@ -1239,19 +1513,13 @@ export default function CRM({ session, onLogout }) {
         </div>
 
         {/* Module content */}
-        {module === 'dashboard' && <Dashboard candidates={candidates} tasks={tasks} apartments={apartments} onNavigate={setModule} />}
+        {module === 'dashboard' && <Dashboard candidates={candidates} tasks={tasks} apartments={apartments} onNavigate={setModule} currentUser={currentUser} />}
         {module === 'applicants' && <ApplicantsModule candidates={candidates} onUpdate={update} onDelete={remove} currentUser={currentUser} />}
         {module === 'workers'    && <WorkersModule    candidates={candidates} onUpdate={update} onDelete={remove} currentUser={currentUser} />}
         {module === 'apartments' && <ApartmentsModule candidates={candidates} currentUser={currentUser} />}
         {module === 'tasks'      && <TasksModule      candidates={candidates} currentUser={currentUser} />}
         {module === 'documents'  && <DocumentsModule  candidates={candidates} currentUser={currentUser} />}
-        {module === 'employers'  && (
-          <div style={{ padding: 40, textAlign: 'center', color: GRAY }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>🏢</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: DARK }}>מודול מעסיקים</div>
-            <div style={{ fontSize: 13, marginTop: 6 }}>ממשיך לפעול מ-Employers.jsx</div>
-          </div>
-        )}
+        {module === 'employers'  && <EmployersModule candidates={candidates} currentUser={currentUser} />}
       </div>
     </div>
   )
