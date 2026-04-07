@@ -508,7 +508,7 @@ function WorkersModule({ candidates, onUpdate, onDelete, currentUser }) {
         </div>
 
         <div style={{ background: WHITE, borderBottom: `1.5px solid #E5E5EA`, padding: '0 24px', display: 'flex', gap: 2, overflowX: 'auto', marginTop: 12 }}>
-          {[['info', '📋 פרטים'], ['placement', '🏢 שיבוץ'], ['docs', '📁 מסמכים'], ['notes', '📝 תרשומות']].map(([k, l]) => (
+          {[['info', '📋 פרטים'], ['placement', '🏢 שיבוץ'], ['finances', '💰 פיננסים'], ['docs', '📁 מסמכים'], ['notes', '📝 תרשומות']].map(([k, l]) => (
             <button key={k} className={`tab-btn${tab === k ? ' active' : ''}`} onClick={() => setTab(k)}>{l}</button>
           ))}
         </div>
@@ -597,6 +597,74 @@ function WorkersModule({ candidates, onUpdate, onDelete, currentUser }) {
                   </div>
                 )
               })}
+            </div>
+          )}
+
+
+          {tab === 'finances' && (
+            <div className="v2-card fade-in" style={{ padding: 22 }}>
+              <SectionTitle action={
+                editMode
+                  ? <button className="v2-btn v2-btn-primary" style={{ fontSize: 13 }} onClick={save}>{saving ? 'שומר...' : '💾 שמור'}</button>
+                  : <button className="v2-btn v2-btn-ghost" style={{ fontSize: 13 }} onClick={() => { setForm({ ...selected }); setEditMode(true) }}>✏️ ערוך</button>
+              }>💰 פרטים פיננסיים</SectionTitle>
+
+              {/* Bank account */}
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: GRAY, letterSpacing: '.5px', textTransform: 'uppercase', marginBottom: 12 }}>🏦 חשבון בנק</div>
+                {editMode ? (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <Inp label="שם הבנק" value={form.bank_name} onChange={v => set('bank_name', v)} />
+                    <Inp label="מספר סניף" value={form.bank_branch} onChange={v => set('bank_branch', v)} />
+                    <Inp label="מספר חשבון" value={form.bank_account} onChange={v => set('bank_account', v)} />
+                    <Inp label="שם בעל החשבון" value={form.bank_holder_name} onChange={v => set('bank_holder_name', v)} />
+                  </div>
+                ) : (
+                  <div>
+                    {[['🏦', 'שם הבנק', selected.bank_name], ['🔢', 'מספר סניף', selected.bank_branch], ['💳', 'מספר חשבון', selected.bank_account], ['👤', 'שם בעל החשבון', selected.bank_holder_name]].map(([icon, label, val]) => val ? (
+                      <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #F9FAFB' }}>
+                        <span style={{ fontSize: 12, color: GRAY }}>{icon} {label}</span>
+                        <span style={{ fontSize: 13, color: DARK, fontWeight: 500 }}>{val}</span>
+                      </div>
+                    ) : null)}
+                    {!selected.bank_name && !selected.bank_account && (
+                      <div style={{ textAlign: 'center', padding: '20px 0', color: '#D1D5DB', fontSize: 13 }}>לא הוזנו פרטי בנק</div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Deposit */}
+              <div style={{ background: '#FFFBEB', border: '1.5px solid #FDE68A', borderRadius: 12, padding: '16px 18px', marginBottom: 20 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#B45309', letterSpacing: '.5px', textTransform: 'uppercase', marginBottom: 12 }}>🔒 חשבון פקדון</div>
+                {editMode ? (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <Inp label="סכום פקדון (₪)" value={form.deposit_amount} onChange={v => set('deposit_amount', v)} type="number" />
+                    <div style={{ gridColumn: '1/-1' }}><Inp label="הערות פקדון" value={form.deposit_notes} onChange={v => set('deposit_notes', v)} rows={2} /></div>
+                  </div>
+                ) : (
+                  <div>
+                    {selected.deposit_amount && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(0,0,0,.06)' }}>
+                        <span style={{ fontSize: 12, color: '#92400E' }}>💰 סכום</span>
+                        <span style={{ fontSize: 15, fontWeight: 800, color: '#92400E' }}>₪{Number(selected.deposit_amount).toLocaleString()}</span>
+                      </div>
+                    )}
+                    {selected.deposit_notes && (
+                      <div style={{ fontSize: 13, color: '#78350F', lineHeight: 1.6, marginTop: 8 }}>{selected.deposit_notes}</div>
+                    )}
+                    {!selected.deposit_amount && !selected.deposit_notes && (
+                      <div style={{ textAlign: 'center', color: '#D97706', fontSize: 13 }}>לא הוזן פקדון</div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Housing assignment */}
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: GRAY, letterSpacing: '.5px', textTransform: 'uppercase', marginBottom: 12 }}>🏠 שיבוץ למגורים</div>
+                <ApartmentLink candidateId={selected.id} currentApartmentId={selected.apartment_id} onUpdate={(aptId, aptName) => { onUpdate(selected.id, { apartment_id: aptId }); setSelected(s => ({ ...s, apartment_id: aptId })) }} />
+              </div>
             </div>
           )}
 
