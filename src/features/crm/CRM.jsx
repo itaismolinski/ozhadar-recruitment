@@ -7,17 +7,26 @@ import {
 import { SECTORS, PERMITS, STATUSES, DOC_FIELDS } from '../../constants.js'
 import { supabase } from '../../lib/supabase.js'
 
-// ─── DESIGN TOKENS (Apple) ────────────────────────────────────────────────────
-const F      = "'Heebo', -apple-system, 'Arial Hebrew', Arial, sans-serif"
-const BLUE   = '#0071E3'
-const DARK   = '#1D1D1F'
-const GRAY   = '#6E6E73'
-const LGRAY  = '#F5F5F7'
-const CREAM  = '#FAFAF8'
-const BORDER = '#D2D2D7'
-const WHITE  = '#FFFFFF'
-const SIDEBAR_BG = '#1C1C1E'
-const SIDEBAR_ACTIVE = 'rgba(0,113,227,0.18)'
+// ─── DESIGN TOKENS 2026 ──────────────────────────────────────────────────────
+const F       = "'Heebo', -apple-system, 'Arial Hebrew', Arial, sans-serif"
+const BLUE    = '#0066FF'
+const BLUE_L  = 'rgba(0,102,255,0.08)'
+const BLUE_M  = 'rgba(0,102,255,0.15)'
+const DARK    = '#111318'
+const DARK2   = '#1E2330'
+const GRAY    = '#6B7280'
+const GRAY2   = '#9CA3AF'
+const LGRAY   = '#F3F4F6'
+const CREAM   = '#F8F9FA'
+const BORDER  = '#E5E7EB'
+const BORDER2 = '#D1D5DB'
+const WHITE   = '#FFFFFF'
+const SIDEBAR_BG     = '#111318'
+const SIDEBAR_HOVER  = 'rgba(255,255,255,0.06)'
+const SIDEBAR_ACTIVE = 'rgba(0,102,255,0.2)'
+const SHADOW_SM  = '0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05)'
+const SHADOW_MD  = '0 4px 16px rgba(0,0,0,.08), 0 2px 6px rgba(0,0,0,.04)'
+const SHADOW_LG  = '0 12px 40px rgba(0,0,0,.12), 0 4px 12px rgba(0,0,0,.06)'
 
 const STAFF = ['איתי', 'דוד', 'הודיה', 'מור']
 
@@ -41,63 +50,180 @@ function useStyles() {
     if (document.getElementById('crm-v2-styles')) return
     const s = document.createElement('style')
     s.id = 'crm-v2-styles'
-    s.textContent = `
+        s.textContent = `
       @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap');
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-      body { font-family: ${F}; }
+      html { scroll-behavior: smooth; }
+      body { font-family: ${F}; background: ${CREAM}; -webkit-font-smoothing: antialiased; }
+      ::-webkit-scrollbar { width: 5px; height: 5px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: ${BORDER2}; border-radius: 99px; }
+      ::-webkit-scrollbar-thumb:hover { background: ${GRAY2}; }
 
+      /* ── INPUTS ── */
       .v2-input {
-        width: 100%; padding: 10px 13px;
+        width: 100%; padding: 9px 13px;
         background: ${WHITE}; border: 1.5px solid ${BORDER};
-        border-radius: 10px; font-size: 14px; font-family: inherit; color: ${DARK};
+        border-radius: 9px; font-size: 13.5px; font-family: inherit; color: ${DARK};
         outline: none; transition: border-color .15s, box-shadow .15s;
+        box-shadow: 0 1px 2px rgba(0,0,0,.04);
       }
-      .v2-input:focus { border-color: ${BLUE}; box-shadow: 0 0 0 3px rgba(0,113,227,.1); }
-      .v2-input::placeholder { color: #B0B0B7; }
+      .v2-input:focus { border-color: ${BLUE}; box-shadow: 0 0 0 3px rgba(0,102,255,.12); }
+      .v2-input::placeholder { color: ${GRAY2}; }
       .v2-select { appearance: none; -webkit-appearance: none; cursor: pointer; }
+      textarea.v2-input { resize: vertical; line-height: 1.6; }
 
-      .v2-btn { padding: 9px 18px; border: none; border-radius: 980px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; transition: all .15s; }
-      .v2-btn-primary { background: ${BLUE}; color: ${WHITE}; }
-      .v2-btn-primary:hover { background: #0077ED; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,113,227,.3); }
-      .v2-btn-ghost { background: ${LGRAY}; color: ${DARK}; }
-      .v2-btn-ghost:hover { background: #EBEBF0; }
-      .v2-btn-danger { background: #FFF1F2; color: #BE123C; border: 1.5px solid #FECDD3; }
-      .v2-btn-danger:hover { background: #FFE4E6; }
+      /* ── BUTTONS ── */
+      .v2-btn {
+        padding: 8px 18px; border: none; border-radius: 8px;
+        font-size: 13px; font-weight: 600; font-family: inherit;
+        cursor: pointer; transition: all .15s; letter-spacing: -.1px;
+        display: inline-flex; align-items: center; gap: 6px;
+      }
+      .v2-btn-primary { background: ${BLUE}; color: ${WHITE}; box-shadow: 0 1px 3px rgba(0,102,255,.3); }
+      .v2-btn-primary:hover { background: #0055DD; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,102,255,.35); }
+      .v2-btn-primary:active { transform: translateY(0); }
+      .v2-btn-ghost {
+        background: ${WHITE}; color: ${DARK}; border: 1.5px solid ${BORDER};
+        box-shadow: 0 1px 2px rgba(0,0,0,.04);
+      }
+      .v2-btn-ghost:hover { background: ${LGRAY}; border-color: ${BORDER2}; }
+      .v2-btn-danger { background: #FEF2F2; color: #DC2626; border: 1.5px solid #FECACA; }
+      .v2-btn-danger:hover { background: #FEE2E2; }
 
+      /* ── SIDEBAR NAV ── */
       .nav-btn {
-        display: flex; align-items: center; gap: 11px;
-        padding: 10px 14px; border-radius: 10px; cursor: pointer;
-        color: rgba(255,255,255,.5); font-size: 13.5px; font-weight: 500;
+        display: flex; align-items: center; gap: 10px;
+        padding: 9px 12px; border-radius: 9px; cursor: pointer;
+        color: rgba(255,255,255,.45); font-size: 13px; font-weight: 500;
         border: none; background: none; font-family: inherit; width: 100%;
         text-align: right; transition: all .15s; white-space: nowrap;
+        position: relative;
       }
-      .nav-btn:hover { background: rgba(255,255,255,.08); color: rgba(255,255,255,.85); }
-      .nav-btn.active { background: ${SIDEBAR_ACTIVE}; color: #60A5FA; font-weight: 700; }
-      .nav-btn .nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+      .nav-btn:hover { background: ${SIDEBAR_HOVER}; color: rgba(255,255,255,.82); }
+      .nav-btn.active {
+        background: ${SIDEBAR_ACTIVE};
+        color: #60A5FA; font-weight: 700;
+      }
+      .nav-btn.active::before {
+        content: '';
+        position: absolute;
+        right: 0; top: 50%; transform: translateY(-50%);
+        width: 3px; height: 60%; background: #60A5FA; border-radius: 99px;
+      }
+      .nav-btn .nav-icon { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; opacity: .9; }
 
-      .v2-card { background: ${WHITE}; border-radius: 16px; border: 1px solid #E5E5EA; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+      /* ── CARDS & TABLES ── */
+      .v2-card {
+        background: ${WHITE}; border-radius: 14px;
+        border: 1px solid ${BORDER};
+        box-shadow: ${SHADOW_SM};
+        transition: box-shadow .2s;
+      }
+      .v2-card:hover { box-shadow: ${SHADOW_MD}; }
       .v2-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-      .v2-table th { padding: 10px 14px; text-align: right; font-weight: 700; color: ${GRAY}; font-size: 11px; letter-spacing: .5px; text-transform: uppercase; background: ${LGRAY}; border-bottom: 1.5px solid ${BORDER}; }
-      .v2-table td { padding: 12px 14px; border-bottom: 1px solid #F3F4F6; vertical-align: middle; }
-      .v2-table tr:hover td { background: ${LGRAY}; }
+      .v2-table th {
+        padding: 10px 16px; text-align: right;
+        font-weight: 600; color: ${GRAY}; font-size: 11px;
+        letter-spacing: .5px; text-transform: uppercase;
+        background: ${CREAM}; border-bottom: 1.5px solid ${BORDER};
+        white-space: nowrap;
+      }
+      .v2-table td { padding: 13px 16px; border-bottom: 1px solid ${LGRAY}; color: ${DARK}; vertical-align: middle; }
       .v2-table tr:last-child td { border-bottom: none; }
+      .v2-table tr:hover td { background: ${CREAM}; cursor: pointer; }
+      .v2-table tr:hover td:first-child { border-radius: 0 8px 8px 0; }
+      .v2-table tr:hover td:last-child  { border-radius: 8px 0 0 8px; }
 
-      .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+      /* ── BADGES ── */
+      .badge {
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 3px 9px; border-radius: 6px;
+        font-size: 11px; font-weight: 700; letter-spacing: .2px;
+        white-space: nowrap;
+      }
 
-      .tab-btn { padding: 11px 16px; background: none; border: none; border-bottom: 2px solid transparent; color: ${GRAY}; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; transition: all .15s; white-space: nowrap; }
+      /* ── TABS ── */
+      .tab-btn {
+        padding: 10px 16px; background: none; border: none;
+        border-bottom: 2px solid transparent;
+        color: ${GRAY}; font-size: 13.5px; font-weight: 500;
+        cursor: pointer; font-family: inherit; transition: all .15s;
+        white-space: nowrap;
+      }
+      .tab-btn:hover { color: ${DARK}; }
       .tab-btn.active { border-bottom-color: ${BLUE}; color: ${BLUE}; font-weight: 700; }
 
-      .stat-card { background: ${WHITE}; border-radius: 16px; border: 1px solid #E5E5EA; padding: 20px 22px; }
-      .stat-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); transform: translateY(-1px); transition: all .2s; }
+      /* ── STAT CARD ── */
+      .stat-card {
+        background: ${WHITE}; border-radius: 14px;
+        border: 1px solid ${BORDER}; padding: 20px 22px;
+        box-shadow: ${SHADOW_SM}; transition: all .2s; cursor: pointer;
+      }
+      .stat-card:hover { box-shadow: ${SHADOW_MD}; transform: translateY(-2px); }
 
-      .drag-zone { border: 2px dashed ${BORDER}; border-radius: 14px; padding: 32px; text-align: center; cursor: pointer; transition: all .2s; background: ${LGRAY}; }
-      .drag-zone:hover, .drag-zone.over { border-color: ${BLUE}; background: rgba(0,113,227,.04); }
+      /* ── DRAG ZONE ── */
+      .drag-zone {
+        border: 2px dashed ${BORDER};
+        border-radius: 12px; padding: 32px;
+        text-align: center; cursor: pointer; transition: all .2s;
+        background: ${CREAM};
+      }
+      .drag-zone:hover, .drag-zone.over {
+        border-color: ${BLUE}; background: ${BLUE_L};
+      }
 
-      .candidate-row { cursor: pointer; transition: background .1s; }
-      .candidate-row:hover td { background: ${LGRAY}; }
+      /* ── NOTE ITEM ── */
+      .note-item {
+        display: flex; gap: 13px; padding: 13px 15px;
+        background: ${CREAM}; border: 1px solid ${BORDER};
+        border-radius: 10px; margin-bottom: 8px; align-items: flex-start;
+        transition: border-color .15s;
+      }
+      .note-item:hover { border-color: ${BORDER2}; }
 
-      @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-      .fade-in { animation: fadeIn .3s ease both; }
+      /* ── PRIORITY BADGES ── */
+      .priority-urgent { background: #FEF2F2; color: #DC2626; }
+      .priority-high    { background: #FFF7ED; color: #C2410C; }
+      .priority-normal  { background: #F0FDF4; color: #15803D; }
+      .priority-low     { background: ${LGRAY}; color: ${GRAY}; }
+
+      /* ── ANIMATIONS ── */
+      @keyframes fadeInUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+      @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
+      @keyframes pulse    { 0%,100%{opacity:1} 50%{opacity:.5} }
+      .fade-in     { animation: fadeInUp .25s ease both; }
+      .fade-in-fast { animation: fadeIn .15s ease both; }
+      .pulse       { animation: pulse 1.5s ease infinite; }
+
+      /* ── SCROLLABLE ── */
+      .scrollable { overflow-y: auto; }
+      .scrollable::-webkit-scrollbar { width: 4px; }
+
+      /* ── SECTION ROW ── */
+      .detail-row {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 9px 0; border-bottom: 1px solid ${LGRAY};
+      }
+      .detail-row:last-child { border-bottom: none; }
+      .detail-label { font-size: 12px; color: ${GRAY}; }
+      .detail-value { font-size: 13px; color: ${DARK}; font-weight: 500; max-width: 60%; text-align: left; word-break: break-word; }
+
+      /* ── TOP BAR ── */
+      .crm-topbar {
+        background: rgba(255,255,255,0.9);
+        backdrop-filter: blur(12px) saturate(180%);
+        -webkit-backdrop-filter: blur(12px) saturate(180%);
+        border-bottom: 1px solid ${BORDER};
+        position: sticky; top: 0; z-index: 200;
+      }
+
+      /* ── FORM GROUP ── */
+      .form-label {
+        display: block; font-size: 11px; font-weight: 700;
+        color: ${GRAY}; margin-bottom: 5px;
+        text-transform: uppercase; letter-spacing: .5px;
+      }
     `
     document.head.appendChild(s)
   }, [])
@@ -111,8 +237,8 @@ const Badge = ({ status }) => {
 
 function SectionTitle({ children, action }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 13, borderBottom: `1.5px solid #F3F4F6` }}>
-      <div style={{ fontSize: 15, fontWeight: 700, color: DARK }}>{children}</div>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, paddingBottom: 14, borderBottom: `1px solid ${BORDER}` }}>
+      <div style={{ fontSize: 14, fontWeight: 700, color: DARK, letterSpacing: '-.2px' }}>{children}</div>
       {action}
     </div>
   )
@@ -120,11 +246,11 @@ function SectionTitle({ children, action }) {
 
 function Inp({ label, value, onChange, type = 'text', placeholder, disabled, rows }) {
   return (
-    <div style={{ marginBottom: 14 }}>
-      {label && <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: GRAY, marginBottom: 5 }}>{label}</label>}
+    <div style={{ marginBottom: 13 }}>
+      {label && <label className="form-label">{label}</label>}
       {rows
-        ? <textarea value={value || ''} onChange={e => onChange(e.target.value)} rows={rows} placeholder={placeholder || ''} className="v2-input" style={{ resize: 'vertical', lineHeight: 1.6 }} />
-        : <input type={type} value={value || ''} onChange={e => onChange(e.target.value)} placeholder={placeholder || ''} disabled={disabled} className="v2-input" style={disabled ? { opacity: .5 } : {}} />
+        ? <textarea value={value || ''} onChange={e => onChange(e.target.value)} rows={rows} placeholder={placeholder || ''} className="v2-input" />
+        : <input type={type} value={value || ''} onChange={e => onChange(e.target.value)} placeholder={placeholder || ''} disabled={disabled} className="v2-input" style={disabled ? { opacity: .45 } : {}} />
       }
     </div>
   )
@@ -132,14 +258,14 @@ function Inp({ label, value, onChange, type = 'text', placeholder, disabled, row
 
 function Sel({ label, value, onChange, opts, placeholder, disabled }) {
   return (
-    <div style={{ marginBottom: 14 }}>
-      {label && <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: GRAY, marginBottom: 5 }}>{label}</label>}
+    <div style={{ marginBottom: 13 }}>
+      {label && <label className="form-label">{label}</label>}
       <div style={{ position: 'relative' }}>
-        <select value={value || ''} onChange={e => onChange(e.target.value)} disabled={disabled} className="v2-input v2-select" style={{ paddingLeft: 32 }}>
+        <select value={value || ''} onChange={e => onChange(e.target.value)} disabled={disabled} className="v2-input v2-select" style={{ paddingLeft: 32, paddingRight: 13 }}>
           <option value=''>{placeholder || '—'}</option>
           {opts.map(o => <option key={o.v || o} value={o.v || o}>{o.l || o}</option>)}
         </select>
-        <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: GRAY, fontSize: 10 }}>▼</span>
+        <span style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: GRAY2, fontSize: 9 }}>▼</span>
       </div>
     </div>
   )
@@ -150,12 +276,12 @@ function NotesWidget({ notes, loading, onAdd, onDelete, currentUser }) {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   return (
     <div>
-      <div style={{ background: '#F0F7FF', border: '1.5px solid #BFDBFE', borderRadius: 12, padding: 16, marginBottom: 18 }}>
+      <div style={{ background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 16, marginBottom: 18 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: 10, marginBottom: 10 }}>
           <Inp label="תאריך" type="date" value={date} onChange={setDate} />
           <Inp label="תרשומת" value={text} onChange={setText} placeholder="הוסף תרשומת..." />
         </div>
-        <button className="v2-btn v2-btn-primary" style={{ width: '100%' }}
+        <button className="v2-btn v2-btn-primary" style={{ width: '100%', justifyContent: 'center', padding: 10, borderRadius: 9 }}
           onClick={async () => { if (!text.trim()) return; await onAdd({ text: text.trim(), note_date: date, created_by: currentUser }); setText(''); setDate(new Date().toISOString().split('T')[0]) }}>
           + הוסף תרשומת
         </button>
@@ -200,13 +326,15 @@ function Dashboard({ candidates, tasks, apartments, onNavigate, currentUser }) {
   const recent = [...candidates].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5)
 
   const StatCard = ({ icon, label, value, sub, color, onClick }) => (
-    <div className="stat-card" onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-        <div style={{ width: 40, height: 40, borderRadius: 12, background: (color || BLUE) + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{icon}</div>
-        {sub && <span className="badge" style={{ background: LGRAY, color: GRAY }}>{sub}</span>}
+    <div className="stat-card" onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', top: -20, left: -20, width: 80, height: 80, borderRadius: '50%', background: (color || BLUE) + '08', pointerEvents: 'none' }} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+        <div style={{ width: 42, height: 42, borderRadius: 11, background: (color || BLUE) + '12', border: `1px solid ${(color || BLUE)}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{icon}</div>
+        {sub && <span className="badge" style={{ background: (color||BLUE)+'12', color: color||BLUE, fontSize: 10 }}>{sub}</span>}
       </div>
-      <div style={{ fontSize: 32, fontWeight: 800, color: color || DARK, letterSpacing: '-1px', lineHeight: 1 }}>{value}</div>
-      <div style={{ fontSize: 13, color: GRAY, marginTop: 5 }}>{label}</div>
+      <div style={{ fontSize: 36, fontWeight: 800, color: color || DARK, letterSpacing: '-1.5px', lineHeight: 1, marginBottom: 4 }}>{value}</div>
+      <div style={{ fontSize: 12, color: GRAY, fontWeight: 500 }}>{label}</div>
+      {onClick && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${color||BLUE}, transparent)`, opacity: .3 }} />}
     </div>
   )
 
@@ -410,7 +538,7 @@ function ApplicantsModule({ candidates, onUpdate, onDelete, currentUser }) {
   }
 
   return (
-    <div style={{ padding: '22px 26px' }} className="fade-in">
+    <div style={{ padding: '24px 28px' }} className="fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, flexWrap: 'wrap', gap: 10 }}>
         <h3 style={{ fontSize: 18, fontWeight: 800, color: DARK, letterSpacing: '-0.3px' }}>🎯 מועמדים ({filtered.length})</h3>
         <div style={{ display: 'flex', gap: 9 }}>
@@ -581,7 +709,7 @@ function WorkersModule({ candidates, onUpdate, onDelete, currentUser }) {
     return (
       <div className="fade-in" style={{ background: CREAM, minHeight: 'calc(100vh - 54px)' }}>
         <div style={{ background: WHITE, borderBottom: `1.5px solid #E5E5EA`, padding: '13px 24px', display: 'flex', alignItems: 'center', gap: 13, flexWrap: 'wrap' }}>
-          <button className="v2-btn v2-btn-ghost" style={{ fontSize: 13 }} onClick={() => { setSelected(null); setEditMode(false) }}>← חזרה</button>
+          <button className="v2-btn v2-btn-ghost" style={{ fontSize: 12, padding: '6px 12px', borderRadius: 8 }} onClick={() => { setSelected(null); setEditMode(false) }}>← חזרה</button>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 17, fontWeight: 800, color: DARK }}>{name}</div>
             {selected.full_name_en && selected.full_name_he && <div style={{ fontSize: 12, color: GRAY }}>{selected.full_name_en}</div>}
@@ -817,32 +945,40 @@ function WorkersModule({ candidates, onUpdate, onDelete, currentUser }) {
   }
 
   return (
-    <div style={{ padding: '22px 26px' }} className="fade-in">
+    <div style={{ padding: '24px 28px' }} className="fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, flexWrap: 'wrap', gap: 10 }}>
-        <h3 style={{ fontSize: 18, fontWeight: 800, color: DARK, letterSpacing: '-0.3px' }}>👥 עובדים ({filtered.length})</h3>
-        <div style={{ display: 'flex', gap: 9 }}>
-          <input placeholder="🔍 חיפוש שם / טלפון / שיבוץ..." value={search} onChange={e => setSearch(e.target.value)} className="v2-input" style={{ minWidth: 220, fontSize: 13 }} />
+        <div>
+          <h3 style={{ fontSize: 20, fontWeight: 800, color: DARK, letterSpacing: '-0.5px', lineHeight: 1 }}>עובדים</h3>
+          <div style={{ fontSize: 12, color: GRAY, marginTop: 2 }}>{filtered.length} רשומות</div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ position: 'relative' }}>
+            <input placeholder="חיפוש שם / טלפון / שיבוץ..." value={search} onChange={e => setSearch(e.target.value)}
+              className="v2-input" style={{ minWidth: 240, fontSize: 13, paddingRight: 36 }} />
+            <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: GRAY2, fontSize: 13, pointerEvents: 'none' }}>🔍</span>
+          </div>
           <select value={filterSector} onChange={e => setSector(e.target.value)} className="v2-input v2-select" style={{ fontSize: 13, minWidth: 120, paddingLeft: 28 }}>
             <option value=''>כל הענפים</option>
             {SECTORS.map(s => <option key={s.v} value={s.v}>{s.he}</option>)}
           </select>
           <select value={filterStatus} onChange={e => setStatus(e.target.value)} className="v2-input v2-select" style={{ fontSize: 13, minWidth: 110, paddingLeft: 28 }}>
             <option value=''>כל הסטטוסים</option>
-            {STATUSES.map(s => <option key={s.v} value={s.v}>{s.he}</option>)}
+            {WORKER_STATUS_LIST.map(s => <option key={s.v} value={s.v}>{s.he}</option>)}
           </select>
         </div>
       </div>
 
       {/* Status cards */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 18, overflowX: 'auto' }}>
-        {STATUSES.map(s => {
-          const cnt = candidates.filter(c => c.status === s.v).length
+      <div style={{ display: 'flex', gap: 8, marginBottom: 18, overflowX: 'auto', paddingBottom: 2 }}>
+        {WORKER_STATUS_LIST.map(s => {
+          const cnt = allWorkers.filter(c => c.status === s.v).length
+          if (!cnt && filterStatus !== s.v) return null
           const active = filterStatus === s.v
           return (
             <div key={s.v} onClick={() => setStatus(active ? '' : s.v)}
-              style={{ minWidth: 90, background: active ? s.bg : WHITE, border: `1.5px solid ${active ? s.fg : '#E5E5EA'}`, borderRadius: 12, padding: '11px 14px', textAlign: 'center', cursor: 'pointer', transition: 'all .15s', flex: 1 }}>
-              <div style={{ fontSize: 22, fontWeight: 900, color: active ? s.fg : DARK }}>{cnt}</div>
-              <div style={{ fontSize: 11, color: active ? s.fg : GRAY, fontWeight: 600 }}>{s.he}</div>
+              style={{ minWidth: 80, background: active ? s.bg : WHITE, border: `1.5px solid ${active ? s.fg : BORDER}`, borderRadius: 10, padding: '10px 12px', textAlign: 'center', cursor: 'pointer', transition: 'all .15s', boxShadow: active ? SHADOW_SM : 'none' }}>
+              <div style={{ fontSize: 20, fontWeight: 900, color: active ? s.fg : DARK, letterSpacing: '-1px' }}>{cnt}</div>
+              <div style={{ fontSize: 10, color: active ? s.fg : GRAY, fontWeight: 700, marginTop: 2 }}>{s.he.replace(/^[^\s]+ /, '')}</div>
             </div>
           )
         })}
@@ -1045,7 +1181,7 @@ function ApartmentsModule({ candidates, currentUser }) {
   }
 
   return (
-    <div style={{ padding: '22px 26px' }} className="fade-in">
+    <div style={{ padding: '24px 28px' }} className="fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, flexWrap: 'wrap', gap: 10 }}>
         <h3 style={{ fontSize: 18, fontWeight: 800, color: DARK, letterSpacing: '-0.3px' }}>🏠 דירות ({filtered.length})</h3>
         <div style={{ display: 'flex', gap: 9 }}>
@@ -1130,7 +1266,7 @@ function TasksModule({ candidates, currentUser }) {
   const INP_S = { padding: '10px 13px', background: LGRAY, border: `1.5px solid ${BORDER}`, borderRadius: 10, color: DARK, fontFamily: F, fontSize: 13, outline: 'none', width: '100%' }
 
   return (
-    <div style={{ padding: '22px 26px' }} className="fade-in">
+    <div style={{ padding: '24px 28px' }} className="fade-in">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18, flexWrap: 'wrap', gap: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <h3 style={{ fontSize: 18, fontWeight: 800, color: DARK, letterSpacing: '-0.3px' }}>✅ משימות</h3>
@@ -1250,7 +1386,7 @@ function DocumentsModule({ candidates, currentUser }) {
       setSaving(false); alert('נשמר ✓')
     }
     return (
-      <div style={{ padding: '22px 26px' }} className="fade-in">
+      <div style={{ padding: '24px 28px' }} className="fade-in">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
           <button className="v2-btn v2-btn-ghost" onClick={() => setSelected(null)}>← חזרה</button>
           <div style={{ fontSize: 16, fontWeight: 700, color: DARK, flex: 1 }}>{editName}</div>
@@ -1272,7 +1408,7 @@ function DocumentsModule({ candidates, currentUser }) {
   }
 
   return (
-    <div style={{ padding: '22px 26px' }} className="fade-in">
+    <div style={{ padding: '24px 28px' }} className="fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <h3 style={{ fontSize: 18, fontWeight: 800, color: DARK, letterSpacing: '-0.3px' }}>📋 מסמכים ותבניות</h3>
         <div style={{ display: 'flex', gap: 9 }}>
@@ -1542,7 +1678,7 @@ function EmployersModule({ candidates, currentUser }) {
 
   // ── EMPLOYERS LIST ──
   return (
-    <div style={{ padding: '22px 26px' }} className="fade-in">
+    <div style={{ padding: '24px 28px' }} className="fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, flexWrap: 'wrap', gap: 10 }}>
         <h3 style={{ fontSize: 18, fontWeight: 800, color: DARK, letterSpacing: '-0.3px' }}>🏢 מעסיקים ({filtered.length})</h3>
         <div style={{ display: 'flex', gap: 9 }}>
@@ -1861,7 +1997,7 @@ function InactiveModal({ candidate, onSave, onClose }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, fontFamily: F }}>
-      <div style={{ background: '#FFF', borderRadius: 20, padding: 28, width: 420, maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,.2)' }}>
+      <div style={{ background: WHITE, borderRadius: 16, padding: 26, width: 420, maxWidth: '90vw', boxShadow: SHADOW_LG, border: `1px solid ${BORDER}` }}>
         <div style={{ fontSize: 18, fontWeight: 800, color: '#1D1D1F', marginBottom: 4 }}>⭕ סיום העסקה</div>
         <div style={{ fontSize: 13, color: '#6E6E73', marginBottom: 22 }}>{candidate.full_name_he || candidate.full_name_en}</div>
 
@@ -2066,7 +2202,7 @@ function ReportsModule({ candidates }) {
   ]
 
   return (
-    <div style={{ padding: '22px 26px' }} className="fade-in">
+    <div style={{ padding: '24px 28px' }} className="fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
         <h3 style={{ fontSize: 18, fontWeight: 800, color: DARK, letterSpacing: '-0.3px' }}>📈 דוחות וייצוא</h3>
         <button className="v2-btn v2-btn-primary"
@@ -2171,31 +2307,52 @@ function TopBar({ module, currentUser, onRefresh }) {
     h >= 5  && h < 10 ? `בוקר טוב, ${currentUser} ☀️` :
     h >= 10 && h < 12 ? `זמן קפה? ☕` :
     h >= 12 && h < 14 ? `צהריים טובים, ${currentUser} 🍽️` :
-    h >= 14 && h < 17 ? `אחר הצהריים טובים 🌤️` :
+    h >= 14 && h < 17 ? `אחר הצהריים 🌤️` :
     h >= 17 && h < 21 ? `ערב טוב, ${currentUser} 🌆` :
     h >= 21            ? `לילה טוב 🌙` :
                          `טוב שחזרת.. 🦉`
 
-  const NAV_LABELS = { dashboard:'📊 דשבורד', applicants:'🎯 מועמדים', workers:'👥 עובדים', apartments:'🏠 דירות', employers:'🏢 מעסיקים', tasks:'✅ משימות', documents:'📋 מסמכים' }
+  const NAV_LABELS = {
+    dashboard:'דשבורד', applicants:'מועמדים', workers:'עובדים',
+    apartments:'דירות', employers:'מעסיקים', tasks:'משימות',
+    documents:'מסמכים', reports:'דוחות'
+  }
+  const NAV_ICONS = {
+    dashboard:'📊', applicants:'🎯', workers:'👥',
+    apartments:'🏠', employers:'🏢', tasks:'✅',
+    documents:'📋', reports:'📈'
+  }
 
   return (
-    <div style={{ background: WHITE, borderBottom: `1px solid #E5E5EA`, padding: '0 24px', display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 0, zIndex: 100, height: 54 }}>
-      {/* Module title */}
-      <div style={{ fontSize: 14, fontWeight: 700, color: DARK }}>{NAV_LABELS[module] || ''}</div>
+    <div className="crm-topbar" style={{ padding: '0 22px', display: 'flex', alignItems: 'center', gap: 14, height: 54 }}>
+      {/* Breadcrumb */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontSize: 15 }}>{NAV_ICONS[module] || '•'}</span>
+        <span style={{ fontSize: 14, fontWeight: 700, color: DARK, letterSpacing: '-.2px' }}>{NAV_LABELS[module] || ''}</span>
+      </div>
 
       <div style={{ flex: 1 }} />
 
       {/* Greeting */}
-      <div style={{ fontSize: 13, color: GRAY, fontWeight: 500 }}>{greeting}</div>
+      <div style={{ fontSize: 12.5, color: GRAY, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
+        {greeting}
+      </div>
+
+      {/* Divider */}
+      <div style={{ width: 1, height: 18, background: BORDER, flexShrink: 0 }} />
 
       {/* Live Clock */}
-      <div style={{ background: DARK, color: WHITE, borderRadius: 9, padding: '5px 13px', fontSize: 15, fontWeight: 700, letterSpacing: '1.5px', fontVariantNumeric: 'tabular-nums', minWidth: 86, textAlign: 'center' }}>
+      <div style={{ background: DARK, color: WHITE, borderRadius: 8, padding: '5px 12px', fontSize: 14, fontWeight: 700, letterSpacing: '1px', fontVariantNumeric: 'tabular-nums', minWidth: 84, textAlign: 'center', fontFamily: 'monospace' }}>
         {now.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
       </div>
 
-      <button className="v2-btn v2-btn-ghost" style={{ fontSize: 12, padding: '6px 12px' }} onClick={onRefresh}>↻ רענן</button>
+      {/* Refresh */}
+      <button className="v2-btn v2-btn-ghost" style={{ fontSize: 12, padding: '6px 11px', borderRadius: 8 }} onClick={onRefresh}
+        title="רענן נתונים">↻</button>
 
-      <div style={{ width: 32, height: 32, borderRadius: 10, background: BLUE, display: 'flex', alignItems: 'center', justifyContent: 'center', color: WHITE, fontSize: 13, fontWeight: 700 }}>
+      {/* Avatar */}
+      <div style={{ width: 32, height: 32, borderRadius: 9, background: `linear-gradient(135deg, ${BLUE}, #0044BB)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: WHITE, fontSize: 13, fontWeight: 800, boxShadow: '0 2px 8px rgba(0,102,255,.3)', cursor: 'default' }}
+        title={currentUser}>
         {currentUser?.[0] || 'א'}
       </div>
     </div>
@@ -2292,70 +2449,92 @@ export default function CRM({ session, onLogout }) {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', fontFamily: F, background: CREAM, color: GRAY, fontSize: 15 }}>
-        טוען מערכת...
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', fontFamily: F, background: CREAM, flexDirection: 'column', gap: 14 }}>
+        <div style={{ width: 44, height: 44, borderRadius: 12, background: `linear-gradient(135deg, ${BLUE}, #0044BB)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 900, color: WHITE, boxShadow: SHADOW_MD }}>OZ</div>
+        <div style={{ color: GRAY, fontSize: 13, fontWeight: 500 }} className="pulse">טוען מערכת...</div>
       </div>
     )
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', fontFamily: F, direction: 'rtl' }}>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', fontFamily: F, direction: 'rtl', background: SIDEBAR_BG }}>
 
       {/* Toast notification */}
       {toast && (
-        <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 9999, background: DARK, color: WHITE, borderRadius: 14, padding: '14px 20px', boxShadow: '0 8px 32px rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', gap: 12, fontFamily: F, maxWidth: 340, animation: 'fadeIn .3s ease' }}>
-          <span style={{ fontSize: 22 }}>📋</span>
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 700 }}>משימה חדשה שובצה אליך</div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,.65)', marginTop: 2 }}>{toast.msg}</div>
+        <div className="fade-in-fast" style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 9999, background: DARK2, color: WHITE, borderRadius: 13, padding: '14px 18px', boxShadow: SHADOW_LG, display: 'flex', alignItems: 'center', gap: 12, fontFamily: F, maxWidth: 360, border: '1px solid rgba(255,255,255,.1)' }}>
+          <div style={{ width: 38, height: 38, borderRadius: 9, background: BLUE, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, flexShrink: 0 }}>📋</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>משימה חדשה שובצה אליך</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,.55)' }}>{toast.msg}</div>
           </div>
-          <button onClick={() => setToast(null)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,.5)', cursor: 'pointer', fontSize: 16, marginRight: 4 }}>✕</button>
+          <button onClick={() => setToast(null)} style={{ background: 'rgba(255,255,255,.1)', border: 'none', color: WHITE, cursor: 'pointer', fontSize: 12, padding: '4px 8px', borderRadius: 6, fontFamily: F }}>✕</button>
         </div>
       )}
 
       {/* ── SIDEBAR ── */}
-      <div style={{ width: 220, background: SIDEBAR_BG, display: 'flex', flexDirection: 'column', flexShrink: 0, padding: '18px 10px', overflowY: 'auto' }}>
-        {/* Logo */}
-        <div style={{ padding: '6px 14px', marginBottom: 20 }}>
-          <div style={{ color: WHITE, fontSize: 16, fontWeight: 800, letterSpacing: '-0.3px' }}>Oz Hadar</div>
-          <div style={{ color: 'rgba(255,255,255,.35)', fontSize: 11, marginTop: 2 }}>CRM · {currentUser}</div>
+      <div style={{ width: 230, background: SIDEBAR_BG, display: 'flex', flexDirection: 'column', flexShrink: 0, padding: '0 0 12px', overflowY: 'auto', borderLeft: '1px solid rgba(255,255,255,.06)' }}>
+        {/* Logo area */}
+        <div style={{ padding: '18px 16px 14px', borderBottom: '1px solid rgba(255,255,255,.07)', marginBottom: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'linear-gradient(135deg, #0066FF 0%, #0044BB 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 900, color: WHITE, flexShrink: 0, boxShadow: '0 4px 12px rgba(0,102,255,.4)' }}>
+              OZ
+            </div>
+            <div>
+              <div style={{ color: WHITE, fontSize: 14, fontWeight: 800, letterSpacing: '-.3px', lineHeight: 1.2 }}>Oz Hadar</div>
+              <div style={{ color: 'rgba(255,255,255,.3)', fontSize: 10.5, marginTop: 1 }}>CRM · {currentUser}</div>
+            </div>
+          </div>
         </div>
 
-        {/* Nav */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          {NAV.map(n => (
-            <button key={n.k} className={`nav-btn${module === n.k ? ' active' : ''}`}
-              onClick={() => setModule(n.k)}>
-              <span className="nav-icon">{n.icon}</span>
-              <span style={{ flex: 1 }}>{n.label}</span>
-              {n.badge > 0 && (
-                <span style={{ background: n.k === 'applicants' ? '#7C3AED' : BLUE, color: WHITE, borderRadius: 10, fontSize: 10, fontWeight: 700, padding: '1px 7px', minWidth: 20, textAlign: 'center' }}>{n.badge}</span>
-              )}
-            </button>
-          ))}
+        {/* Nav group */}
+        <div style={{ padding: '4px 10px', flex: 1 }}>
+          <div style={{ fontSize: 9.5, fontWeight: 700, color: 'rgba(255,255,255,.2)', letterSpacing: '1px', textTransform: 'uppercase', padding: '4px 4px 8px' }}>ראשי</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {NAV.slice(0,5).map(n => (
+              <button key={n.k} className={`nav-btn${module === n.k ? ' active' : ''}`}
+                onClick={() => setModule(n.k)}>
+                <span className="nav-icon">{n.icon}</span>
+                <span style={{ flex: 1 }}>{n.label}</span>
+                {n.badge > 0 && (
+                  <span style={{ background: n.k === 'applicants' ? '#7C3AED' : BLUE, color: WHITE, borderRadius: 6, fontSize: 10, fontWeight: 800, padding: '1px 6px', lineHeight: 1.6 }}>{n.badge}</span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ fontSize: 9.5, fontWeight: 700, color: 'rgba(255,255,255,.2)', letterSpacing: '1px', textTransform: 'uppercase', padding: '16px 4px 8px' }}>כלים</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {NAV.slice(5).map(n => (
+              <button key={n.k} className={`nav-btn${module === n.k ? ' active' : ''}`}
+                onClick={() => setModule(n.k)}>
+                <span className="nav-icon">{n.icon}</span>
+                <span style={{ flex: 1 }}>{n.label}</span>
+                {n.badge > 0 && (
+                  <span style={{ background: BLUE, color: WHITE, borderRadius: 6, fontSize: 10, fontWeight: 800, padding: '1px 6px', lineHeight: 1.6 }}>{n.badge}</span>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div style={{ flex: 1 }} />
-
-        {/* Bottom stats */}
-        <div style={{ background: 'rgba(255,255,255,.05)', borderRadius: 12, padding: '12px 14px', marginBottom: 10, fontSize: 12 }}>
-          <div style={{ color: 'rgba(255,255,255,.35)', marginBottom: 7, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.5px' }}>סיכום</div>
-          <div style={{ color: 'rgba(255,255,255,.7)', marginBottom: 4 }}>👥 {candidates.length} עובדים</div>
-          <div style={{ color: 'rgba(255,255,255,.7)', marginBottom: 4 }}>✅ {tasks.filter(t => t.status === 'open').length} משימות פתוחות</div>
-          {candidates.filter(c => isSoon(c.permit_expiry)).length > 0 && (
-            <div style={{ color: '#FCD34D' }}>🟡 {candidates.filter(c => isSoon(c.permit_expiry)).length} ויזות פוקעות</div>
-          )}
+        {/* Bottom */}
+        <div style={{ padding: '0 10px' }}>
+          <div style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 10, padding: '10px 12px', marginBottom: 8 }}>
+            <div style={{ color: 'rgba(255,255,255,.25)', marginBottom: 6, fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>סיכום</div>
+            <div style={{ color: 'rgba(255,255,255,.55)', fontSize: 12, marginBottom: 3 }}>👥 {candidates.length} עובדים</div>
+            <div style={{ color: 'rgba(255,255,255,.55)', fontSize: 12, marginBottom: 3 }}>✅ {tasks.filter(t => t.status === 'open').length} משימות פתוחות</div>
+            {candidates.filter(c => isSoon(c.permit_expiry)).length > 0 && (
+              <div style={{ color: '#FCD34D', fontSize: 12 }}>⚠️ {candidates.filter(c => isSoon(c.permit_expiry)).length} ויזות פוקעות</div>
+            )}
+          </div>
+          <button onClick={onLogout} className="nav-btn" style={{ color: 'rgba(255,255,255,.3)', width: '100%' }}>
+            <span className="nav-icon">🚪</span><span style={{ fontSize: 12 }}>התנתק</span>
+          </button>
         </div>
-
-        <button onClick={onLogout} className="nav-btn" style={{ color: 'rgba(255,255,255,.35)' }}>
-          <span className="nav-icon">🚪</span><span>התנתק</span>
-        </button>
       </div>
 
       {/* ── MAIN ── */}
-      <div style={{ flex: 1, overflow: 'auto', background: CREAM }}>
-
-        {/* Top bar */}
+      <div style={{ flex: 1, overflow: 'auto', background: CREAM, display: 'flex', flexDirection: 'column' }}>
         <TopBar module={module} currentUser={currentUser} onRefresh={loadAll} />
 
         {/* Module content */}
