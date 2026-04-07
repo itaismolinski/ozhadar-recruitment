@@ -283,7 +283,7 @@ const Badge = ({ status }) => {
 
 function SectionTitle({ children, action }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, paddingBottom: 13, borderBottom: `1.5px solid ${BORDER}` }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, paddingBottom: 13, borderBottom: '1.5px solid ' + BORDER }}>
       <div style={{ fontSize: 14, fontWeight: 800, color: DARK, letterSpacing: '-.3px' }}>{children}</div>
       {action}
     </div>
@@ -322,7 +322,7 @@ function NotesWidget({ notes, loading, onAdd, onDelete, currentUser }) {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   return (
     <div>
-      <div style={{ background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 16, marginBottom: 18 }}>
+      <div style={{ background: CREAM, border: '1px solid ' + BORDER, borderRadius: 12, padding: 16, marginBottom: 18 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: 10, marginBottom: 10 }}>
           <Inp label="תאריך" type="date" value={date} onChange={setDate} />
           <Inp label="תרשומת" value={text} onChange={setText} placeholder="הוסף תרשומת..." />
@@ -336,7 +336,7 @@ function NotesWidget({ notes, loading, onAdd, onDelete, currentUser }) {
         : notes.length === 0 ? <div style={{ textAlign: 'center', color: '#D1D5DB', padding: 24, fontSize: 13 }}>אין תרשומות עדיין</div>
           : notes.map(n => (
             <div key={n.id} style={{ display: 'flex', gap: 14, padding: '12px 14px', background: LGRAY, borderRadius: 11, marginBottom: 8, alignItems: 'flex-start' }}>
-              <div style={{ flexShrink: 0, background: WHITE, border: `1.5px solid ${BORDER}`, borderRadius: 9, padding: '6px 10px', textAlign: 'center', minWidth: 66 }}>
+              <div style={{ flexShrink: 0, background: WHITE, border: '1.5px solid ' + BORDER, borderRadius: 9, padding: '6px 10px', textAlign: 'center', minWidth: 66 }}>
                 <div style={{ fontSize: 11, color: GRAY }}>{new Date(n.note_date).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit' })}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: DARK }}>{new Date(n.note_date).getFullYear()}</div>
               </div>
@@ -375,12 +375,12 @@ function Dashboard({ candidates, tasks, apartments, onNavigate, currentUser }) {
     <div className="stat-card" onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default', position: 'relative', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', top: -20, left: -20, width: 80, height: 80, borderRadius: '50%', background: (color || BLUE) + '08', pointerEvents: 'none' }} />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
-        <div style={{ width: 42, height: 42, borderRadius: 11, background: (color || BLUE) + '12', border: `1px solid ${(color || BLUE)}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{icon}</div>
+        <div style={{ width: 42, height: 42, borderRadius: 11, background: (color || BLUE) + '12', border: '1px solid ' + (color || BLUE) + '22', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{icon}</div>
         {sub && <span className="badge" style={{ background: (color||BLUE)+'12', color: color||BLUE, fontSize: 10 }}>{sub}</span>}
       </div>
       <div style={{ fontSize: 38, fontWeight: 900, color: color || DARK, letterSpacing: '-2px', lineHeight: 1, marginBottom: 5, fontVariantNumeric: 'tabular-nums' }}>{value}</div>
       <div style={{ fontSize: 12, color: GRAY2, fontWeight: 500, letterSpacing: '-.1px' }}>{label}</div>
-      {onClick && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${color||BLUE}, transparent)`, opacity: .3 }} />}
+      {onClick && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, ' + color||BLUE + ', transparent)', opacity: .3 }} />}
     </div>
   )
 
@@ -392,7 +392,7 @@ function Dashboard({ candidates, tasks, apartments, onNavigate, currentUser }) {
             <h2 style={{ fontSize: 28, fontWeight: 900, color: DARK, letterSpacing: '-0.8px', lineHeight: 1.1 }}>שלום, {currentUser} 👋</h2>
             <p style={{ fontSize: 13, color: GRAY, marginTop: 5, fontWeight: 400 }}>{now.toLocaleDateString('he-IL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
           </div>
-          <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '10px 16px', textAlign: 'center', boxShadow: SHADOW_XS }}>
+          <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '10px 16px', textAlign: 'center', boxShadow: SHADOW_XS }}>
             <div style={{ fontSize: 20, fontWeight: 900, color: DARK, letterSpacing: '-1px', fontVariantNumeric: 'tabular-nums' }}>{now.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}</div>
             <div style={{ fontSize: 10.5, color: GRAY2, marginTop: 1 }}>שעה מקומית</div>
           </div>
@@ -405,7 +405,7 @@ function Dashboard({ candidates, tasks, apartments, onNavigate, currentUser }) {
         <StatCard icon="🎯" label="מועמדים חדשים" value={newApplicants.length} sub={newApplicants.length > 0 ? 'ממתינים' : null} color="#7C3AED" onClick={() => onNavigate('applicants')} />
         <StatCard icon="🏢" label="משובצים" value={placed.length} color="#059669" onClick={() => onNavigate('workers')} />
         <StatCard icon="🏠" label="דירות" value={apartments.length} color="#D97706" onClick={() => onNavigate('apartments')} />
-        <StatCard icon="✅" label="משימות פתוחות" value={openTasks.length} sub={urgentTasks.length > 0 ? `${urgentTasks.length} דחופות` : null} color={urgentTasks.length > 0 ? '#DC2626' : DARK} onClick={() => onNavigate('tasks')} />
+        <StatCard icon="✅" label="משימות פתוחות" value={openTasks.length} sub={urgentTasks.length > 0 ? urgentTasks.length + ' דחופות' : null} color={urgentTasks.length > 0 ? '#DC2626' : DARK} onClick={() => onNavigate('tasks')} />
       </div>
 
       {/* Alerts */}
@@ -460,7 +460,7 @@ function Dashboard({ candidates, tasks, apartments, onNavigate, currentUser }) {
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: DARK }}>{t.title}</div>
                     <div style={{ fontSize: 11, color: GRAY }}>
-                      {t.assigned_to && `👤 ${t.assigned_to}`}
+                      {t.assigned_to && '👤 ' + t.assigned_to}
                       {t.due_date && <span style={{ color: over ? '#DC2626' : GRAY, marginRight: 6 }}> · 📅 {fmtDate(t.due_date)}{over ? ' ⚠️' : ''}</span>}
                     </div>
                   </div>
@@ -521,9 +521,9 @@ function ApplicantsModule({ candidates, onUpdate, onDelete, currentUser }) {
     const appInitials = name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase()
     return (
       <div className="fade-in" style={{ background: CREAM, minHeight: 'calc(100vh - 54px)' }}>
-        <div style={{ background: WHITE, borderBottom: `1px solid ${BORDER}`, padding: '14px 24px', display: 'flex', alignItems: 'center', gap: 13, flexWrap: 'wrap' }}>
+        <div style={{ background: WHITE, borderBottom: '1px solid ' + BORDER, padding: '14px 24px', display: 'flex', alignItems: 'center', gap: 13, flexWrap: 'wrap' }}>
           <button className="v2-btn v2-btn-ghost" style={{ fontSize: 12, borderRadius: 8 }} onClick={() => setSelected(null)}>← חזרה</button>
-          <div style={{ width: 40, height: 40, borderRadius: 12, background: `linear-gradient(135deg, #7C3AED, #4F46E5)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: WHITE, fontSize: 14, fontWeight: 800, flexShrink: 0 }}>{appInitials}</div>
+          <div style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg, #7C3AED, #4F46E5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: WHITE, fontSize: 14, fontWeight: 800, flexShrink: 0 }}>{appInitials}</div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 16, fontWeight: 800, color: DARK, letterSpacing: '-.3px' }}>{name}</div>
             {selected.full_name_en && selected.full_name_he && <div style={{ fontSize: 11.5, color: GRAY, marginTop: 1 }}>{selected.full_name_en}</div>}
@@ -531,7 +531,7 @@ function ApplicantsModule({ candidates, onUpdate, onDelete, currentUser }) {
           <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', alignItems: 'center' }}>
             <span className="badge" style={{ background: astatus.bg, color: astatus.fg }}>{astatus.label}</span>
             {selected.phone && (
-              <a href={`https://wa.me/${selected.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer"
+              <a href={'https://wa.me/' + selected.phone.replace(/[^0-9]/g, '')} target="_blank" rel="noreferrer"
                 style={{ textDecoration: 'none', padding: '7px 13px', background: '#F0FDF4', border: '1.5px solid #BBF7D0', borderRadius: 10, color: '#15803D', fontSize: 13, fontWeight: 700, fontFamily: F }}>
                 💬 WA
               </a>
@@ -543,7 +543,7 @@ function ApplicantsModule({ candidates, onUpdate, onDelete, currentUser }) {
         <div style={{ padding: '14px 24px 0', display: 'flex', gap: 7, flexWrap: 'wrap', alignItems: 'center' }}>
           {APPLICANT_STATUSES.map(s => (
             <button key={s.v} onClick={() => setApplicantStatus(selected.id, s.v)}
-              style={{ padding: '6px 14px', borderRadius: 20, border: `1.5px solid ${selected.status === s.v ? s.fg : BORDER}`, background: selected.status === s.v ? s.bg : WHITE, color: selected.status === s.v ? s.fg : GRAY, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: F }}>
+              style={{ padding: '6px 14px', borderRadius: 20, border: '1.5px solid ' + selected.status === s.v ? s.fg : BORDER, background: selected.status === s.v ? s.bg : WHITE, color: selected.status === s.v ? s.fg : GRAY, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: F }}>
               {s.label}
             </button>
           ))}
@@ -554,7 +554,7 @@ function ApplicantsModule({ candidates, onUpdate, onDelete, currentUser }) {
               if (!employer) return
               await onUpdate(selected.id, { placement: employer, placement_date: new Date().toISOString().split('T')[0], status: 'active' })
               setSelected(s => ({ ...s, placement: employer, status: 'active' }))
-              alert(`✅ ${selected.full_name_he || selected.full_name_en} שובץ אצל ${employer} והועבר למודול עובדים`)
+              alert('✅ ' + selected.full_name_he || selected.full_name_en + ' שובץ אצל ' + employer + ' והועבר למודול עובדים')
               setSelected(null)
             }}
             style={{ padding: '8px 16px', background: '#0F766E', color: WHITE, border: 'none', borderRadius: 20, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: F, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -562,9 +562,9 @@ function ApplicantsModule({ candidates, onUpdate, onDelete, currentUser }) {
           </button>
         </div>
 
-        <div style={{ background: WHITE, borderBottom: `1.5px solid #E5E5EA`, padding: '0 24px', display: 'flex', gap: 2, overflowX: 'auto', marginTop: 14 }}>
+        <div style={{ background: WHITE, borderBottom: '1.5px solid #E5E5EA', padding: '0 24px', display: 'flex', gap: 2, overflowX: 'auto', marginTop: 14 }}>
           {[['info', '📋 פרטים'], ['notes', '📝 מעקב ותרשומות']].map(([k, l]) => (
-            <button key={k} className={`tab-btn${tab === k ? ' active' : ''}`} onClick={() => setTab(k)}>{l}</button>
+            <button key={k} className={'tab-btn' + tab === k ? ' active' : ''} onClick={() => setTab(k)}>{l}</button>
           ))}
         </div>
 
@@ -572,7 +572,7 @@ function ApplicantsModule({ candidates, onUpdate, onDelete, currentUser }) {
           {tab === 'info' && (
             <div className="v2-card fade-in" style={{ padding: 22 }}>
               <SectionTitle>פרטי המועמד</SectionTitle>
-              {[['📱', 'טלפון', selected.phone], ['📧', 'אימייל', selected.email], ['🌍', 'מדינה', selected.country], ['📍', 'עיר', selected.city], ['🎂', 'ת.לידה', selected.dob ? fmtDate(selected.dob) : null], ['⚙️', 'ענף', SECTORS.find(s => s.v === selected.sector)?.he], ['🔧', 'מקצוע', selected.profession], ['📅', 'ניסיון', selected.experience ? `${selected.experience} שנים` : null], ['🏢', 'מעסיק נוכחי', selected.current_employer], ['🪪', 'ויזה', PERMITS.find(p => p.v === selected.permit_type)?.l], ['✈️', 'כניסה', selected.entry_date ? fmtDate(selected.entry_date) : null]].map(([icon, label, val]) => val ? (
+              {[['📱', 'טלפון', selected.phone], ['📧', 'אימייל', selected.email], ['🌍', 'מדינה', selected.country], ['📍', 'עיר', selected.city], ['🎂', 'ת.לידה', selected.dob ? fmtDate(selected.dob) : null], ['⚙️', 'ענף', SECTORS.find(s => s.v === selected.sector)?.he], ['🔧', 'מקצוע', selected.profession], ['📅', 'ניסיון', selected.experience ? selected.experience + ' שנים' : null], ['🏢', 'מעסיק נוכחי', selected.current_employer], ['🪪', 'ויזה', PERMITS.find(p => p.v === selected.permit_type)?.l], ['✈️', 'כניסה', selected.entry_date ? fmtDate(selected.entry_date) : null]].map(([icon, label, val]) => val ? (
                 <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #F9FAFB' }}>
                   <span style={{ fontSize: 12, color: GRAY }}>{icon} {label}</span>
                   <span style={{ fontSize: 13, color: DARK, fontWeight: 500 }}>{val}</span>
@@ -612,7 +612,7 @@ function ApplicantsModule({ candidates, onUpdate, onDelete, currentUser }) {
       {/* Status filters */}
       <div style={{ display: 'flex', gap: 7, marginBottom: 18, flexWrap: 'wrap' }}>
         <button onClick={() => setFilterStatus('')}
-          style={{ padding: '5px 14px', borderRadius: 20, border: `1.5px solid ${!filterStatus ? BLUE : BORDER}`, background: !filterStatus ? BLUE + '18' : WHITE, color: !filterStatus ? BLUE : GRAY, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: F }}>
+          style={{ padding: '5px 14px', borderRadius: 20, border: '1.5px solid ' + !filterStatus ? BLUE : BORDER, background: !filterStatus ? BLUE + '18' : WHITE, color: !filterStatus ? BLUE : GRAY, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: F }}>
           הכל ({candidates.length})
         </button>
         {APPLICANT_STATUSES.map(s => {
@@ -620,7 +620,7 @@ function ApplicantsModule({ candidates, onUpdate, onDelete, currentUser }) {
           if (!cnt) return null
           return (
             <button key={s.v} onClick={() => setFilterStatus(s.v)}
-              style={{ padding: '5px 14px', borderRadius: 20, border: `1.5px solid ${filterStatus === s.v ? s.fg : BORDER}`, background: filterStatus === s.v ? s.bg : WHITE, color: filterStatus === s.v ? s.fg : GRAY, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: F }}>
+              style={{ padding: '5px 14px', borderRadius: 20, border: '1.5px solid ' + filterStatus === s.v ? s.fg : BORDER, background: filterStatus === s.v ? s.bg : WHITE, color: filterStatus === s.v ? s.fg : GRAY, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: F }}>
               {s.label} ({cnt})
             </button>
           )
@@ -638,12 +638,12 @@ function ApplicantsModule({ candidates, onUpdate, onDelete, currentUser }) {
                 <tr key={c.id} className="candidate-row" onClick={() => { setSelected(c); setTab('info') }}>
                   <td style={{ fontWeight: 700, color: DARK }}>{c.full_name_he || c.full_name_en || '—'}</td>
                   <td style={{ color: GRAY, direction: 'ltr' }}>{c.phone || '—'}</td>
-                  <td style={{ color: GRAY, fontSize: 12 }}>{SECTORS.find(s => s.v === c.sector)?.he || '—'} {c.profession && `· ${c.profession.split('/')[0]}`}</td>
+                  <td style={{ color: GRAY, fontSize: 12 }}>{SECTORS.find(s => s.v === c.sector)?.he || '—'} {c.profession && '· ' + c.profession.split('/')[0]}</td>
                   <td style={{ fontSize: 12, color: GRAY }}>{PERMITS.find(p => p.v === c.permit_type)?.l || '—'}</td>
                   <td>{as && <span className="badge" style={{ background: as.bg, color: as.fg }}>{as.label}</span>}</td>
                   <td style={{ color: GRAY, fontSize: 12, whiteSpace: 'nowrap' }}>{fmtDate(c.created_at)}</td>
                   <td style={{ textAlign: 'center', width: 48 }}>
-                    <button onClick={e => { e.stopPropagation(); if (window.confirm(`למחוק את ${c.full_name_he || c.full_name_en}?`)) onDelete(c.id) }}
+                    <button onClick={e => { e.stopPropagation(); if (window.confirm('למחוק את ' + c.full_name_he || c.full_name_en + '?')) onDelete(c.id) }}
                       style={{ background: '#FFF1F2', border: '1px solid #FECDD3', borderRadius: 8, padding: '5px 9px', cursor: 'pointer', color: '#BE123C', fontSize: 13, fontFamily: 'inherit' }}>
                       🗑️
                     </button>
@@ -710,7 +710,7 @@ function ApartmentLink({ candidateId, currentApartmentId, onUpdate }) {
         <select value={currentApartmentId || ''} onChange={e => assign(e.target.value || null)}
           className="v2-input v2-select" style={{ paddingLeft: 32, fontSize: 13 }} disabled={saving}>
           <option value=''>— ללא שיבוץ לדירה —</option>
-          {apts.map(a => <option key={a.id} value={a.id}>{a.address}{a.city ? `, ${a.city}` : ''}</option>)}
+          {apts.map(a => <option key={a.id} value={a.id}>{a.address}{a.city ? ', ' + a.city : ''}</option>)}
         </select>
         <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: GRAY, fontSize: 10 }}>▼</span>
         {saving && <span style={{ fontSize: 11, color: GRAY, marginTop: 4, display: 'block' }}>שומר...</span>}
@@ -762,11 +762,11 @@ function WorkersModule({ candidates, onUpdate, onDelete, currentUser }) {
       setSaving(false); setEditMode(false)
     }
 
-    const INP_S = { padding: '10px 13px', background: LGRAY, border: `1.5px solid ${BORDER}`, borderRadius: 10, color: DARK, fontFamily: F, fontSize: 13, outline: 'none', width: '100%' }
+    const INP_S = { padding: '10px 13px', background: LGRAY, border: '1.5px solid ' + BORDER, borderRadius: 10, color: DARK, fontFamily: F, fontSize: 13, outline: 'none', width: '100%' }
 
     return (
       <div className="fade-in" style={{ background: CREAM, minHeight: 'calc(100vh - 54px)' }}>
-        <div style={{ background: WHITE, borderBottom: `1.5px solid #E5E5EA`, padding: '13px 24px', display: 'flex', alignItems: 'center', gap: 13, flexWrap: 'wrap' }}>
+        <div style={{ background: WHITE, borderBottom: '1.5px solid #E5E5EA', padding: '13px 24px', display: 'flex', alignItems: 'center', gap: 13, flexWrap: 'wrap' }}>
           <button className="v2-btn v2-btn-ghost" style={{ fontSize: 12, padding: '6px 12px', borderRadius: 8 }} onClick={() => { setSelected(null); setEditMode(false) }}>← חזרה</button>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 17, fontWeight: 800, color: DARK }}>{name}</div>
@@ -775,11 +775,11 @@ function WorkersModule({ candidates, onUpdate, onDelete, currentUser }) {
           <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', alignItems: 'center' }}>
             <Badge status={form.status || selected.status} />
             {selected.phone && <>
-              <a href={`tel:${selected.phone}`} className="v2-btn v2-btn-ghost" style={{ textDecoration: 'none', fontSize: 13, padding: '7px 13px' }}>📞</a>
-              <a href={`https://wa.me/${selected.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="v2-btn v2-btn-ghost" style={{ textDecoration: 'none', fontSize: 13, padding: '7px 13px' }}>💬 WA</a>
+              <a href={'tel:' + selected.phone} className="v2-btn v2-btn-ghost" style={{ textDecoration: 'none', fontSize: 13, padding: '7px 13px' }}>📞</a>
+              <a href={'https://wa.me/' + selected.phone.replace(/[^0-9]/g, '')} target="_blank" rel="noreferrer" className="v2-btn v2-btn-ghost" style={{ textDecoration: 'none', fontSize: 13, padding: '7px 13px' }}>💬 WA</a>
             </>}
             <button className="v2-btn v2-btn-danger" style={{ fontSize: 13, padding: '8px 14px' }}
-              onClick={() => { if (window.confirm(`⚠️ מחיקת עובד\n\nהאם למחוק את ${name}?\nכל הנתונים, תרשומות ומסמכים יימחקו.\nפעולה זו אינה הפיכה.`)) { onDelete(selected.id); setSelected(null) } }}>
+              onClick={() => { if (window.confirm('⚠️ מחיקת עובד\n\nהאם למחוק את ' + name + '?\nכל הנתונים, תרשומות ומסמכים יימחקו.\nפעולה זו אינה הפיכה.')) { onDelete(selected.id); setSelected(null) } }}>
               🗑️ מחק עובד
             </button>
           </div>
@@ -797,7 +797,7 @@ function WorkersModule({ candidates, onUpdate, onDelete, currentUser }) {
               await onUpdate(selected.id, updates)
               setSelected(c => ({ ...c, ...updates }))
             }}
-              style={{ padding: '5px 13px', borderRadius: 20, border: `1.5px solid ${(form.status || selected.status) === s.v ? s.fg : BORDER}`, background: (form.status || selected.status) === s.v ? s.bg : WHITE, color: (form.status || selected.status) === s.v ? s.fg : GRAY, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: F }}>
+              style={{ padding: '5px 13px', borderRadius: 20, border: '1.5px solid ' + (form.status || selected.status) === s.v ? s.fg : BORDER, background: (form.status || selected.status) === s.v ? s.bg : WHITE, color: (form.status || selected.status) === s.v ? s.fg : GRAY, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: F }}>
               {s.he}
             </button>
           ))}
@@ -809,9 +809,9 @@ function WorkersModule({ candidates, onUpdate, onDelete, currentUser }) {
           onClose={() => setShowInactiveModal(false)} />
       )}
 
-      <div style={{ background: WHITE, borderBottom: `1.5px solid #E5E5EA`, padding: '0 24px', display: 'flex', gap: 2, overflowX: 'auto', marginTop: 12 }}>
+      <div style={{ background: WHITE, borderBottom: '1.5px solid #E5E5EA', padding: '0 24px', display: 'flex', gap: 2, overflowX: 'auto', marginTop: 12 }}>
           {[['info', '📋 פרטים'], ['placement', '🏢 שיבוץ'], ['finances', '💰 פיננסים'], ['events', '📅 אירועים'], ['docs', '📁 מסמכים'], ['notes', '📝 תרשומות']].map(([k, l]) => (
-            <button key={k} className={`tab-btn${tab === k ? ' active' : ''}`} onClick={() => setTab(k)}>{l}</button>
+            <button key={k} className={'tab-btn' + tab === k ? ' active' : ''} onClick={() => setTab(k)}>{l}</button>
           ))}
         </div>
 
@@ -819,7 +819,7 @@ function WorkersModule({ candidates, onUpdate, onDelete, currentUser }) {
           {tab === 'info' && (
             <div className="v2-card fade-in" style={{ padding: 22 }}>
               <SectionTitle action={
-                <button className={`v2-btn ${editMode ? 'v2-btn-primary' : 'v2-btn-ghost'}`} style={{ fontSize: 13 }}
+                <button className={'v2-btn ' + editMode ? 'v2-btn-primary' : 'v2-btn-ghost'} style={{ fontSize: 13 }}
                   onClick={() => { if (editMode) { save() } else { setForm({ ...selected }); setEditMode(true) } }}>
                   {saving ? 'שומר...' : editMode ? '💾 שמור' : '✏️ ערוך'}
                 </button>
@@ -835,7 +835,7 @@ function WorkersModule({ candidates, onUpdate, onDelete, currentUser }) {
                 </div>
               ) : (
                 <div>
-                  {[['📱', 'טלפון', selected.phone], ['📧', 'אימייל', selected.email], ['🌍', 'מדינה', selected.country?.split('/')[0]?.trim()], ['📍', 'עיר', selected.city?.split('/')[0]?.trim()], ['🎂', 'ת.לידה', selected.dob ? fmtDate(selected.dob) : null], ['⚙️', 'ענף', SECTORS.find(s => s.v === selected.sector)?.he], ['🔧', 'מקצוע', selected.profession?.split('/')[0]?.trim()], ['📅', 'ניסיון', selected.experience ? `${selected.experience} שנים` : null], ['🏢', 'מעסיק נוכחי', selected.current_employer], ['🏛️', 'מעסיק אחרון', selected.last_employer], ['🪪', 'ויזה', PERMITS.find(p => p.v === selected.permit_type)?.l], ['🔢', 'מספר היתר', selected.permit_number], ['✈️', 'כניסה לישראל', selected.entry_date ? fmtDate(selected.entry_date) : null]].map(([icon, label, val]) => val ? (
+                  {[['📱', 'טלפון', selected.phone], ['📧', 'אימייל', selected.email], ['🌍', 'מדינה', selected.country?.split('/')[0]?.trim()], ['📍', 'עיר', selected.city?.split('/')[0]?.trim()], ['🎂', 'ת.לידה', selected.dob ? fmtDate(selected.dob) : null], ['⚙️', 'ענף', SECTORS.find(s => s.v === selected.sector)?.he], ['🔧', 'מקצוע', selected.profession?.split('/')[0]?.trim()], ['📅', 'ניסיון', selected.experience ? selected.experience + ' שנים' : null], ['🏢', 'מעסיק נוכחי', selected.current_employer], ['🏛️', 'מעסיק אחרון', selected.last_employer], ['🪪', 'ויזה', PERMITS.find(p => p.v === selected.permit_type)?.l], ['🔢', 'מספר היתר', selected.permit_number], ['✈️', 'כניסה לישראל', selected.entry_date ? fmtDate(selected.entry_date) : null]].map(([icon, label, val]) => val ? (
                     <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #F9FAFB' }}>
                       <span style={{ fontSize: 12, color: GRAY }}>{icon} {label}</span>
                       <span style={{ fontSize: 13, color: DARK, fontWeight: 500 }}>{val}</span>
@@ -894,7 +894,7 @@ function WorkersModule({ candidates, onUpdate, onDelete, currentUser }) {
             <div className="v2-card fade-in" style={{ padding: 22 }}>
               <SectionTitle>📁 מסמכים</SectionTitle>
               {DOC_FIELDS.map(d => {
-                const hasDoc = selected[`doc_${d.k}`]
+                const hasDoc = selected['doc_' + d.k]
                 return (
                   <div key={d.k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 14px', marginBottom: 8, background: LGRAY, borderRadius: 10 }}>
                     <div><div style={{ fontSize: 13, fontWeight: 600, color: DARK }}>{d.he}</div><div style={{ fontSize: 11, color: GRAY }}>{d.en}</div></div>
@@ -905,7 +905,7 @@ function WorkersModule({ candidates, onUpdate, onDelete, currentUser }) {
                         {hasDoc ? '🔄 החלף' : '📎 העלה'}
                       </button>
                       <input ref={el => fileRefs.current[d.k] = el} type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }}
-                        onChange={async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; await uploadDoc(selected.id, d.k, f); await onUpdate(selected.id, { [`doc_${d.k}`]: true }); setSelected(s => ({ ...s, [`doc_${d.k}`]: true })) }} />
+                        onChange={async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; await uploadDoc(selected.id, d.k, f); await onUpdate(selected.id, { ['doc_' + d.k]: true }); setSelected(s => ({ ...s, ['doc_' + d.k]: true })) }} />
                     </div>
                   </div>
                 )
@@ -1034,7 +1034,7 @@ function WorkersModule({ candidates, onUpdate, onDelete, currentUser }) {
           const active = filterStatus === s.v
           return (
             <div key={s.v} onClick={() => setStatus(active ? '' : s.v)}
-              style={{ minWidth: 80, background: active ? s.bg : WHITE, border: `1.5px solid ${active ? s.fg : BORDER}`, borderRadius: 10, padding: '10px 12px', textAlign: 'center', cursor: 'pointer', transition: 'all .15s', boxShadow: active ? SHADOW_SM : 'none' }}>
+              style={{ minWidth: 80, background: active ? s.bg : WHITE, border: '1.5px solid ' + active ? s.fg : BORDER, borderRadius: 10, padding: '10px 12px', textAlign: 'center', cursor: 'pointer', transition: 'all .15s', boxShadow: active ? SHADOW_SM : 'none' }}>
               <div style={{ fontSize: 20, fontWeight: 900, color: active ? s.fg : DARK, letterSpacing: '-1px' }}>{cnt}</div>
               <div style={{ fontSize: 10, color: active ? s.fg : GRAY, fontWeight: 700, marginTop: 2 }}>{s.he.replace(/^[^\s]+ /, '')}</div>
             </div>
@@ -1076,7 +1076,7 @@ function WorkersModule({ candidates, onUpdate, onDelete, currentUser }) {
                   <td>{(() => { const s = WORKER_STATUS_LIST.find(x=>x.v===c.status) || WORKER_STATUS_LIST[0]; return <span className="badge" style={{background:s.bg,color:s.fg}}>{s.he}</span> })()}</td>
                   <td style={{ color: GRAY, fontSize: 12, whiteSpace: 'nowrap' }}>{fmtDate(c.created_at)}</td>
                   <td onClick={e => e.stopPropagation()} style={{ textAlign: 'center', width: 48 }}>
-                    <button onClick={e => { e.stopPropagation(); if (window.confirm(`למחוק את ${c.full_name_he || c.full_name_en}?\nפעולה זו אינה הפיכה.`)) onDelete(c.id) }}
+                    <button onClick={e => { e.stopPropagation(); if (window.confirm('למחוק את ' + c.full_name_he || c.full_name_en + '?\nפעולה זו אינה הפיכה.')) onDelete(c.id) }}
                       style={{ background: '#FFF1F2', border: '1px solid #FECDD3', borderRadius: 8, padding: '5px 9px', cursor: 'pointer', color: '#BE123C', fontSize: 13, fontFamily: 'inherit' }}>
                       🗑️
                     </button>
@@ -1178,29 +1178,29 @@ function ApartmentsModule({ candidates, currentUser }) {
   if (selected) {
     return (
       <div className="fade-in" style={{ background: CREAM, minHeight: 'calc(100vh - 54px)' }}>
-        <div style={{ background: WHITE, borderBottom: `1px solid ${BORDER}`, padding: '14px 24px', display: 'flex', alignItems: 'center', gap: 13, flexWrap: 'wrap' }}>
+        <div style={{ background: WHITE, borderBottom: '1px solid ' + BORDER, padding: '14px 24px', display: 'flex', alignItems: 'center', gap: 13, flexWrap: 'wrap' }}>
           <button className="v2-btn v2-btn-ghost" style={{ borderRadius: 8, fontSize: 12 }} onClick={() => setSelected(null)}>← חזרה</button>
-          <div style={{ width: 40, height: 40, borderRadius: 12, background: `linear-gradient(135deg, #D97706, #B45309)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>🏠</div>
+          <div style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg, #D97706, #B45309)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>🏠</div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 16, fontWeight: 800, color: DARK, letterSpacing: '-.3px' }}>{selected.address}</div>
-            <div style={{ fontSize: 11.5, color: GRAY, marginTop: 1 }}>{selected.city} {selected.floor && `· קומה ${selected.floor}`} {selected.rooms && `· ${selected.rooms} חדרים`}</div>
+            <div style={{ fontSize: 11.5, color: GRAY, marginTop: 1 }}>{selected.city} {selected.floor && '· קומה ' + selected.floor} {selected.rooms && '· ' + selected.rooms + ' חדרים'}</div>
           </div>
           <div style={{ display: 'flex', gap: 7 }}>
-            {selected.owner_phone && <a href={`tel:${selected.owner_phone}`} className="v2-btn v2-btn-ghost" style={{ textDecoration: 'none', fontSize: 13 }}>📞 בעל דירה</a>}
+            {selected.owner_phone && <a href={'tel:' + selected.owner_phone} className="v2-btn v2-btn-ghost" style={{ textDecoration: 'none', fontSize: 13 }}>📞 בעל דירה</a>}
             <button className="v2-btn v2-btn-ghost" onClick={() => { setEditApt(selected); setShowForm(true) }}>✏️ ערוך</button>
             <button className="v2-btn v2-btn-danger" style={{ fontSize: 12 }} onClick={async () => { if (window.confirm('למחוק?')) { await supabase.from('apartments').delete().eq('id', selected.id); setApts(p => p.filter(a => a.id !== selected.id)); setSelected(null) } }}>🗑️</button>
           </div>
         </div>
-        <div style={{ background: WHITE, borderBottom: `1.5px solid #E5E5EA`, padding: '0 24px', display: 'flex', gap: 2, overflowX: 'auto' }}>
-          {[['info', '📋 פרטים'], ['residents', `👥 דיירים`], ['notes', '📝 תרשומות']].map(([k, l]) => (
-            <button key={k} className={`tab-btn${tab === k ? ' active' : ''}`} onClick={() => setTab(k)}>{l}</button>
+        <div style={{ background: WHITE, borderBottom: '1.5px solid #E5E5EA', padding: '0 24px', display: 'flex', gap: 2, overflowX: 'auto' }}>
+          {[['info', '📋 פרטים'], ['residents', '👥 דיירים'], ['notes', '📝 תרשומות']].map(([k, l]) => (
+            <button key={k} className={'tab-btn' + tab === k ? ' active' : ''} onClick={() => setTab(k)}>{l}</button>
           ))}
         </div>
         <div style={{ maxWidth: 700, margin: '22px auto', padding: '0 20px 60px' }}>
           {tab === 'info' && (
             <div className="v2-card fade-in" style={{ padding: 22 }}>
               <SectionTitle>פרטי הדירה</SectionTitle>
-              {[['📍', 'כתובת', `${selected.address}${selected.city ? ', ' + selected.city : ''}`], ['🏠', 'קומה', selected.floor], ['🛏', 'חדרים', selected.rooms], ['💰', 'שכ"ד', selected.rent_amount ? `₪${selected.rent_amount}/חודש` : null], ['👤', 'בעל דירה', selected.owner_name], ['📞', 'טלפון', selected.owner_phone], ['📅', 'תחילת חוזה', selected.start_date ? fmtDate(selected.start_date) : null], ['📅', 'סיום חוזה', selected.end_date ? fmtDate(selected.end_date) : null], ['⚡', 'מונה חשמל', selected.meter_electric], ['💧', 'מונה מים', selected.meter_water], ['🔥', 'מונה גז', selected.meter_gas]].map(([icon, label, val]) => val ? (
+              {[['📍', 'כתובת', selected.address + selected.city ? ', ' + selected.city : ''], ['🏠', 'קומה', selected.floor], ['🛏', 'חדרים', selected.rooms], ['💰', 'שכ"ד', selected.rent_amount ? '₪' + selected.rent_amount + '/חודש' : null], ['👤', 'בעל דירה', selected.owner_name], ['📞', 'טלפון', selected.owner_phone], ['📅', 'תחילת חוזה', selected.start_date ? fmtDate(selected.start_date) : null], ['📅', 'סיום חוזה', selected.end_date ? fmtDate(selected.end_date) : null], ['⚡', 'מונה חשמל', selected.meter_electric], ['💧', 'מונה מים', selected.meter_water], ['🔥', 'מונה גז', selected.meter_gas]].map(([icon, label, val]) => val ? (
                 <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #F9FAFB' }}>
                   <span style={{ fontSize: 12, color: GRAY }}>{icon} {label}</span>
                   <span style={{ fontSize: 13, color: DARK, fontWeight: 500 }}>{val}</span>
@@ -1280,7 +1280,7 @@ function ApartmentsModule({ candidates, currentUser }) {
                   </span>
                 </div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: DARK, marginBottom: 3 }}>{a.address}</div>
-                {a.city && <div style={{ fontSize: 12, color: GRAY, marginBottom: 8 }}>📍 {a.city}{a.floor && ` · קומה ${a.floor}`}</div>}
+                {a.city && <div style={{ fontSize: 12, color: GRAY, marginBottom: 8 }}>📍 {a.city}{a.floor && ' · קומה ' + a.floor}</div>}
                 <div style={{ fontSize: 12, color: GRAY, display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {a.owner_name && <span>👤 {a.owner_name}</span>}
                   {a.rent_amount && <span>💰 ₪{a.rent_amount}/חודש</span>}
@@ -1333,7 +1333,7 @@ function TasksModule({ candidates, currentUser }) {
   const PRIORITY = { urgent: { label: '🔴 דחוף', bg: '#FFF1F2', fg: '#BE123C' }, high: { label: '🟠 גבוה', bg: '#FFF7ED', fg: '#C2410C' }, normal: { label: '🟢 רגיל', bg: '#F0FDF9', fg: '#0F766E' }, low: { label: '⚪ נמוך', bg: LGRAY, fg: GRAY } }
   const open = tasks.filter(t => t.status === 'open').length
   const done = tasks.filter(t => t.status === 'done').length
-  const INP_S = { padding: '10px 13px', background: LGRAY, border: `1.5px solid ${BORDER}`, borderRadius: 10, color: DARK, fontFamily: F, fontSize: 13, outline: 'none', width: '100%' }
+  const INP_S = { padding: '10px 13px', background: LGRAY, border: '1.5px solid ' + BORDER, borderRadius: 10, color: DARK, fontFamily: F, fontSize: 13, outline: 'none', width: '100%' }
 
   return (
     <div style={{ padding: '24px 28px' }} className="fade-in">
@@ -1367,13 +1367,13 @@ function TasksModule({ candidates, currentUser }) {
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
         {[['open', 'פתוחות'], ['done', 'הושלמו'], ['', 'הכל']].map(([v, l]) => (
           <button key={v} onClick={() => setFilterStatus(v)}
-            style={{ padding: '6px 14px', borderRadius: 20, border: `1.5px solid ${filterStatus === v ? BLUE : BORDER}`, background: filterStatus === v ? BLUE + '18' : WHITE, color: filterStatus === v ? BLUE : GRAY, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: F }}>{l}</button>
+            style={{ padding: '6px 14px', borderRadius: 20, border: '1.5px solid ' + filterStatus === v ? BLUE : BORDER, background: filterStatus === v ? BLUE + '18' : WHITE, color: filterStatus === v ? BLUE : GRAY, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: F }}>{l}</button>
         ))}
-        <select value={filterPriority} onChange={e => setFilterPriority(e.target.value)} style={{ padding: '5px 12px', border: `1.5px solid ${BORDER}`, borderRadius: 20, fontSize: 12, color: GRAY, fontFamily: F, outline: 'none', background: WHITE, cursor: 'pointer', appearance: 'none' }}>
+        <select value={filterPriority} onChange={e => setFilterPriority(e.target.value)} style={{ padding: '5px 12px', border: '1.5px solid ' + BORDER, borderRadius: 20, fontSize: 12, color: GRAY, fontFamily: F, outline: 'none', background: WHITE, cursor: 'pointer', appearance: 'none' }}>
           <option value=''>כל העדיפויות</option>
           {Object.entries(PRIORITY).map(([v, p]) => <option key={v} value={v}>{p.label}</option>)}
         </select>
-        <select value={filterAssignee} onChange={e => setFilterAssignee(e.target.value)} style={{ padding: '5px 12px', border: `1.5px solid ${BORDER}`, borderRadius: 20, fontSize: 12, color: GRAY, fontFamily: F, outline: 'none', background: WHITE, cursor: 'pointer', appearance: 'none' }}>
+        <select value={filterAssignee} onChange={e => setFilterAssignee(e.target.value)} style={{ padding: '5px 12px', border: '1.5px solid ' + BORDER, borderRadius: 20, fontSize: 12, color: GRAY, fontFamily: F, outline: 'none', background: WHITE, cursor: 'pointer', appearance: 'none' }}>
           <option value=''>כל הנציגים</option>
           {STAFF.map(s => <option key={s}>{s}</option>)}
         </select>
@@ -1390,7 +1390,7 @@ function TasksModule({ candidates, currentUser }) {
                 const pr = PRIORITY[t.priority || 'normal']
                 return (
                   <div key={t.id} className="v2-card" style={{ padding: '13px 16px', display: 'flex', alignItems: 'flex-start', gap: 12, opacity: done ? .65 : 1, borderColor: over ? '#FECDD3' : '#E5E5EA' }}>
-                    <button onClick={() => toggle(t)} style={{ width: 22, height: 22, borderRadius: 6, border: `2px solid ${done ? BLUE : BORDER}`, background: done ? BLUE : WHITE, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, marginTop: 1 }}>
+                    <button onClick={() => toggle(t)} style={{ width: 22, height: 22, borderRadius: 6, border: '2px solid ' + done ? BLUE : BORDER, background: done ? BLUE : WHITE, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, marginTop: 1 }}>
                       {done && <span style={{ color: WHITE, fontSize: 12 }}>✓</span>}
                     </button>
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -1435,9 +1435,9 @@ function DocumentsModule({ candidates, currentUser }) {
     if (!file) return
     setUploading(true)
     try {
-      const path = `${Date.now()}_${file.name}`
+      const path = Date.now() + '_' + file.name
       await supabase.storage.from('document-templates').upload(path, file)
-      const { data } = await supabase.from('document_templates').insert([{ name: file.name.replace(/\.[^.]+$/, ''), description: `הועלה ${new Date().toLocaleDateString('he-IL')}`, file_path: path, created_by: currentUser, category: 'uploaded' }]).select().single()
+      const { data } = await supabase.from('document_templates').insert([{ name: file.name.replace(/\.[^.]+$/, ''), description: 'הועלה ' + new Date().toLocaleDateString('he-IL'), file_path: path, created_by: currentUser, category: 'uploaded' }]).select().single()
       setTemplates(p => [data, ...p])
     } catch (e) { alert('שגיאה בהעלאה') }
     finally { setUploading(false) }
@@ -1488,7 +1488,7 @@ function DocumentsModule({ candidates, currentUser }) {
         </div>
       </div>
 
-      <div className={`drag-zone${isDragging ? ' over' : ''}`} style={{ marginBottom: 22 }}
+      <div className={'drag-zone' + isDragging ? ' over' : ''} style={{ marginBottom: 22 }}
         onDragOver={e => { e.preventDefault(); setIsDragging(true) }} onDragLeave={() => setIsDragging(false)}
         onDrop={e => { e.preventDefault(); setIsDragging(false); handleFile(e.dataTransfer.files[0]) }}
         onClick={() => fileRef.current.click()}>
@@ -1617,7 +1617,7 @@ function EmployersModule({ candidates, currentUser }) {
           <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
             {[['active','פעיל'],['inactive','לא פעיל']].map(([v, l]) => (
               <button key={v} onClick={() => sl('status', v)}
-                style={{ flex: 1, padding: 10, borderRadius: 10, border: `1.5px solid ${lf.status === v ? BLUE : BORDER}`, background: lf.status === v ? BLUE + '18' : WHITE, color: lf.status === v ? BLUE : GRAY, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: F }}>
+                style={{ flex: 1, padding: 10, borderRadius: 10, border: '1.5px solid ' + lf.status === v ? BLUE : BORDER, background: lf.status === v ? BLUE + '18' : WHITE, color: lf.status === v ? BLUE : GRAY, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: F }}>
                 {l}
               </button>
             ))}
@@ -1653,33 +1653,33 @@ function EmployersModule({ candidates, currentUser }) {
     ) : null
     return (
       <div className="fade-in" style={{ background: CREAM, minHeight: 'calc(100vh - 54px)' }}>
-        <div style={{ background: WHITE, borderBottom: `1.5px solid #E5E5EA`, padding: '13px 24px', display: 'flex', alignItems: 'center', gap: 13, flexWrap: 'wrap' }}>
+        <div style={{ background: WHITE, borderBottom: '1.5px solid #E5E5EA', padding: '13px 24px', display: 'flex', alignItems: 'center', gap: 13, flexWrap: 'wrap' }}>
           <button className="v2-btn v2-btn-ghost" onClick={() => setSelected(null)}>← חזרה</button>
-          <div style={{ width: 42, height: 42, borderRadius: 12, background: color + '18', border: `1.5px solid ${color}33`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 900, color }}>
+          <div style={{ width: 42, height: 42, borderRadius: 12, background: color + '18', border: '1.5px solid ' + color + '33', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 900, color }}>
             {selected.name[0]}
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 17, fontWeight: 800, color: DARK }}>{selected.name}</div>
             <div style={{ fontSize: 12, color: GRAY }}>
-              {selected.company_id && `ח.פ ${selected.company_id} · `}
+              {selected.company_id && 'ח.פ ' + selected.company_id + ' · '}
               {SECTORS.find(s => s.v === selected.sector)?.he}
-              {selected.city && ` · ${selected.city}`}
+              {selected.city && ' · ' + selected.city}
             </div>
           </div>
           <div style={{ display: 'flex', gap: 7 }}>
             <span className="badge" style={{ background: selected.status === 'active' ? '#F0FDF9' : LGRAY, color: selected.status === 'active' ? '#0F766E' : GRAY }}>
               {selected.status === 'active' ? '● פעיל' : '○ לא פעיל'}
             </span>
-            {selected.phone && <a href={`tel:${selected.phone}`} className="v2-btn v2-btn-ghost" style={{ textDecoration: 'none', fontSize: 13 }}>📞</a>}
-            {selected.contact_phone && <a href={`https://wa.me/${selected.contact_phone.replace(/[^0-9]/g,'')}`} target="_blank" rel="noreferrer" className="v2-btn v2-btn-ghost" style={{ textDecoration: 'none', fontSize: 13 }}>💬 WA</a>}
+            {selected.phone && <a href={'tel:' + selected.phone} className="v2-btn v2-btn-ghost" style={{ textDecoration: 'none', fontSize: 13 }}>📞</a>}
+            {selected.contact_phone && <a href={'https://wa.me/' + selected.contact_phone.replace(/[^0-9]/g,'')} target="_blank" rel="noreferrer" className="v2-btn v2-btn-ghost" style={{ textDecoration: 'none', fontSize: 13 }}>💬 WA</a>}
             <button className="v2-btn v2-btn-ghost" onClick={() => { setEditEmp(selected); setShowForm(true) }}>✏️ ערוך</button>
             <button className="v2-btn v2-btn-danger" style={{ fontSize: 12 }} onClick={async () => { if (window.confirm('למחוק?')) { await supabase.from('employers').delete().eq('id', selected.id); setEmployers(p => p.filter(e => e.id !== selected.id)); setSelected(null) } }}>🗑️</button>
           </div>
         </div>
 
-        <div style={{ background: WHITE, borderBottom: `1.5px solid #E5E5EA`, padding: '0 24px', display: 'flex', gap: 2, overflowX: 'auto' }}>
-          {[['info','📋 פרטים'],[`workers`,`👥 עובדים משובצים (${myWorkers.length})`],['notes','📝 תרשומות']].map(([k,l]) => (
-            <button key={k} className={`tab-btn${tab===k?' active':''}`} onClick={() => setTab(k)}>{l}</button>
+        <div style={{ background: WHITE, borderBottom: '1.5px solid #E5E5EA', padding: '0 24px', display: 'flex', gap: 2, overflowX: 'auto' }}>
+          {[['info','📋 פרטים'],['workers','👥 עובדים משובצים (' + myWorkers.length + ')'],['notes','📝 תרשומות']].map(([k,l]) => (
+            <button key={k} className={'tab-btn' + tab===k?' active':''} onClick={() => setTab(k)}>{l}</button>
           ))}
         </div>
 
@@ -1694,7 +1694,7 @@ function EmployersModule({ candidates, currentUser }) {
               {row('📞','טלפון',selected.phone)}
               {row('📧','אימייל',selected.email)}
               {row('🌐','אתר',selected.website)}
-              {row('👷','מכסת עובדים',selected.workers_quota?`${selected.workers_quota} עובדים`:null)}
+              {row('👷','מכסת עובדים',selected.workers_quota?selected.workers_quota + ' עובדים':null)}
               <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1.5px solid #F3F4F6', fontSize: 12, fontWeight: 700, color: GRAY, marginBottom: 10, textTransform: 'uppercase', letterSpacing: '.5px' }}>איש קשר</div>
               {row('👤','שם',selected.contact_name)}
               {row('💼','תפקיד',selected.contact_role)}
@@ -1716,7 +1716,7 @@ function EmployersModule({ candidates, currentUser }) {
                       <div style={{ fontSize: 11, color: GRAY }}>{w.phone} · {SECTORS.find(s=>s.v===w.sector)?.he}</div>
                     </div>
                     <div style={{ fontSize: 12, color: GRAY }}>
-                      {w.placement_date && `מאז ${fmtDate(w.placement_date)}`}
+                      {w.placement_date && 'מאז ' + fmtDate(w.placement_date)}
                     </div>
                   </div>
                 ))}
@@ -1776,7 +1776,7 @@ function EmployersModule({ candidates, currentUser }) {
                   onMouseEnter={ev => { ev.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,.1)'; ev.currentTarget.style.transform = 'translateY(-2px)' }}
                   onMouseLeave={ev => { ev.currentTarget.style.boxShadow = ''; ev.currentTarget.style.transform = '' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                    <div style={{ width: 42, height: 42, borderRadius: 12, background: color + '18', border: `1.5px solid ${color}33`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 900, color }}>
+                    <div style={{ width: 42, height: 42, borderRadius: 12, background: color + '18', border: '1.5px solid ' + color + '33', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 900, color }}>
                       {e.name[0]}
                     </div>
                     <span className="badge" style={{ background: e.status === 'active' ? '#F0FDF9' : LGRAY, color: e.status === 'active' ? '#0F766E' : GRAY }}>
@@ -1787,10 +1787,10 @@ function EmployersModule({ candidates, currentUser }) {
                   {e.company_id && <div style={{ fontSize: 11, color: GRAY, marginBottom: 6 }}>ח.פ {e.company_id}</div>}
                   <div style={{ fontSize: 12, color: GRAY, display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 10 }}>
                     {e.city && <span>📍 {e.city}</span>}
-                    {e.contact_name && <span>👤 {e.contact_name}{e.contact_role ? ` · ${e.contact_role}` : ''}</span>}
+                    {e.contact_name && <span>👤 {e.contact_name}{e.contact_role ? ' · ' + e.contact_role : ''}</span>}
                     {e.phone && <span>📞 {e.phone}</span>}
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid #F3F4F6`, paddingTop: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #F3F4F6', paddingTop: 10 }}>
                     <span style={{ background: color + '18', color, padding: '2px 9px', borderRadius: 20, fontSize: 10, fontWeight: 700 }}>
                       {SECTORS.find(s => s.v === e.sector)?.he || 'ענף'}
                     </span>
@@ -1856,7 +1856,7 @@ function EventsTab({ candidateId, currentUser }) {
     setSaving(true)
     let doc_path = null
     if (docFile) {
-      const path = `${candidateId}/events/${Date.now()}_${docFile.name}`
+      const path = candidateId + '/events/' + Date.now() + '_' + docFile.name
       await supabase.storage.from('candidate-docs').upload(path, docFile)
       doc_path = path
     }
@@ -1924,7 +1924,7 @@ function EventsTab({ candidateId, currentUser }) {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
                 {EVENT_TYPES.map(t => (
                   <button key={t.v} onClick={() => sf('event_type', t.v)}
-                    style={{ padding: '6px 11px', borderRadius: 20, border: `1.5px solid ${form.event_type === t.v ? t.color : BORDER}`, background: form.event_type === t.v ? t.bg : WHITE, color: form.event_type === t.v ? t.color : GRAY, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: F, whiteSpace: 'nowrap' }}>
+                    style={{ padding: '6px 11px', borderRadius: 20, border: '1.5px solid ' + form.event_type === t.v ? t.color : BORDER, background: form.event_type === t.v ? t.bg : WHITE, color: form.event_type === t.v ? t.color : GRAY, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: F, whiteSpace: 'nowrap' }}>
                     {t.icon} {t.label}
                   </button>
                 ))}
@@ -1954,8 +1954,8 @@ function EventsTab({ candidateId, currentUser }) {
             <div style={{ gridColumn: '1/-1' }}>
               <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: GRAY, marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.5px' }}>מסמך מצורף</label>
               <button onClick={() => fileRef.current.click()}
-                style={{ width: '100%', padding: '9px 14px', background: WHITE, border: `1.5px solid ${docFile ? BLUE : BORDER}`, borderRadius: 10, fontSize: 13, color: docFile ? BLUE : GRAY, cursor: 'pointer', fontFamily: F, textAlign: 'right', fontWeight: docFile ? 700 : 400 }}>
-                {docFile ? `📎 ${docFile.name}` : '📎 העלה מסמך (PDF, Word, תמונה)'}
+                style={{ width: '100%', padding: '9px 14px', background: WHITE, border: '1.5px solid ' + docFile ? BLUE : BORDER, borderRadius: 10, fontSize: 13, color: docFile ? BLUE : GRAY, cursor: 'pointer', fontFamily: F, textAlign: 'right', fontWeight: docFile ? 700 : 400 }}>
+                {docFile ? '📎 ' + docFile.name : '📎 העלה מסמך (PDF, Word, תמונה)'}
               </button>
               <input ref={fileRef} type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" style={{ display: 'none' }}
                 onChange={e => { setDocFile(e.target.files[0]); e.target.value = '' }} />
@@ -1990,12 +1990,12 @@ function EventsTab({ candidateId, currentUser }) {
             return (
               <div key={ev.id} style={{ display: 'flex', gap: 14, marginBottom: 16, position: 'relative' }}>
                 {/* Icon bubble */}
-                <div style={{ flexShrink: 0, width: 44, height: 44, borderRadius: '50%', background: t.bg, border: `2px solid ${t.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, zIndex: 1, boxShadow: '0 2px 8px rgba(0,0,0,.08)' }}>
+                <div style={{ flexShrink: 0, width: 44, height: 44, borderRadius: '50%', background: t.bg, border: '2px solid ' + t.color + '40', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, zIndex: 1, boxShadow: '0 2px 8px rgba(0,0,0,.08)' }}>
                   {t.icon}
                 </div>
 
                 {/* Content */}
-                <div style={{ flex: 1, background: WHITE, border: `1.5px solid ${t.color}30`, borderRadius: 12, padding: '12px 14px' }}>
+                <div style={{ flex: 1, background: WHITE, border: '1.5px solid ' + t.color + '30', borderRadius: 12, padding: '12px 14px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
                     <div>
                       <span className="badge" style={{ background: t.bg, color: t.color, fontSize: 12, marginLeft: 8 }}>{t.icon} {t.label}</span>
@@ -2021,7 +2021,7 @@ function EventsTab({ candidateId, currentUser }) {
                     {ev.created_by && <span style={{ fontSize: 11, color: GRAY }}>👤 הוזן ע"י {ev.created_by}</span>}
                     {ev.doc_path && (
                       <button onClick={() => viewDoc(ev.doc_path)}
-                        style={{ background: LGRAY, border: `1px solid ${BORDER}`, borderRadius: 8, padding: '4px 10px', fontSize: 12, color: DARK, cursor: 'pointer', fontFamily: F, fontWeight: 600 }}>
+                        style={{ background: LGRAY, border: '1px solid ' + BORDER, borderRadius: 8, padding: '4px 10px', fontSize: 12, color: DARK, cursor: 'pointer', fontFamily: F, fontWeight: 600 }}>
                         📎 מסמך מצורף — צפה
                       </button>
                     )}
@@ -2050,7 +2050,7 @@ function InactiveModal({ candidate, onSave, onClose }) {
     setSaving(true)
     let hearing_doc_path = candidate.hearing_doc_path || null
     if (docFile) {
-      const path = `${candidate.id}/hearing_${Date.now()}_${docFile.name}`
+      const path = candidate.id + '/hearing_' + Date.now() + '_' + docFile.name
       await supabase.storage.from('candidate-docs').upload(path, docFile)
       hearing_doc_path = path
     }
@@ -2067,7 +2067,7 @@ function InactiveModal({ candidate, onSave, onClose }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, fontFamily: F }}>
-      <div style={{ background: WHITE, borderRadius: 16, padding: 26, width: 420, maxWidth: '90vw', boxShadow: SHADOW_LG, border: `1px solid ${BORDER}` }}>
+      <div style={{ background: WHITE, borderRadius: 16, padding: 26, width: 420, maxWidth: '90vw', boxShadow: SHADOW_LG, border: '1px solid ' + BORDER }}>
         <div style={{ fontSize: 18, fontWeight: 800, color: '#1D1D1F', marginBottom: 4 }}>⭕ סיום העסקה</div>
         <div style={{ fontSize: 13, color: '#6E6E73', marginBottom: 22 }}>{candidate.full_name_he || candidate.full_name_en}</div>
 
@@ -2077,7 +2077,7 @@ function InactiveModal({ candidate, onSave, onClose }) {
           <div style={{ display: 'flex', gap: 10 }}>
             {[['fired','פיטורין 📄'],['resigned','התפטרות ✍️']].map(([v,l]) => (
               <button key={v} onClick={() => setType(v)}
-                style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: `2px solid ${type===v?'#DC2626':'#E5E5EA'}`, background: type===v?'#FFF1F2':'#FAFAFA', color: type===v?'#DC2626':'#6E6E73', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: F }}>
+                style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: '2px solid ' + type===v?'#DC2626':'#E5E5EA', background: type===v?'#FFF1F2':'#FAFAFA', color: type===v?'#DC2626':'#6E6E73', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: F }}>
                 {l}
               </button>
             ))}
@@ -2096,7 +2096,7 @@ function InactiveModal({ candidate, onSave, onClose }) {
           <div style={{ display: 'flex', gap: 10 }}>
             {[[true,'בוצע שימוע ✅'],[false,'לא בוצע שימוע ❌']].map(([v,l]) => (
               <button key={String(v)} onClick={() => setHearing(v)}
-                style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: `2px solid ${hearing===v?'#D97706':'#E5E5EA'}`, background: hearing===v?'#FEF9C3':'#FAFAFA', color: hearing===v?'#92400E':'#6E6E73', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: F }}>
+                style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: '2px solid ' + hearing===v?'#D97706':'#E5E5EA', background: hearing===v?'#FEF9C3':'#FAFAFA', color: hearing===v?'#92400E':'#6E6E73', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: F }}>
                 {l}
               </button>
             ))}
@@ -2109,7 +2109,7 @@ function InactiveModal({ candidate, onSave, onClose }) {
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={() => fileRef.current.click()}
               style={{ flex: 1, padding: '10px 14px', background: '#F5F5F7', border: '1.5px solid #D2D2D7', borderRadius: 10, fontSize: 13, color: '#1D1D1F', cursor: 'pointer', fontFamily: F, textAlign: 'right' }}>
-              {docFile ? `📄 ${docFile.name}` : candidate.hearing_doc_path ? '🔄 החלף מסמך' : '📎 העלה מסמך'}
+              {docFile ? '📄 ' + docFile.name : candidate.hearing_doc_path ? '🔄 החלף מסמך' : '📎 העלה מסמך'}
             </button>
             {candidate.hearing_doc_path && !docFile && (
               <button onClick={viewDoc} style={{ padding: '10px 14px', background: '#EEF2FF', border: '1.5px solid #C7D2FE', borderRadius: 10, fontSize: 13, color: '#4F46E5', cursor: 'pointer', fontFamily: F }}>👁 צפה</button>
@@ -2137,11 +2137,11 @@ function InactiveModal({ candidate, onSave, onClose }) {
 function exportToExcel(rows, headers, filename) {
   // Build CSV with BOM for Hebrew support in Excel
   const bom = '\uFEFF'
-  const csvHeaders = headers.map(h => `"${h.label}"`).join(',')
+  const csvHeaders = headers.map(h => '"' + h.label + '"').join(',')
   const csvRows = rows.map(row =>
     headers.map(h => {
       const val = h.fn ? h.fn(row) : (row[h.key] ?? '')
-      return `"${String(val).replace(/"/g, '""')}"`
+      return '"' + String(val).replace(/"/g, '""') + '"'
     }).join(',')
   )
   const csv = bom + csvHeaders + '\n' + csvRows.join('\n')
@@ -2237,7 +2237,7 @@ function ReportsModule({ candidates }) {
     {
       id: 'visa_expiry',
       icon: '⏱', title: 'ויזות פוקעות / פגות', count: expiring.length + expired.length, color: '#D97706',
-      desc: `${expired.length} פגו, ${expiring.length} קרובות לפוג`,
+      desc: expired.length + ' פגו, ' + expiring.length + ' קרובות לפוג',
       export: () => exportToExcel([...expired,...expiring], [
         { key: 'full_name_he', label: 'שם עברית' },
         { key: 'full_name_en', label: 'שם אנגלית' },
@@ -2292,7 +2292,7 @@ function ReportsModule({ candidates }) {
             <div style={{ fontSize: 15, fontWeight: 700, color: DARK, marginBottom: 4 }}>{r.title}</div>
             <div style={{ fontSize: 12, color: GRAY, marginBottom: 14 }}>{r.desc}</div>
             <button onClick={r.export}
-              style={{ width: '100%', padding: '9px 0', background: r.color + '12', border: `1.5px solid ${r.color}33`, borderRadius: 10, fontSize: 13, fontWeight: 700, color: r.color, cursor: 'pointer', fontFamily: F }}>
+              style={{ width: '100%', padding: '9px 0', background: r.color + '12', border: '1.5px solid ' + r.color + '33', borderRadius: 10, fontSize: 13, fontWeight: 700, color: r.color, cursor: 'pointer', fontFamily: F }}>
               ⬇️ הורד Excel (.csv)
             </button>
           </div>
@@ -2461,13 +2461,13 @@ function TopBar({ module, currentUser, onRefresh, tasks = [] }) {
 
   const h = now.getHours()
   const greeting =
-    h >= 5  && h < 10 ? `בוקר טוב, ${currentUser} ☀️` :
-    h >= 10 && h < 12 ? `זמן קפה? ☕` :
-    h >= 12 && h < 14 ? `צהריים טובים, ${currentUser} 🍽️` :
-    h >= 14 && h < 17 ? `אחר הצהריים 🌤️` :
-    h >= 17 && h < 21 ? `ערב טוב, ${currentUser} 🌆` :
-    h >= 21            ? `לילה טוב 🌙` :
-                         `טוב שחזרת.. 🦉`
+    h >= 5  && h < 10 ? 'בוקר טוב, ' + currentUser + ' ☀️' :
+    h >= 10 && h < 12 ? 'זמן קפה? ☕' :
+    h >= 12 && h < 14 ? 'צהריים טובים, ' + currentUser + ' 🍽️' :
+    h >= 14 && h < 17 ? 'אחר הצהריים 🌤️' :
+    h >= 17 && h < 21 ? 'ערב טוב, ' + currentUser + ' 🌆' :
+    h >= 21            ? 'לילה טוב 🌙' :
+                         'טוב שחזרת.. 🦉'
 
   const NAV_LABELS = {
     dashboard:'דשבורד', applicants:'מועמדים', workers:'עובדים',
@@ -2510,7 +2510,7 @@ function TopBar({ module, currentUser, onRefresh, tasks = [] }) {
         title="רענן נתונים">↻</button>
 
       {/* Avatar */}
-      <div style={{ width: 32, height: 32, borderRadius: 9, background: `linear-gradient(135deg, ${BLUE} 0%, #0033AA 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: WHITE, fontSize: 13, fontWeight: 800, boxShadow: '0 2px 8px rgba(0,102,255,.28), 0 0 0 2px rgba(0,102,255,.15)', cursor: 'default', flexShrink: 0 }}
+      <div style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg, ' + BLUE + ' 0%, #0033AA 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: WHITE, fontSize: 13, fontWeight: 800, boxShadow: '0 2px 8px rgba(0,102,255,.28), 0 0 0 2px rgba(0,102,255,.15)', cursor: 'default', flexShrink: 0 }}
         title={currentUser}>
         {currentUser?.[0] || 'א'}
       </div>
@@ -2551,12 +2551,12 @@ export default function CRM({ session, onLogout }) {
         const task = payload.new
         if (task.assigned_to === currentUser) {
           // In-app toast
-          setToast({ msg: `משימה חדשה: ${task.title}`, type: 'task' })
+          setToast({ msg: 'משימה חדשה: ' + task.title, type: 'task' })
           setTimeout(() => setToast(null), 5000)
           // Browser notification
           if (Notification.permission === 'granted') {
             new Notification('Oz Hadar CRM — משימה חדשה 📋', {
-              body: `${task.title}\nמוגדר לך ע"י ${task.created_by || 'צוות'}`,
+              body: task.title + '\nמוגדר לך ע"י ' + task.created_by || 'צוות',
               icon: '/favicon.ico',
               tag: task.id,
             })
@@ -2609,7 +2609,7 @@ export default function CRM({ session, onLogout }) {
   if (loading) {
     return (
       <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', fontFamily: F, background: SIDEBAR_BG, flexDirection: 'column', gap: 16 }}>
-        <div style={{ width: 52, height: 52, borderRadius: 16, background: `linear-gradient(135deg, ${BLUE} 0%, #0033AA 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 900, color: WHITE, boxShadow: '0 8px 28px rgba(0,102,255,.4)' }}>OZ</div>
+        <div style={{ width: 52, height: 52, borderRadius: 16, background: 'linear-gradient(135deg, ' + BLUE + ' 0%, #0033AA 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 900, color: WHITE, boxShadow: '0 8px 28px rgba(0,102,255,.4)' }}>OZ</div>
         <div style={{ color: 'rgba(255,255,255,.35)', fontSize: 13, fontWeight: 500, letterSpacing: '.3px' }} className="pulse">טוען מערכת...</div>
       </div>
     )
@@ -2631,10 +2631,10 @@ export default function CRM({ session, onLogout }) {
       )}
 
       {/* ── SIDEBAR ── */}
-      <div style={{ width: 220, background: SIDEBAR_BG, display: 'flex', flexDirection: 'column', flexShrink: 0, padding: '0', overflowY: 'auto', borderLeft: `1px solid ${SIDEBAR_BORDER}` }}>
+      <div style={{ width: 220, background: SIDEBAR_BG, display: 'flex', flexDirection: 'column', flexShrink: 0, padding: '0', overflowY: 'auto', borderLeft: '1px solid ' + SIDEBAR_BORDER }}>
 
         {/* Logo */}
-        <div style={{ padding: '18px 18px 16px', borderBottom: `1px solid ${SIDEBAR_BORDER}`, marginBottom: 6 }}>
+        <div style={{ padding: '18px 18px 16px', borderBottom: '1px solid ' + SIDEBAR_BORDER, marginBottom: 6 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
             <div style={{ width: 32, height: 32, borderRadius: 9, background: BLUE, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -2654,7 +2654,7 @@ export default function CRM({ session, onLogout }) {
           <div style={{ fontSize: 10, fontWeight: 700, color: GRAY2, letterSpacing: '.8px', textTransform: 'uppercase', padding: '8px 4px 6px' }}>ראשי</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             {NAV.slice(0,5).map(n => (
-              <button key={n.k} className={`nav-btn${module === n.k ? ' active' : ''}`} onClick={() => setModule(n.k)}>
+              <button key={n.k} className={'nav-btn' + module === n.k ? ' active' : ''} onClick={() => setModule(n.k)}>
                 <span className="nav-icon">{n.icon}</span>
                 <span style={{ flex: 1 }}>{n.label}</span>
                 {n.badge > 0 && (
@@ -2667,7 +2667,7 @@ export default function CRM({ session, onLogout }) {
           <div style={{ fontSize: 10, fontWeight: 700, color: GRAY2, letterSpacing: '.8px', textTransform: 'uppercase', padding: '14px 4px 6px' }}>כלים</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             {NAV.slice(5).map(n => (
-              <button key={n.k} className={`nav-btn${module === n.k ? ' active' : ''}`} onClick={() => setModule(n.k)}>
+              <button key={n.k} className={'nav-btn' + module === n.k ? ' active' : ''} onClick={() => setModule(n.k)}>
                 <span className="nav-icon">{n.icon}</span>
                 <span style={{ flex: 1 }}>{n.label}</span>
                 {n.badge > 0 && (
@@ -2679,7 +2679,7 @@ export default function CRM({ session, onLogout }) {
         </div>
 
         {/* Bottom */}
-        <div style={{ padding: '10px 10px 14px', borderTop: `1px solid ${SIDEBAR_BORDER}` }}>
+        <div style={{ padding: '10px 10px 14px', borderTop: '1px solid ' + SIDEBAR_BORDER }}>
           <div style={{ background: LGRAY, borderRadius: 10, padding: '10px 12px', marginBottom: 8 }}>
             <div style={{ fontSize: 9.5, fontWeight: 700, color: GRAY2, marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.5px' }}>סיכום</div>
             <div style={{ color: DARK, fontSize: 12, marginBottom: 2 }}>👥 {candidates.length} עובדים</div>
