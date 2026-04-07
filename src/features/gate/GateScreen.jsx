@@ -1,71 +1,180 @@
 import { useState, useEffect } from 'react'
 import { T } from '../../translations.js'
 
-const SANS    = "'Outfit', system-ui, Arial, sans-serif"
-const DISPLAY = "'Syne', 'Outfit', Arial, sans-serif"
-const BG = {
-  minHeight: 'calc(100vh - 0px)',
-  background: 'linear-gradient(160deg, #ecfdf9 0%, #fffcf5 50%, #eff6ff 100%)',
-  display: 'flex', alignItems: 'center', justifyContent: 'center',
-  padding: '44px 20px', position: 'relative', overflow: 'hidden',
-  fontFamily: SANS,
-}
+const F    = "'Heebo', -apple-system, 'Arial Hebrew', Arial, sans-serif"
+const BLUE = '#0071E3'
+const DARK = '#1D1D1F'
+const GRAY = '#6E6E73'
 
-function useStyles() {
+function useGlobalStyles() {
   useEffect(() => {
-    if (!document.getElementById('oz-fonts')) {
-      const l = document.createElement('link')
-      l.id = 'oz-fonts'; l.rel = 'stylesheet'
-      l.href = 'https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Syne:wght@700;800&display=swap'
-      document.head.appendChild(l)
-    }
-    if (!document.getElementById('oz-css')) {
-      const s = document.createElement('style'); s.id = 'oz-css'
-      s.textContent = `
-        @keyframes oz-fu{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes oz-fp{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-        .oz-a1{animation:oz-fu .5s ease both .08s}.oz-a2{animation:oz-fu .5s ease both .2s}
-        .oz-a3{animation:oz-fu .5s ease both .32s}.oz-a4{animation:oz-fu .5s ease both .46s}
-        .oz-float{animation:oz-fp 3s ease-in-out infinite}
-        .oz-btn-main:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(15,118,110,.38)!important}
-        .oz-lang-btn:hover{border-color:#0F766E!important;background:#F0FDF9!important}
-        .oz-card-h:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.1)!important}
-      `
-      document.head.appendChild(s)
-    }
+    if (document.getElementById('gate-styles')) return
+    const s = document.createElement('style')
+    s.id = 'gate-styles'
+    s.textContent = `
+      @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap');
+
+      @keyframes gFadeUp {
+        from { opacity:0; transform:translateY(28px); }
+        to   { opacity:1; transform:translateY(0); }
+      }
+      @keyframes gFadeIn {
+        from { opacity:0; }
+        to   { opacity:1; }
+      }
+      @keyframes gScaleIn {
+        from { opacity:0; transform:scale(0.94); }
+        to   { opacity:1; transform:scale(1); }
+      }
+      @keyframes gFloat {
+        0%,100% { transform:translateY(0); }
+        50%      { transform:translateY(-8px); }
+      }
+      @keyframes gPulse {
+        0%,100% { box-shadow: 0 0 0 0 rgba(0,113,227,0.3); }
+        50%      { box-shadow: 0 0 0 12px rgba(0,113,227,0); }
+      }
+      @keyframes gSlideRight {
+        from { opacity:0; transform:translateX(-20px); }
+        to   { opacity:1; transform:translateX(0); }
+      }
+
+      .g-a1 { animation: gFadeUp 0.6s cubic-bezier(0.22,1,0.36,1) both 0.05s; }
+      .g-a2 { animation: gFadeUp 0.6s cubic-bezier(0.22,1,0.36,1) both 0.15s; }
+      .g-a3 { animation: gFadeUp 0.6s cubic-bezier(0.22,1,0.36,1) both 0.25s; }
+      .g-a4 { animation: gFadeUp 0.6s cubic-bezier(0.22,1,0.36,1) both 0.35s; }
+      .g-a5 { animation: gFadeUp 0.6s cubic-bezier(0.22,1,0.36,1) both 0.45s; }
+      .g-float { animation: gFloat 4s ease-in-out infinite; }
+      .g-scale-in { animation: gScaleIn 0.5s cubic-bezier(0.22,1,0.36,1) both; }
+      .g-fade-in  { animation: gFadeIn 0.4s ease both; }
+
+      .g-lang-btn {
+        width: 100%;
+        padding: 18px 20px;
+        background: white;
+        border: 1.5px solid #D2D2D7;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        cursor: pointer;
+        font-family: inherit;
+        transition: all 0.22s cubic-bezier(0.22,1,0.36,1);
+        text-align: right;
+      }
+      .g-lang-btn:hover {
+        border-color: ${BLUE};
+        background: rgba(0,113,227,0.04);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0,113,227,0.12);
+      }
+      .g-lang-btn:active { transform: scale(0.98); }
+
+      .g-btn-yes {
+        padding: 16px 36px;
+        background: ${BLUE};
+        color: white;
+        border: none;
+        border-radius: 980px;
+        font-size: 17px;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 2px 16px rgba(0,113,227,0.3);
+        letter-spacing: -0.2px;
+        animation: gPulse 2.5s ease-in-out infinite;
+      }
+      .g-btn-yes:hover {
+        background: #0077ED;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0,113,227,0.4);
+      }
+      .g-btn-yes:active { transform: scale(0.97); }
+
+      .g-btn-no {
+        padding: 16px 28px;
+        background: #F5F5F7;
+        color: ${GRAY};
+        border: none;
+        border-radius: 980px;
+        font-size: 17px;
+        font-weight: 500;
+        font-family: inherit;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .g-btn-no:hover { background: #EBEBF0; }
+
+      .g-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 1px 0 rgba(0,0,0,0.06), 0 4px 24px rgba(0,0,0,0.07);
+      }
+
+      .g-about-card {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+        transition: all 0.22s;
+        box-shadow: 0 1px 0 rgba(0,0,0,0.04), 0 2px 12px rgba(0,0,0,0.05);
+      }
+      .g-about-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 28px rgba(0,0,0,0.1);
+      }
+    `
+    document.head.appendChild(s)
   }, [])
 }
 
-// ─── LANGUAGE PICKER ─────────────────────────────────────────────────────────
+// ── LANGUAGE PICKER ────────────────────────────────────────────────────────────
 function LangPicker({ onSelect }) {
+  useGlobalStyles()
   return (
-    <div style={BG}>
-      <div style={{position:'absolute',top:-90,right:-90,width:300,height:300,borderRadius:'50%',background:'radial-gradient(circle,rgba(15,118,110,.07) 0%,transparent 70%)',pointerEvents:'none'}}/>
-      <div style={{position:'absolute',bottom:-70,left:-70,width:240,height:240,borderRadius:'50%',background:'radial-gradient(circle,rgba(99,102,241,.06) 0%,transparent 70%)',pointerEvents:'none'}}/>
-      <div style={{maxWidth:380,width:'100%',textAlign:'center',position:'relative',zIndex:1}}>
-        <div className="oz-a1 oz-float" style={{width:76,height:76,borderRadius:20,background:'linear-gradient(135deg,#0F766E,#14B8A6)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:34,margin:'0 auto 22px',boxShadow:'0 8px 26px rgba(15,118,110,.28)'}}>🌐</div>
-        <div className="oz-a2" style={{fontFamily:DISPLAY,fontSize:26,fontWeight:800,color:'#0F172A',marginBottom:6}}>Oz Hadar Group</div>
-        <div className="oz-a2" style={{fontSize:13,color:'#9CA3AF',marginBottom:34,letterSpacing:'.3px'}}>
-          Select language &nbsp;·&nbsp; בחר שפה &nbsp;·&nbsp; اختر اللغة
+    <div style={{ minHeight:'100vh', background:'linear-gradient(180deg,#F5F5F7 0%,#FFFFFF 70%)', display:'flex', alignItems:'center', justifyContent:'center', padding:24, fontFamily:F }}>
+      <div style={{ maxWidth:400, width:'100%' }}>
+
+        {/* Logo */}
+        <div className="g-a1" style={{ textAlign:'center', marginBottom:40 }}>
+          <div className="g-float" style={{ width:72, height:72, borderRadius:20, background:BLUE, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', boxShadow:'0 8px 28px rgba(0,113,227,0.3)', fontSize:32 }}>
+            🌐
+          </div>
+          <div style={{ display:'inline-block', background:'white', border:'1px solid #D2D2D7', borderRadius:980, padding:'6px 18px', fontSize:13, color:GRAY, fontWeight:500, marginBottom:20 }}>
+            Oz Hadar Group
+          </div>
+          <h1 className="g-a2" style={{ fontSize:40, fontWeight:800, color:DARK, letterSpacing:'-1px', lineHeight:1.05, marginBottom:10 }}>
+            בחר שפה
+          </h1>
+          <p className="g-a3" style={{ fontSize:16, color:GRAY, fontWeight:400 }}>
+            Select language &nbsp;·&nbsp; اختر اللغة
+          </p>
         </div>
-        <div className="oz-a3" style={{display:'flex',flexDirection:'column',gap:11}}>
+
+        {/* Language buttons */}
+        <div className="g-a4" style={{ display:'flex', flexDirection:'column', gap:12 }}>
           {[
             ['he','🇮🇱','עברית','Hebrew'],
             ['en','🇬🇧','English','English'],
-            ['ar','🇸🇦','العربية','Arabic — عربي'],
+            ['ar','🇸🇦','العربية','Arabic'],
           ].map(([code, flag, native, latin]) => (
-            <button key={code} onClick={() => onSelect(code)} className="oz-lang-btn"
-              style={{width:'100%',padding:'15px 20px',background:'#fff',border:'1.5px solid #E5E7EB',borderRadius:12,display:'flex',alignItems:'center',gap:14,cursor:'pointer',fontFamily:SANS,transition:'all .2s',boxShadow:'0 1px 4px rgba(0,0,0,.05)'}}>
-              <span style={{fontSize:28,lineHeight:1,flexShrink:0}}>{flag}</span>
-              <div style={{flex:1,textAlign:code==='en'?'left':'right'}}>
-                <div style={{fontSize:16,fontWeight:700,color:'#111827',fontFamily:DISPLAY}}>{native}</div>
-                <div style={{fontSize:11,color:'#9CA3AF',marginTop:2}}>{latin}</div>
+            <button key={code} className="g-lang-btn" onClick={() => onSelect(code)}>
+              <span style={{ fontSize:32, lineHeight:1, flexShrink:0 }}>{flag}</span>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:18, fontWeight:700, color:DARK }}>{native}</div>
+                <div style={{ fontSize:13, color:GRAY, marginTop:2 }}>{latin}</div>
               </div>
-              <span style={{color:'#D1D5DB',fontSize:16}}>{code==='en'?'→':'←'}</span>
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M8 5L13 10L8 15" stroke="#C7C7CC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </button>
           ))}
         </div>
-        <div className="oz-a4" style={{marginTop:24,fontSize:10,color:'#D1D5DB',letterSpacing:'1px',textTransform:'uppercase'}}>
+
+        <div className="g-a5" style={{ textAlign:'center', marginTop:28, fontSize:12, color:'#C7C7CC' }}>
           Oz Hadar Group · Foreign Worker Recruitment
         </div>
       </div>
@@ -73,107 +182,129 @@ function LangPicker({ onSelect }) {
   )
 }
 
-// ─── GATE SCREEN ─────────────────────────────────────────────────────────────
+// ── GATE SCREEN ────────────────────────────────────────────────────────────────
 export function GateScreen({ onYes, lang, onChangeLang }) {
-  useStyles()
+  useGlobalStyles()
   const t = T[lang] || T.he
+  const rtl = t.dir === 'rtl'
+
   return (
-    <div style={{...BG, direction:t.dir}}>
-      <div style={{position:'absolute',top:-90,right:-90,width:300,height:300,borderRadius:'50%',background:'radial-gradient(circle,rgba(15,118,110,.07) 0%,transparent 70%)',pointerEvents:'none'}}/>
-      <div style={{position:'absolute',bottom:-70,left:-70,width:240,height:240,borderRadius:'50%',background:'radial-gradient(circle,rgba(245,158,11,.06) 0%,transparent 70%)',pointerEvents:'none'}}/>
+    <div style={{ minHeight:'100vh', background:'linear-gradient(180deg,#F5F5F7 0%,#FFFFFF 70%)', display:'flex', alignItems:'center', justifyContent:'center', padding:24, fontFamily:F, direction:t.dir }}>
+      <div style={{ maxWidth:480, width:'100%', textAlign:'center' }}>
 
-      <div style={{maxWidth:420,width:'100%',textAlign:'center',position:'relative',zIndex:1}}>
-        <div className="oz-a1 oz-float" style={{width:80,height:80,borderRadius:22,background:'linear-gradient(135deg,#0F766E,#14B8A6)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:38,margin:'0 auto 26px',boxShadow:'0 8px 26px rgba(15,118,110,.28)'}}>💼</div>
-
-        <h1 className="oz-a2" style={{fontFamily:DISPLAY,fontSize:'clamp(34px,8vw,50px)',fontWeight:800,color:'#0F172A',lineHeight:1.08,marginBottom:12,letterSpacing:'-.5px'}}>
-          {t.gate_headline}
-        </h1>
-        <p className="oz-a3" style={{fontSize:15,color:'#374151',lineHeight:1.8,marginBottom:4,fontWeight:500}}>{t.gate_sub}</p>
-        <p className="oz-a3" style={{fontSize:13,color:'#9CA3AF',lineHeight:1.8,marginBottom:24}}>{t.gate_sub2}</p>
-
-        <div className="oz-a3" style={{background:'#f0fdf4',border:'1.5px solid #bbf7d0',borderRadius:12,padding:'13px 16px',marginBottom:26,textAlign:t.dir==='rtl'?'right':'left'}}>
-          <p style={{fontSize:13,fontWeight:700,color:'#0F766E',marginBottom:5}}>{t.gate_noexp_title}</p>
-          <p style={{fontSize:12,color:'#4B5563',lineHeight:1.7}}>{t.gate_noexp_body}</p>
-        </div>
-
-        <div className="oz-a4" style={{display:'flex',gap:12,justifyContent:'center'}}>
-          <button onClick={onYes} className="oz-btn-main"
-            style={{background:'#0F766E',color:'#fff',border:'none',borderRadius:12,fontSize:15,fontWeight:700,cursor:'pointer',padding:'14px 30px',fontFamily:SANS,transition:'all .2s',boxShadow:'0 4px 18px rgba(15,118,110,.25)'}}>
-            {t.gate_yes}
-          </button>
-          <button style={{background:'#fff',color:'#9CA3AF',border:'1.5px solid #E5E7EB',borderRadius:12,fontSize:14,fontWeight:500,cursor:'default',padding:'14px 18px',fontFamily:SANS}}>
-            {t.gate_no}
-          </button>
-        </div>
-
-        <button onClick={onChangeLang}
-          style={{marginTop:20,background:'none',border:'none',cursor:'pointer',fontSize:12,color:'#9CA3AF',fontFamily:SANS,textDecoration:'underline',display:'block',margin:'18px auto 0'}}>
-          {t.gate_change_lang}
-        </button>
-        <p style={{marginTop:12,fontSize:10,color:'#D1D5DB',letterSpacing:'1px',textTransform:'uppercase'}}>{t.footer}</p>
-      </div>
-    </div>
-  )
-}
-
-// ─── ABOUT SCREEN ─────────────────────────────────────────────────────────────
-export function AboutScreen({ onContinue, lang }) {
-  useStyles()
-  const t = T[lang] || T.he
-  return (
-    <div style={{...BG, direction:t.dir, alignItems:'flex-start', paddingTop:32}}>
-      <div style={{maxWidth:540,width:'100%',position:'relative',zIndex:1}}>
-        <div style={{textAlign:'center',marginBottom:20}}>
-          <div style={{display:'inline-flex',alignItems:'center',gap:10,background:'#fff',border:'1.5px solid #E5E7EB',borderRadius:12,padding:'9px 16px',marginBottom:14,boxShadow:'0 2px 8px rgba(0,0,0,.05)'}}>
-            <div style={{width:32,height:32,background:'linear-gradient(135deg,#0F766E,#14B8A6)',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,fontSize:12,color:'#fff',fontFamily:SANS}}>OZ</div>
-            <div style={{textAlign:t.dir==='rtl'?'right':'left'}}>
-              <div style={{fontSize:13,fontWeight:700,color:'#111827',fontFamily:SANS}}>{t.about_badge}</div>
-              <div style={{fontSize:10,color:'#9CA3AF',fontFamily:SANS}}>Oz Hadar Group</div>
-            </div>
+        {/* Icon */}
+        <div className="g-a1">
+          <div className="g-float" style={{ width:80, height:80, borderRadius:22, background:BLUE, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 28px', boxShadow:'0 8px 28px rgba(0,113,227,0.3)', fontSize:38 }}>
+            💼
           </div>
-          <h2 style={{fontFamily:DISPLAY,fontSize:'clamp(24px,5vw,34px)',fontWeight:800,color:'#0F172A',marginBottom:4}}>{t.about_headline}</h2>
-          <p style={{fontSize:14,color:'#9CA3AF',fontFamily:SANS}}>{t.about_headline2}</p>
         </div>
 
-        <div style={{background:'#fff',border:'1.5px solid #F3F4F6',borderRadius:14,padding:'16px 18px',marginBottom:12,boxShadow:'0 1px 6px rgba(0,0,0,.04)',direction:t.dir}}>
-          <p style={{fontSize:14,color:'#374151',lineHeight:1.9,fontFamily:SANS}}>{t.about_body}</p>
+        {/* Headline */}
+        <div className="g-a2">
+          <h1 style={{ fontSize:'clamp(40px,8vw,64px)', fontWeight:800, color:DARK, letterSpacing:'-1.5px', lineHeight:1.0, marginBottom:16 }}>
+            {t.gate_headline}
+          </h1>
         </div>
 
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:9,marginBottom:18}}>
-          {t.about_cards.map(([icon, title, desc], i) => {
-            const colors = [
-              {bg:'#fefce8',bc:'#fef08a',cl:'#92400E'},
-              {bg:'#f0fdf4',bc:'#bbf7d0',cl:'#065F46'},
-              {bg:'#eff6ff',bc:'#bfdbfe',cl:'#1E40AF'},
-              {bg:'#fff1f2',bc:'#fecdd3',cl:'#9F1239'},
-            ][i]
-            return (
-              <div key={i} className="oz-card-h" style={{background:colors.bg,border:`1.5px solid ${colors.bc}`,borderRadius:13,padding:13,transition:'all .2s',boxShadow:'0 1px 4px rgba(0,0,0,.03)'}}>
-                <div style={{fontSize:20,marginBottom:6}}>{icon}</div>
-                <div style={{fontSize:12,fontWeight:700,color:'#1C1917',fontFamily:SANS}}>{title}</div>
-                <div style={{fontSize:10,color:colors.cl,fontWeight:600,marginBottom:5,fontFamily:SANS,textTransform:'uppercase',letterSpacing:'.3px'}}>{icon}</div>
-                <div style={{fontSize:11,color:'#6B7280',lineHeight:1.5,direction:t.dir,fontFamily:SANS}}>{desc}</div>
-              </div>
-            )
-          })}
+        <div className="g-a3">
+          <p style={{ fontSize:18, color:GRAY, lineHeight:1.65, marginBottom:8, fontWeight:400 }}>{t.gate_sub}</p>
+          <p style={{ fontSize:15, color:'#AEAEB2', lineHeight:1.65, marginBottom:32 }}>{t.gate_sub2}</p>
         </div>
 
-        <button onClick={onContinue} className="oz-btn-main"
-          style={{width:'100%',padding:15,background:'#0F766E',color:'#fff',border:'none',borderRadius:12,fontSize:15,fontWeight:700,cursor:'pointer',fontFamily:SANS,boxShadow:'0 4px 18px rgba(15,118,110,.22)',transition:'all .2s'}}>
-          {t.about_cta}
-        </button>
+        {/* Info card */}
+        <div className="g-a4 g-card" style={{ padding:'18px 22px', marginBottom:36, textAlign: rtl ? 'right' : 'left' }}>
+          <div style={{ fontSize:14, fontWeight:700, color:BLUE, marginBottom:6 }}>{t.gate_noexp_title}</div>
+          <div style={{ fontSize:14, color:GRAY, lineHeight:1.65 }}>{t.gate_noexp_body}</div>
+        </div>
+
+        {/* CTA buttons */}
+        <div className="g-a5" style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap', marginBottom:24 }}>
+          <button className="g-btn-yes" onClick={onYes}>{t.gate_yes}</button>
+          <button className="g-btn-no">{t.gate_no}</button>
+        </div>
+
+        {/* Change language */}
+        <div className="g-fade-in" style={{ marginTop:8 }}>
+          <button onClick={onChangeLang} style={{ background:'none', border:'none', cursor:'pointer', fontSize:14, color:'#AEAEB2', fontFamily:F, textDecoration:'underline' }}>
+            {t.gate_change_lang}
+          </button>
+        </div>
       </div>
     </div>
   )
 }
 
-// ─── ROOT COMPONENT (manages lang state) ────────────────────────────────────
+// ── ABOUT SCREEN ───────────────────────────────────────────────────────────────
+export function AboutScreen({ onContinue, lang }) {
+  useGlobalStyles()
+  const t = T[lang] || T.he
+  const rtl = t.dir === 'rtl'
+
+  const CARD_ICONS = ['💰','⚖️','🏠','📞']
+  const CARD_COLORS = [
+    { bg:'#FFF9ED', icon:'#C9973A' },
+    { bg:'#EDFAF4', icon:'#1A7F4B' },
+    { bg:'#EDF4FF', icon:'#1A5FBF' },
+    { bg:'#FFF0F0', icon:'#BF3A3A' },
+  ]
+
+  return (
+    <div style={{ minHeight:'100vh', background:'linear-gradient(180deg,#F5F5F7 0%,#FFFFFF 50%)', fontFamily:F, direction:t.dir, padding:'48px 20px 80px' }}>
+      <div style={{ maxWidth:560, margin:'0 auto' }}>
+
+        {/* Header */}
+        <div className="g-a1" style={{ textAlign:'center', marginBottom:40 }}>
+          <div style={{ display:'inline-flex', alignItems:'center', gap:10, background:'white', border:'1px solid #D2D2D7', borderRadius:980, padding:'8px 18px', marginBottom:24, boxShadow:'0 1px 6px rgba(0,0,0,0.06)' }}>
+            <div style={{ width:28, height:28, borderRadius:8, background:BLUE, display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:900, color:'white' }}>OZ</div>
+            <span style={{ fontSize:14, fontWeight:600, color:DARK }}>{t.about_badge}</span>
+          </div>
+          <h1 style={{ fontSize:'clamp(34px,6vw,52px)', fontWeight:800, color:DARK, letterSpacing:'-1px', lineHeight:1.05, marginBottom:12 }}>
+            {t.about_headline}<br/>
+            <span style={{ color:BLUE }}>{t.about_headline2}</span>
+          </h1>
+        </div>
+
+        {/* Body text */}
+        <div className="g-a2 g-card" style={{ padding:'22px 24px', marginBottom:24 }}>
+          <p style={{ fontSize:16, color:GRAY, lineHeight:1.8, textAlign: rtl ? 'right' : 'left' }}>{t.about_body}</p>
+        </div>
+
+        {/* Cards grid */}
+        <div className="g-a3" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14, marginBottom:32 }}>
+          {t.about_cards.map(([icon, title, desc], i) => (
+            <div key={i} className="g-about-card" style={{ background: CARD_COLORS[i].bg, flexDirection:'column', gap:10 }}>
+              <div style={{ width:44, height:44, borderRadius:12, background:'white', display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, boxShadow:'0 2px 8px rgba(0,0,0,0.08)' }}>
+                {icon}
+              </div>
+              <div>
+                <div style={{ fontSize:14, fontWeight:700, color:DARK, marginBottom:4 }}>{title}</div>
+                <div style={{ fontSize:13, color:GRAY, lineHeight:1.55 }}>{desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* CTA */}
+        <div className="g-a4">
+          <button
+            onClick={onContinue}
+            className="g-btn-yes"
+            style={{ width:'100%', padding:18, fontSize:18, borderRadius:16, boxShadow:'0 4px 20px rgba(0,113,227,0.28)' }}>
+            {t.about_cta}
+          </button>
+        </div>
+
+        <p style={{ textAlign:'center', marginTop:20, fontSize:12, color:'#C7C7CC' }}>{t.footer}</p>
+      </div>
+    </div>
+  )
+}
+
+// ── ROOT ───────────────────────────────────────────────────────────────────────
 export function GateFlow({ onYes }) {
-  const [stage, setStage] = useState('pick')  // pick | gate | about
+  const [stage, setStage] = useState('pick')
   const [lang, setLang]   = useState('he')
-
   const selectLang = (l) => { setLang(l); setStage('gate') }
-
   if (stage === 'pick')  return <LangPicker onSelect={selectLang} />
   if (stage === 'gate')  return <GateScreen lang={lang} onYes={() => setStage('about')} onChangeLang={() => setStage('pick')} />
   if (stage === 'about') return <AboutScreen lang={lang} onContinue={() => onYes(lang)} />
