@@ -277,6 +277,64 @@ function useStyles() {
       .anim-up   { animation: fadeInUp .25s ease both; }
       .anim-slide { animation: slideIn .22s ease both; }
       .pulse     { animation: pulse 1.8s ease infinite; }
+    
+      /* ── INLINE EDIT */
+      .ie-row { display:flex; justify-content:space-between; align-items:center; padding:7px 10px; border-radius:9px; margin-bottom:2px; transition:background .12s; border:1px solid transparent; }
+      .ie-row:hover { background:#F8FAFC; border-color:#E2E8F0; }
+      .ie-row:hover .ie-eb { opacity:1; }
+      .ie-eb { opacity:0; background:none; border:none; cursor:pointer; padding:3px 6px; border-radius:6px; color:#94A3B8; transition:all .12s; flex-shrink:0; font-family:inherit; display:flex; align-items:center; }
+      .ie-eb:hover { background:#EEF2FF; color:#4F46E5; }
+      .ie-input { width:100%; padding:5px 9px; font-size:13px; font-family:inherit; border:1.5px solid #6366F1; border-radius:7px; outline:none; background:#FAFAFA; color:#0F172A; font-weight:500; box-shadow:0 0 0 3px rgba(99,102,241,.1); }
+      .ie-label { font-size:11px; color:#94A3B8; font-weight:600; min-width:105px; flex-shrink:0; }
+      .ie-value { font-size:13px; color:#0F172A; font-weight:500; flex:1; text-align:left; word-break:break-word; }
+      .ie-section { background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px; padding:10px 12px; margin-bottom:12px; }
+      .ie-section-title { font-size:10px; font-weight:800; color:#64748B; letter-spacing:.1em; text-transform:uppercase; font-family:'Manrope',inherit; padding:2px 0 8px; border-bottom:1px solid #E2E8F0; margin-bottom:4px; }
+      .spill { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:99px; font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; font-family:'Manrope',inherit; }
+      .glass-card { background:rgba(255,255,255,0.75); backdrop-filter:blur(16px) saturate(180%); -webkit-backdrop-filter:blur(16px) saturate(180%); border:1px solid rgba(255,255,255,0.6); box-shadow:0 2px 12px rgba(0,0,0,.06); }
+      .av { width:36px; height:36px; border-radius:10px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; font-family:'Manrope',inherit; }
+      .av-blue { background:linear-gradient(135deg,#EEF2FF,#DBEAFE); color:#3B82F6; }
+      .av-teal { background:linear-gradient(135deg,#F0FDF9,#CCFBF1); color:#0F766E; }
+      .chk { width:16px; height:16px; border-radius:4px; border:1.5px solid #CBD5E1; background:#FFF; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .13s; flex-shrink:0; }
+      .chk.on { background:#0066FF; border-color:#0066FF; }
+      .pg-btn { width:30px; height:30px; border-radius:7px; border:1px solid #E2E8F0; background:#FFF; color:#64748B; font-size:12px; font-weight:600; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .13s; font-family:inherit; }
+      .pg-btn:hover { background:#F1F5F9; color:#0F172A; }
+      .pg-btn.on { background:#0066FF; color:#FFF; border-color:#0066FF; box-shadow:0 2px 8px rgba(0,102,255,.3); }
+      .pg-btn:disabled { opacity:.35; cursor:not-allowed; }
+      .bulk-btn { padding:6px 12px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; font-size:10px; font-weight:700; color:#64748B; cursor:pointer; letter-spacing:.05em; text-transform:uppercase; font-family:'Manrope',inherit; transition:all .13s; display:flex; align-items:center; gap:5px; }
+      .bulk-btn:hover { background:#F1F5F9; color:#0F172A; border-color:#CBD5E1; }
+      .bulk-btn.del:hover { background:#FEF2F2; color:#DC2626; border-color:#FECACA; }
+    
+      /* ══════════════════════════════════════════════════════
+         INLINE EDIT SYSTEM
+      ══════════════════════════════════════════════════════ */
+      .ie-section { background: #FAFAFA; border: 1px solid #E2E8F0; border-radius: 12px; padding: 4px 6px; margin-bottom: 10px; }
+      .ie-section-title { font-family: 'Manrope', inherit; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: #94A3B8; padding: 8px 6px 4px; }
+      .ie-row { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 8px; transition: background .12s; }
+      .ie-row:hover { background: rgba(0,102,255,.04); }
+      .ie-row:hover .ie-edit-btn { opacity: 1; }
+      .ie-label { font-size: 11.5px; color: #64748B; font-weight: 500; min-width: 110px; flex-shrink: 0; }
+      .ie-value { font-size: 13px; color: #0F172A; font-weight: 500; }
+      .ie-edit-btn { opacity: 0; width: 24px; height: 24px; border-radius: 6px; border: 1px solid #E2E8F0; background: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .13s; flex-shrink: 0; color: #64748B; }
+      .ie-edit-btn:hover { background: #EEF2FF; border-color: #C7D2FE; color: #4F46E5; }
+      .ie-input { width: 100%; padding: 7px 10px; background: #FFFFFF; border: 1.5px solid #0066FF; border-radius: 8px; font-size: 13px; font-family: inherit; color: #0F172A; outline: none; box-shadow: 0 0 0 3px rgba(0,102,255,.1); transition: all .15s; }
+
+      /* ══════════════════════════════════════════════════════
+         GLASS CARDS / AVATARS / PILLS / PAGINATION / BULK
+      ══════════════════════════════════════════════════════ */
+      .glass-card { background: rgba(255,255,255,0.82); backdrop-filter: blur(16px) saturate(180%); -webkit-backdrop-filter: blur(16px) saturate(180%); border: 1px solid rgba(255,255,255,0.65); box-shadow: 0 2px 12px rgba(0,0,0,.06), 0 0 0 1px rgba(0,0,0,.04); }
+      .av { width:36px; height:36px; border-radius:10px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; font-family:'Manrope',inherit; }
+      .av-blue { background:linear-gradient(135deg,#EEF2FF,#DBEAFE); color:#3B82F6; }
+      .av-teal { background:linear-gradient(135deg,#F0FDF9,#CCFBF1); color:#0F766E; }
+      .spill { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:99px; font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; font-family:'Manrope',inherit; }
+      .chk { width:16px; height:16px; border-radius:4px; border:1.5px solid #CBD5E1; background:#FFF; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .13s; flex-shrink:0; }
+      .chk.on { background:#0066FF; border-color:#0066FF; }
+      .pg-btn { width:30px; height:30px; border-radius:7px; border:1px solid #E2E8F0; background:#FFF; color:#64748B; font-size:12px; font-weight:600; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .13s; font-family:inherit; }
+      .pg-btn:hover { background:#F1F5F9; color:#0F172A; }
+      .pg-btn.on { background:#0066FF; color:#FFF; border-color:#0066FF; box-shadow:0 2px 8px rgba(0,102,255,.3); }
+      .pg-btn:disabled { opacity:.35; cursor:not-allowed; }
+      .bulk-btn { padding:6px 12px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; font-size:10px; font-weight:700; color:#64748B; cursor:pointer; letter-spacing:.05em; text-transform:uppercase; font-family:'Manrope',inherit; transition:all .13s; display:flex; align-items:center; gap:5px; }
+      .bulk-btn:hover { background:#F1F5F9; color:#0F172A; border-color:#CBD5E1; }
+      .bulk-btn.del:hover { background:#FEF2F2; color:#DC2626; border-color:#FECACA; }
     `
     document.head.appendChild(s)
   }, [])
@@ -823,79 +881,147 @@ function WorkersModule({ candidates, onUpdate, onDelete, currentUser }) {
         </div>
 
         <div style={{ maxWidth: 700, margin: '22px auto', padding: '0 20px 60px' }}>
-          {tab === 'info' && (
-            <div className="v2-card fade-in" style={{ padding: 22 }}>
-              <SectionTitle action={
-                <button className={'v2-btn ' + editMode ? 'v2-btn-primary' : 'v2-btn-ghost'} style={{ fontSize: 13 }}
-                  onClick={() => { if (editMode) { save() } else { setForm({ ...selected }); setEditMode(true) } }}>
-                  {saving ? 'שומר...' : editMode ? '💾 שמור' : '✏️ ערוך'}
-                </button>
-              }>פרטים אישיים ומקצועיים</SectionTitle>
-              {editMode ? (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  {[['שם עברית', 'full_name_he'], ['שם אנגלית', 'full_name_en'], ['טלפון', 'phone'], ['אימייל', 'email'], ['מדינה', 'country'], ['עיר', 'city'], ['ענף', 'sector'], ['מקצוע', 'profession'], ['ניסיון', 'experience'], ['מעסיק נוכחי', 'current_employer'], ['מעסיק אחרון', 'last_employer'], ['מספר היתר', 'permit_number']].map(([label, k]) => (
-                    <div key={k}><label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: GRAY, marginBottom: 4 }}>{label}</label><input value={form[k] || ''} onChange={e => set(k, e.target.value)} style={INP_S} /></div>
-                  ))}
-                  {[['תוקף ויזה', 'permit_expiry'], ['כניסה לישראל', 'entry_date'], ['ת.לידה', 'dob'], ['תחילת עבודה בפועל', 'work_start_date'], ['תאריך בריחה', 'escaped_at'], ['תאריך פציעה', 'injured_at']].map(([label, k]) => (
-                    <div key={k}><label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: GRAY, marginBottom: 4 }}>{label}</label><input type="date" value={form[k] || ''} onChange={e => set(k, e.target.value)} style={INP_S} /></div>
-                  ))}
+          {tab === 'info' && (() => {
+            // Quick save helper for a single field
+            const saveField = async (field, val) => {
+              const updates = { [field]: val }
+              await onUpdate(selected.id, updates)
+              setSelected(s => ({ ...s, ...updates }))
+            }
+            const sectorOpts = SECTORS.map(s => ({ v: s.v, l: s.he }))
+            const permitOpts = PERMITS.map(p => ({ v: p.v, l: p.l }))
+            return (
+              <div className="v2-card fade-in" style={{ padding: '20px 22px' }}>
+                <SectionTitle>פרטים אישיים ומקצועיים</SectionTitle>
+
+                {/* Personal */}
+                <div className="ie-section">
+                  <div className="ie-section-title">🪪 זיהוי</div>
+                  <InlineField label="שם בעברית"   value={selected.full_name_he}    onSave={v => saveField('full_name_he', v)} icon="👤" />
+                  <InlineField label="שם באנגלית"   value={selected.full_name_en}    onSave={v => saveField('full_name_en', v)} />
+                  <InlineField label="ת.לידה"        value={selected.dob}             onSave={v => saveField('dob', v)} type="date" />
+                  <InlineField label="מדינת מוצא"   value={selected.country}         onSave={v => saveField('country', v)} icon="🌍" />
+                  <InlineField label="עיר מגורים"   value={selected.city}            onSave={v => saveField('city', v)} icon="📍" />
                 </div>
-              ) : (
-                <div>
-                  {[['📱', 'טלפון', selected.phone], ['📧', 'אימייל', selected.email], ['🌍', 'מדינה', selected.country?.split('/')[0]?.trim()], ['📍', 'עיר', selected.city?.split('/')[0]?.trim()], ['🎂', 'ת.לידה', selected.dob ? fmtDate(selected.dob) : null], ['⚙️', 'ענף', SECTORS.find(s => s.v === selected.sector)?.he], ['🔧', 'מקצוע', selected.profession?.split('/')[0]?.trim()], ['📅', 'ניסיון', selected.experience ? selected.experience + ' שנים' : null], ['🏢', 'מעסיק נוכחי', selected.current_employer], ['🏛️', 'מעסיק אחרון', selected.last_employer], ['🪪', 'ויזה', PERMITS.find(p => p.v === selected.permit_type)?.l], ['🔢', 'מספר היתר', selected.permit_number], ['✈️', 'כניסה לישראל', selected.entry_date ? fmtDate(selected.entry_date) : null]].map(([icon, label, val]) => val ? (
-                    <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #F9FAFB' }}>
-                      <span style={{ fontSize: 12, color: GRAY }}>{icon} {label}</span>
-                      <span style={{ fontSize: 13, color: DARK, fontWeight: 500 }}>{val}</span>
+
+                {/* Contact */}
+                <div className="ie-section">
+                  <div className="ie-section-title">📱 פרטי קשר</div>
+                  <InlineField label="טלפון"         value={selected.phone}           onSave={v => saveField('phone', v)} icon="📱" type="tel" />
+                  <InlineField label="אימייל"        value={selected.email}           onSave={v => saveField('email', v)} icon="📧" type="email" />
+                </div>
+
+                {/* Professional */}
+                <div className="ie-section">
+                  <div className="ie-section-title">⚙️ מקצועי</div>
+                  <InlineField label="ענף"           value={selected.sector}          onSave={v => saveField('sector', v)} options={sectorOpts} icon="⚙️" />
+                  <InlineField label="מקצוע"         value={selected.profession}      onSave={v => saveField('profession', v)} icon="🔧" />
+                  <InlineField label="שנות ניסיון"   value={selected.experience}      onSave={v => saveField('experience', v)} type="number" />
+                  <InlineField label="מעסיק נוכחי"   value={selected.current_employer} onSave={v => saveField('current_employer', v)} icon="🏢" />
+                  <InlineField label="מעסיק אחרון"   value={selected.last_employer}   onSave={v => saveField('last_employer', v)} icon="🏛️" />
+                </div>
+
+                {/* Visa */}
+                <div className="ie-section">
+                  <div className="ie-section-title">🪪 ויזה / היתר</div>
+                  <InlineField label="סוג ויזה"      value={selected.permit_type}     onSave={v => saveField('permit_type', v)} options={permitOpts} />
+                  <InlineField label="מספר היתר"     value={selected.permit_number}   onSave={v => saveField('permit_number', v)} icon="🔢" />
+                  <InlineField label="תוקף ויזה"     value={selected.permit_expiry}   onSave={v => saveField('permit_expiry', v)} type="date" icon="⏱" />
+                  <InlineField label="כניסה לישראל"  value={selected.entry_date}      onSave={v => saveField('entry_date', v)} type="date" icon="✈️" />
+                  <InlineField label="תחילת עבודה"   value={selected.work_start_date} onSave={v => saveField('work_start_date', v)} type="date" icon="📅" />
+                </div>
+
+                {/* Status events */}
+                {(selected.escaped_at || selected.injured_at || selected.terminated_at) && (
+                  <div className="ie-section">
+                    <div className="ie-section-title">⚠️ אירועי סטטוס</div>
+                    {selected.escaped_at  && <InlineField label="תאריך בריחה"  value={selected.escaped_at}    onSave={v => saveField('escaped_at', v)}    type="date" icon="🚨" />}
+                    {selected.injured_at  && <InlineField label="תאריך פציעה"  value={selected.injured_at}    onSave={v => saveField('injured_at', v)}    type="date" icon="🩹" />}
+                    {selected.terminated_at && <InlineField label="תאריך סיום" value={selected.terminated_at} onSave={v => saveField('terminated_at', v)} type="date" icon="⭕" />}
+                  </div>
+                )}
+
+                {/* Visa progress bar */}
+                {selected.permit_expiry && (() => {
+                  const exp = isExpired(selected.permit_expiry)
+                  const soon = isSoon(selected.permit_expiry)
+                  const expDate = new Date(selected.permit_expiry)
+                  const refDate = selected.entry_date ? new Date(selected.entry_date) : new Date(expDate.getFullYear()-1, expDate.getMonth(), expDate.getDate())
+                  const pct = Math.max(0, Math.min(100, Math.round((expDate-new Date())/(expDate-refDate)*100)))
+                  const barColor = exp ? '#EF4444' : soon ? '#F59E0B' : '#10B981'
+                  return (
+                    <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: '13px 15px', marginBottom: 12 }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                        <span className="label-caps" style={{ color: GRAY }}>תוקף ויזה</span>
+                        <span className="spill" style={{ background: barColor+'18', color: barColor }}>{exp?'פג תוקף':soon?'פג בקרוב':'בתוקף'}</span>
+                      </div>
+                      <div style={{ fontSize:14, fontWeight:700, color: exp?'#DC2626':DARK, marginBottom:8 }}>{fmtDate(selected.permit_expiry)}</div>
+                      <div style={{ background:'#E2E8F0', borderRadius:99, height:5, overflow:'hidden' }}>
+                        <div style={{ width:pct+'%', height:'100%', background:barColor, borderRadius:99 }} />
+                      </div>
+                      <div className="label-caps" style={{ color:GRAY2, marginTop:5, textAlign:'left' }}>{exp?'פג תוקף':pct+'% נותר'}</div>
                     </div>
-                  ) : null)}
-                  {selected.permit_expiry && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #F9FAFB' }}>
-                      <span style={{ fontSize: 12, color: GRAY }}>⏱ תוקף ויזה</span>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: isExpired(selected.permit_expiry) ? '#DC2626' : isSoon(selected.permit_expiry) ? '#D97706' : DARK }}>
-                        {fmtDate(selected.permit_expiry)} {isExpired(selected.permit_expiry) ? '🔴' : isSoon(selected.permit_expiry) ? '🟡' : ''}
+                  )
+                })()}
+
+                <div style={{ marginTop: 8, fontSize: 11, color: '#CBD5E1', textAlign: 'center' }}>
+                  נרשם {fmtDate(selected.created_at)} · #{selected.id.slice(0,8)}
+                </div>
+              </div>
+            )
+          })()}
+
+          {tab === 'placement' && (() => {
+            const saveField = async (field, val) => {
+              const updates = { [field]: val }
+              if (field === 'placement' && val && !['active','in_treatment'].includes(selected.status)) updates.status = 'active'
+              await onUpdate(selected.id, updates)
+              setSelected(s => ({ ...s, ...updates }))
+            }
+            return (
+              <div className="v2-card fade-in" style={{ padding: '20px 22px' }}>
+                <SectionTitle>🏢 שיבוץ ומעסיק</SectionTitle>
+
+                {/* Current placement banner */}
+                {selected.placement && (
+                  <div style={{ background: '#F0FDF9', border: '1.5px solid #CCFBF1', borderRadius: 12, padding: '14px 16px', marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <div className="label-caps" style={{ color: '#0F766E', marginBottom: 4 }}>שיבוץ נוכחי</div>
+                      <div style={{ fontSize: 17, fontWeight: 800, color: '#134E4A' }}>{selected.placement}</div>
+                      {selected.placement_date && <div style={{ fontSize: 12, color: '#0F766E', marginTop: 3 }}>מתאריך: {fmtDate(selected.placement_date)}</div>}
+                    </div>
+                    <span className="material-symbols-outlined" style={{ fontSize: 28, color: '#5EEAD4' }}>business</span>
+                  </div>
+                )}
+
+                <div className="ie-section">
+                  <div className="ie-section-title">📋 פרטי שיבוץ</div>
+                  <InlineField label="מקום עבודה"    value={selected.placement}       onSave={v => saveField('placement', v)} icon="🏢" emptyText="לא שובץ עדיין" />
+                  <InlineField label="תאריך שיבוץ"   value={selected.placement_date}  onSave={v => saveField('placement_date', v)} type="date" icon="📅" />
+                </div>
+
+                <div className="ie-section">
+                  <div className="ie-section-title">📝 הערות שיבוץ</div>
+                  <InlineTextarea label="" value={selected.placement_notes} onSave={v => saveField('placement_notes', v)} rows={3} emptyText="לחץ להוספת הערות שיבוץ..." />
+                </div>
+
+                {/* Termination info if inactive */}
+                {selected.status === 'inactive' && selected.termination_type && (
+                  <div style={{ background: '#FFF1F2', border: '1.5px solid #FECDD3', borderRadius: 12, padding: '14px 16px', marginTop: 8 }}>
+                    <div className="label-caps" style={{ color: '#BE123C', marginBottom: 10 }}>⭕ סיום העסקה</div>
+                    <InlineField label="סיבת סיום"   value={selected.termination_type} onSave={v => saveField('termination_type', v)} options={[{v:'fired',l:'פיטורין'},{v:'resigned',l:'התפטרות'}]} />
+                    <InlineField label="תאריך סיום"  value={selected.terminated_at}    onSave={v => saveField('terminated_at', v)} type="date" />
+                    <div style={{ display:'flex', justifyContent:'space-between', padding:'8px 10px', borderRadius:9, marginBottom:3 }}>
+                      <span className="ie-label">שימוע</span>
+                      <span style={{ fontSize:13, fontWeight:600, color: selected.hearing_conducted?'#059669':'#DC2626' }}>
+                        {selected.hearing_conducted ? '✅ בוצע' : '❌ לא בוצע'}
                       </span>
                     </div>
-                  )}
-                  <div style={{ marginTop: 10, fontSize: 11, color: '#D1D5DB', textAlign: 'center' }}>נרשם {fmtDate(selected.created_at)} · #{selected.id.slice(0, 8)}</div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {tab === 'placement' && (
-            <div className="v2-card fade-in" style={{ padding: 22 }}>
-              <SectionTitle>🏢 שיבוץ</SectionTitle>
-              {selected.placement && (
-                <div style={{ background: '#F0FDF9', border: '1.5px solid #CCFBF1', borderRadius: 12, padding: '12px 14px', marginBottom: 16 }}>
-                  <div style={{ fontSize: 11, color: '#0F766E', fontWeight: 700, marginBottom: 3, textTransform: 'uppercase' }}>שיבוץ נוכחי</div>
-                  <div style={{ fontSize: 16, fontWeight: 700 }}>{selected.placement}</div>
-                  {selected.placement_date && <div style={{ fontSize: 12, color: GRAY, marginTop: 2 }}>מתאריך: {fmtDate(selected.placement_date)}</div>}
-                </div>
-              )}
-              {!editMode && <button className="v2-btn v2-btn-ghost" style={{ marginBottom: 14, fontSize: 13 }} onClick={() => { setForm({ ...selected }); setEditMode(true) }}>✏️ ערוך שיבוץ</button>}
-              {editMode && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <Inp label="מקום עבודה" value={form.placement} onChange={v => set('placement', v)} />
-                  <div><label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: GRAY, marginBottom: 5 }}>תאריך שיבוץ</label><input type="date" value={form.placement_date || ''} onChange={e => set('placement_date', e.target.value)} className="v2-input" /></div>
-                  <Inp label="הערות" value={form.placement_notes} onChange={v => set('placement_notes', v)} rows={3} />
-                  <button className="v2-btn v2-btn-primary" onClick={async () => {
-                    setSaving(true)
-                    const updates = { placement: form.placement, placement_date: form.placement_date || null, placement_notes: form.placement_notes }
-                    // Auto-promote to worker when placement assigned
-                    if (form.placement && !['active','in_treatment'].includes(selected.status)) {
-                      updates.status = 'active'
-                    }
-                    await onUpdate(selected.id, updates)
-                    setSelected(s => ({ ...s, ...updates }))
-                    setSaving(false); setEditMode(false)
-                    if (updates.status === 'active') alert('✅ העובד שובץ והועבר אוטומטית למודול עובדים')
-                  }}>
-                    {saving ? 'שומר...' : '💾 שמור שיבוץ'}
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+                  </div>
+                )}
+              </div>
+            )
+          })()}
 
           {tab === 'docs' && (
             <div className="v2-card fade-in" style={{ padding: 22 }}>
@@ -921,72 +1047,37 @@ function WorkersModule({ candidates, onUpdate, onDelete, currentUser }) {
           )}
 
 
-          {tab === 'finances' && (
-            <div className="v2-card fade-in" style={{ padding: 22 }}>
-              <SectionTitle action={
-                editMode
-                  ? <button className="v2-btn v2-btn-primary" style={{ fontSize: 13 }} onClick={save}>{saving ? 'שומר...' : '💾 שמור'}</button>
-                  : <button className="v2-btn v2-btn-ghost" style={{ fontSize: 13 }} onClick={() => { setForm({ ...selected }); setEditMode(true) }}>✏️ ערוך</button>
-              }>💰 פרטים פיננסיים</SectionTitle>
+          {tab === 'finances' && (() => {
+            const saveField = async (field, val) => {
+              const updates = { [field]: val }
+              await onUpdate(selected.id, updates)
+              setSelected(s => ({ ...s, ...updates }))
+            }
+            return (
+              <div className="v2-card fade-in" style={{ padding: '20px 22px' }}>
+                <SectionTitle>💰 פרטים פיננסיים</SectionTitle>
 
-              {/* Bank account */}
-              <div style={{ marginBottom: 20 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: GRAY, letterSpacing: '.5px', textTransform: 'uppercase', marginBottom: 12 }}>🏦 חשבון בנק</div>
-                {editMode ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <Inp label="שם הבנק" value={form.bank_name} onChange={v => set('bank_name', v)} />
-                    <Inp label="מספר סניף" value={form.bank_branch} onChange={v => set('bank_branch', v)} />
-                    <Inp label="מספר חשבון" value={form.bank_account} onChange={v => set('bank_account', v)} />
-                    <Inp label="שם בעל החשבון" value={form.bank_holder_name} onChange={v => set('bank_holder_name', v)} />
-                  </div>
-                ) : (
-                  <div>
-                    {[['🏦', 'שם הבנק', selected.bank_name], ['🔢', 'מספר סניף', selected.bank_branch], ['💳', 'מספר חשבון', selected.bank_account], ['👤', 'שם בעל החשבון', selected.bank_holder_name]].map(([icon, label, val]) => val ? (
-                      <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #F9FAFB' }}>
-                        <span style={{ fontSize: 12, color: GRAY }}>{icon} {label}</span>
-                        <span style={{ fontSize: 13, color: DARK, fontWeight: 500 }}>{val}</span>
-                      </div>
-                    ) : null)}
-                    {!selected.bank_name && !selected.bank_account && (
-                      <div style={{ textAlign: 'center', padding: '20px 0', color: '#D1D5DB', fontSize: 13 }}>לא הוזנו פרטי בנק</div>
-                    )}
-                  </div>
-                )}
-              </div>
+                <div className="ie-section">
+                  <div className="ie-section-title">🏦 חשבון בנק</div>
+                  <InlineField label="שם הבנק"         value={selected.bank_name}        onSave={v => saveField('bank_name', v)} icon="🏦" />
+                  <InlineField label="מספר סניף"       value={selected.bank_branch}       onSave={v => saveField('bank_branch', v)} icon="🔢" />
+                  <InlineField label="מספר חשבון"      value={selected.bank_account}      onSave={v => saveField('bank_account', v)} icon="💳" />
+                  <InlineField label="שם בעל החשבון"   value={selected.bank_holder_name}  onSave={v => saveField('bank_holder_name', v)} icon="👤" />
+                </div>
 
-              {/* Deposit */}
-              <div style={{ background: '#FFFBEB', border: '1.5px solid #FDE68A', borderRadius: 12, padding: '16px 18px', marginBottom: 20 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#B45309', letterSpacing: '.5px', textTransform: 'uppercase', marginBottom: 12 }}>🔒 חשבון פקדון</div>
-                {editMode ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <Inp label="סכום פקדון (₪)" value={form.deposit_amount} onChange={v => set('deposit_amount', v)} type="number" />
-                    <div style={{ gridColumn: '1/-1' }}><Inp label="הערות פקדון" value={form.deposit_notes} onChange={v => set('deposit_notes', v)} rows={2} /></div>
-                  </div>
-                ) : (
-                  <div>
-                    {selected.deposit_amount && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(0,0,0,.06)' }}>
-                        <span style={{ fontSize: 12, color: '#92400E' }}>💰 סכום</span>
-                        <span style={{ fontSize: 15, fontWeight: 800, color: '#92400E' }}>₪{Number(selected.deposit_amount).toLocaleString()}</span>
-                      </div>
-                    )}
-                    {selected.deposit_notes && (
-                      <div style={{ fontSize: 13, color: '#78350F', lineHeight: 1.6, marginTop: 8 }}>{selected.deposit_notes}</div>
-                    )}
-                    {!selected.deposit_amount && !selected.deposit_notes && (
-                      <div style={{ textAlign: 'center', color: '#D97706', fontSize: 13 }}>לא הוזן פקדון</div>
-                    )}
-                  </div>
-                )}
-              </div>
+                <div style={{ background: '#FFFBEB', border: '1.5px solid #FDE68A', borderRadius: 12, padding: '14px 16px', marginBottom: 14 }}>
+                  <div className="ie-section-title" style={{ color: '#B45309' }}>🔒 חשבון פקדון</div>
+                  <InlineField label="סכום פקדון (₪)"  value={selected.deposit_amount}   onSave={v => saveField('deposit_amount', v)} type="number" icon="💰" />
+                  <InlineTextarea label="הערות פקדון"  value={selected.deposit_notes}    onSave={v => saveField('deposit_notes', v)} rows={2} />
+                </div>
 
-              {/* Housing assignment */}
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: GRAY, letterSpacing: '.5px', textTransform: 'uppercase', marginBottom: 12 }}>🏠 שיבוץ למגורים</div>
-                <ApartmentLink candidateId={selected.id} currentApartmentId={selected.apartment_id} onUpdate={(aptId, aptName) => { onUpdate(selected.id, { apartment_id: aptId }); setSelected(s => ({ ...s, apartment_id: aptId })) }} />
+                <div>
+                  <div className="ie-section-title" style={{ padding:'6px 0 8px' }}>🏠 שיבוץ למגורים</div>
+                  <ApartmentLink candidateId={selected.id} currentApartmentId={selected.apartment_id} onUpdate={(aptId) => { onUpdate(selected.id, { apartment_id: aptId }); setSelected(s => ({ ...s, apartment_id: aptId })) }} />
+                </div>
               </div>
-            </div>
-          )}
+            )
+          })()}
 
           {tab === 'events' && (
             <div className="v2-card fade-in" style={{ padding: 22 }}>
@@ -2469,6 +2560,105 @@ function TopBar({ module, currentUser, onRefresh, tasks = [] }) {
         title={currentUser}>
         {currentUser?.[0] || 'א'}
       </div>
+    </div>
+  )
+}
+
+// ─── INLINE EDIT COMPONENTS ─────────────────────────────────────────────────
+// InlineField — shows value; click to edit; saves on blur/Enter
+function InlineField({ label, value, onSave, type = 'text', options, placeholder, icon, emptyText = 'לא הוזן' }) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(value || '')
+  const inputRef = useRef()
+
+  useEffect(() => { if (editing) { setDraft(value || ''); setTimeout(() => inputRef.current?.focus(), 30) } }, [editing])
+
+  const save = async () => {
+    setEditing(false)
+    const trimmed = String(draft).trim()
+    if (trimmed !== String(value || '').trim()) await onSave(trimmed || null)
+  }
+
+  const displayVal = (() => {
+    if (!value && value !== 0) return null
+    if (options) { const opt = options.find(o => o.v === value); return opt ? opt.l || opt.he : value }
+    if (type === 'date') return new Date(value).toLocaleDateString('he-IL')
+    return value
+  })()
+
+  return (
+    <div className="ie-row">
+      {/* Label */}
+      <span className="ie-label">{icon && <span style={{ marginLeft: 5 }}>{icon}</span>}{label}</span>
+
+      {/* Value / Input */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end', minWidth: 0 }}>
+        {editing ? (
+          options ? (
+            <select ref={inputRef} value={draft} onChange={e => setDraft(e.target.value)}
+              onBlur={save} className="ie-input" style={{ maxWidth: 200 }}>
+              <option value="">— בחר —</option>
+              {options.map(o => <option key={o.v} value={o.v}>{o.l || o.he}</option>)}
+            </select>
+          ) : (
+            <input ref={inputRef} type={type} value={draft}
+              onChange={e => setDraft(e.target.value)}
+              onBlur={save}
+              onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setEditing(false) }}
+              placeholder={placeholder || label}
+              className="ie-input" style={{ maxWidth: 220 }} />
+          )
+        ) : (
+          <>
+            <span className="ie-value" style={{ color: displayVal ? '#0F172A' : '#CBD5E1', fontWeight: displayVal ? 500 : 400 }}>
+              {displayVal || emptyText}
+            </span>
+            <button className="ie-eb" onClick={() => setEditing(true)} title={'ערוך ' + label}>
+              <span className="material-symbols-outlined" style={{ fontSize: 14 }}>edit</span>
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// InlineTextarea — multi-line inline edit
+function InlineTextarea({ label, value, onSave, rows = 3, emptyText = 'לחץ להוספה...' }) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(value || '')
+  const ref = useRef()
+
+  useEffect(() => { if (editing) { setDraft(value || ''); setTimeout(() => ref.current?.focus(), 30) } }, [editing])
+
+  const save = async () => {
+    setEditing(false)
+    const trimmed = draft.trim()
+    if (trimmed !== (value || '').trim()) await onSave(trimmed || null)
+  }
+
+  return (
+    <div style={{ marginBottom: 6 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+        <span className="ie-label">{label}</span>
+        {!editing && <button className="ie-eb" style={{ opacity: 1, fontSize: 11 }} onClick={() => setEditing(true)}>
+          <span className="material-symbols-outlined" style={{ fontSize: 13 }}>edit</span>
+        </button>}
+      </div>
+      {editing ? (
+        <div>
+          <textarea ref={ref} value={draft} onChange={e => setDraft(e.target.value)} rows={rows}
+            className="ie-input" style={{ resize: 'vertical', lineHeight: 1.6 }} />
+          <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+            <button className="v2-btn v2-btn-primary" style={{ fontSize: 12, padding: '6px 14px' }} onClick={save}>💾 שמור</button>
+            <button className="v2-btn v2-btn-ghost" style={{ fontSize: 12 }} onClick={() => setEditing(false)}>ביטול</button>
+          </div>
+        </div>
+      ) : (
+        <div onClick={() => setEditing(true)} style={{ fontSize: 13, color: value ? '#0F172A' : '#CBD5E1', lineHeight: 1.7, cursor: 'pointer', padding: '6px 8px', borderRadius: 7, background: '#F8FAFC', border: '1px dashed #E2E8F0', minHeight: 36 }}>
+          {value || emptyText}
+        </div>
+      )}
     </div>
   )
 }
