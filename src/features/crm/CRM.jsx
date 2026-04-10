@@ -9,6 +9,7 @@ import { supabase } from '../../lib/supabase.js'
 
 // ─── DESIGN TOKENS 2026 ──────────────────────────────────────────────────────
 const F       = "'Heebo', 'Inter', -apple-system, 'Arial Hebrew', Arial, sans-serif"
+const FH      = "'Manrope', 'Heebo', sans-serif"
 const BLUE    = '#0066FF'
 const BLUE_D  = '#0052CC'
 const BLUE_L  = 'rgba(0,102,255,0.07)'
@@ -55,7 +56,9 @@ function useStyles() {
     const s = document.createElement('style')
     s.id = 'crm-v2-styles'
     s.textContent = `
-      @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800;900&family=Heebo:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+      .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20; font-size: 16px; line-height: 1; }
 
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
       html { font-size: 14px; }
@@ -107,18 +110,21 @@ function useStyles() {
 
       /* ── SIDEBAR NAV ─────────────────── */
       .nav-btn {
-        display: flex; align-items: center; gap: 10px; padding: 9px 11px;
-        border-radius: 9px; cursor: pointer;
-        color: rgba(255,255,255,.38); font-size: 13px; font-weight: 500;
-        border: none; background: none; font-family: inherit;
-        width: 100%; text-align: right; transition: all .13s; letter-spacing: -.1px;
+        display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+        border-radius: 8px; cursor: pointer;
+        color: #94A3B8; font-size: 11px; font-weight: 700;
+        font-family: 'Manrope', inherit;
+        letter-spacing: 0.05em; text-transform: uppercase;
+        border: none; background: none;
+        width: 100%; text-align: right; transition: all .15s;
+        position: relative;
       }
-      .nav-btn:hover { background: rgba(255,255,255,.058); color: rgba(255,255,255,.75); }
+      .nav-btn:hover { background: #F8FAFC; color: #1E293B; }
       .nav-btn.active {
-        background: linear-gradient(135deg, rgba(0,102,255,.22), rgba(0,102,255,.12));
-        color: #7BB8FF; font-weight: 700;
-        box-shadow: inset 1px 0 0 0 rgba(0,102,255,.5);
+        background: #EFF6FF; color: #2563EB; 
+        border-left: 2px solid #2563EB;
       }
+      .nav-btn .nav-icon { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
       .nav-icon {
         width: 19px; height: 19px; display: flex; align-items: center;
         justify-content: center; font-size: 14px; flex-shrink: 0; opacity: .6;
@@ -1007,7 +1013,7 @@ function WorkersModule({ candidates, onUpdate, onDelete, currentUser }) {
     <div style={{ padding: '24px 28px' }} className="fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, flexWrap: 'wrap', gap: 10 }}>
         <div>
-          <h3 style={{ fontSize: 20, fontWeight: 800, color: DARK, letterSpacing: '-0.5px', lineHeight: 1 }}>עובדים</h3>
+          <h3 className="headline" style={{ fontSize: 20, fontWeight: 800, color: DARK, letterSpacing: '-0.5px', lineHeight: 1 }}>עובדים</h3>
           <div style={{ fontSize: 12, color: GRAY, marginTop: 2 }}>{filtered.length} רשומות</div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -1982,48 +1988,60 @@ function EventsTab({ candidateId, currentUser }) {
           <div style={{ fontSize: 13, color: GRAY }}>לחץ "+ הוסף אירוע" כדי לתעד את הראשון</div>
         </div>
       ) : (
-        <div style={{ position: 'relative' }}>
-          {/* Timeline line */}
-          <div style={{ position: 'absolute', right: 21, top: 0, bottom: 0, width: 2, background: '#E5E5EA' }} />
-
+        <div className="timeline-wrap">
           {events.map((ev, i) => {
             const t = typeInfo(ev.event_type)
+            const isFirst = i === 0
             return (
-              <div key={ev.id} style={{ display: 'flex', gap: 14, marginBottom: 16, position: 'relative' }}>
-                {/* Icon bubble */}
-                <div style={{ flexShrink: 0, width: 44, height: 44, borderRadius: '50%', background: t.bg, border: '2px solid ' + t.color + '40', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, zIndex: 1, boxShadow: '0 2px 8px rgba(0,0,0,.08)' }}>
-                  {t.icon}
+              <div key={ev.id} className="timeline-item">
+                {/* Dot */}
+                <div className={'timeline-dot ' + (isFirst ? 'timeline-dot-done' : 'timeline-dot-pending')}
+                  style={{ marginTop: 2 }}>
+                  {isFirst
+                    ? <span className="material-symbols-outlined" style={{ fontSize: 13, color: WHITE, fontVariationSettings: "'FILL' 1, 'wght' 700" }}>check</span>
+                    : <div style={{ width: 8, height: 8, borderRadius: '50%', background: t.color }} />
+                  }
                 </div>
 
                 {/* Content */}
-                <div style={{ flex: 1, background: WHITE, border: '1.5px solid ' + t.color + '30', borderRadius: 12, padding: '12px 14px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-                    <div>
-                      <span className="badge" style={{ background: t.bg, color: t.color, fontSize: 12, marginLeft: 8 }}>{t.icon} {t.label}</span>
-                      {ev.employer && <span style={{ fontSize: 13, fontWeight: 700, color: DARK }}>🏢 {ev.employer}</span>}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 12, color: GRAY, whiteSpace: 'nowrap' }}>
-                        {new Date(ev.event_date).toLocaleDateString('he-IL', { year: 'numeric', month: 'long', day: 'numeric' })}
-                      </span>
-                      <button onClick={() => setConfirmDel(ev.id)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#FCA5A5', fontSize: 14, padding: '0 2px' }}
-                        onMouseEnter={e => e.currentTarget.style.color = '#EF4444'} onMouseLeave={e => e.currentTarget.style.color = '#FCA5A5'}>
-                        ✕
-                      </button>
-                    </div>
+                <div style={{ flex: 1, paddingBottom: 4 }}>
+                  {/* Date + type */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <span className="label-caps" style={{ color: GRAY2 }}>
+                      {new Date(ev.event_date).toLocaleDateString('he-IL', { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </span>
+                    <button onClick={() => setConfirmDel(ev.id)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#FCA5A5', fontSize: 13, padding: '0 2px', lineHeight: 1 }}
+                      onMouseEnter={e => e.currentTarget.style.color = '#EF4444'}
+                      onMouseLeave={e => e.currentTarget.style.color = '#FCA5A5'}>✕</button>
                   </div>
 
-                  {ev.description && (
-                    <div style={{ fontSize: 13, color: DARK, lineHeight: 1.7, direction: 'rtl', marginTop: 4 }}>{ev.description}</div>
+                  {/* Event type badge */}
+                  <span className="label-tag" style={{ background: t.bg, color: t.color, marginBottom: 6 }}>{t.icon} {t.label}</span>
+
+                  {/* Employer */}
+                  {ev.employer && (
+                    <p style={{ fontSize: 14, fontWeight: 600, color: DARK, margin: '6px 0 2px' }}>{ev.employer}</p>
                   )}
 
+                  {/* Description */}
+                  {ev.description && (
+                    <p style={{ fontSize: 13, color: GRAY, lineHeight: 1.65, direction: 'rtl' }}>{ev.description}</p>
+                  )}
+
+                  {/* Footer */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
-                    {ev.created_by && <span style={{ fontSize: 11, color: GRAY }}>👤 הוזן ע"י {ev.created_by}</span>}
+                    {ev.created_by && (
+                      <span style={{ fontSize: 11, color: GRAY2 }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 12, verticalAlign: 'middle', marginLeft: 3 }}>person</span>
+                        {ev.created_by}
+                      </span>
+                    )}
                     {ev.doc_path && (
                       <button onClick={() => viewDoc(ev.doc_path)}
-                        style={{ background: LGRAY, border: '1px solid ' + BORDER, borderRadius: 8, padding: '4px 10px', fontSize: 12, color: DARK, cursor: 'pointer', fontFamily: F, fontWeight: 600 }}>
-                        📎 מסמך מצורף — צפה
+                        style={{ display: 'flex', alignItems: 'center', gap: 5, background: LGRAY, border: '1px solid ' + BORDER, borderRadius: 8, padding: '4px 10px', fontSize: 12, color: DARK, cursor: 'pointer', fontFamily: F, fontWeight: 600 }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 14 }}>attach_file</span>
+                        מסמך מצורף
                       </button>
                     )}
                   </div>
@@ -2393,9 +2411,9 @@ function TopBar({ module, currentUser, onRefresh, tasks = [] }) {
 
       {/* Breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 120 }}>
-        <span style={{ fontSize: 13, color: GRAY }}>{NAV_LABELS[module] || ''}</span>
-        <span style={{ fontSize: 13, color: GRAY2 }}>›</span>
-        <span style={{ fontSize: 13, fontWeight: 600, color: DARK }}>{currentUser}</span>
+        <span className="label-caps" style={{ color: GRAY }}>{NAV_LABELS[module] || ''}</span>
+        <span style={{ color: GRAY2, fontSize: 12 }}>›</span>
+        <span className="label-caps" style={{ color: DARK }}>{currentUser}</span>
       </div>
 
       {/* Search — centered */}
@@ -2580,8 +2598,8 @@ export default function CRM({ session, onLogout }) {
               </svg>
             </div>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 800, color: DARK, letterSpacing: '-.3px', lineHeight: 1.15 }}>Ozhadar</div>
-              <div style={{ fontSize: 10, color: GRAY2, fontWeight: 500, letterSpacing: '.2px' }}>CRM</div>
+              <div className="headline" style={{ fontSize: 15, fontWeight: 900, color: DARK, letterSpacing: '-.5px', lineHeight: 1.1 }}>Ozhadar</div>
+              <div className="label-caps" style={{ color: GRAY2, letterSpacing: '.15em', marginTop: 1 }}>CRM · Recruitment</div>
             </div>
           </div>
         </div>
