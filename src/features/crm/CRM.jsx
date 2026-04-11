@@ -688,12 +688,12 @@ function ApplicantsModule({ candidates, onUpdate, onDelete, onAdd, currentUser }
       {showAddModal && (
         <ManualAddModal currentUser={currentUser} onClose={() => setShowAddModal(false)}
           onSave={async (fields, notesText) => {
-            if (onAdd) {
-              const newCand = await onAdd(fields)
-              if (notesText && newCand?.id) {
-                await insertNote({ candidate_id: newCand.id, text: notesText,
-                  note_date: new Date().toISOString().split('T')[0], created_by: currentUser })
-              }
+            if (!onAdd) throw new Error('onAdd prop חסר — פנה לתמיכה')
+            const newCand = await onAdd(fields)
+            if (!newCand) throw new Error('השמירה לא החזירה נתונים')
+            if (notesText && newCand.id) {
+              await insertNote({ candidate_id: newCand.id, text: notesText,
+                note_date: new Date().toISOString().split('T')[0], created_by: currentUser })
             }
           }}
         />
@@ -1155,14 +1155,13 @@ function WorkersModule({ candidates, onUpdate, onDelete, onAdd, currentUser }) {
       {showAddWorker && (
         <ManualAddModal currentUser={currentUser} onClose={() => setShowAddWorker(false)}
           onSave={async (fields, notesText) => {
-            if (onAdd) {
-              // Workers default to 'new' if not set — auto promote when placement given
-              if (!fields.status) fields.status = 'new'
-              const newWorker = await onAdd(fields)
-              if (notesText && newWorker?.id) {
-                await insertNote({ candidate_id: newWorker.id, text: notesText,
-                  note_date: new Date().toISOString().split('T')[0], created_by: currentUser })
-              }
+            if (!onAdd) throw new Error('onAdd prop חסר')
+            if (!fields.status) fields.status = 'new'
+            const newWorker = await onAdd(fields)
+            if (!newWorker) throw new Error('השמירה לא החזירה נתונים')
+            if (notesText && newWorker.id) {
+              await insertNote({ candidate_id: newWorker.id, text: notesText,
+                note_date: new Date().toISOString().split('T')[0], created_by: currentUser })
             }
           }}
         />
@@ -3590,9 +3589,43 @@ export default function CRM({ session, onLogout }) {
         {/* Module content */}
         {module === 'dashboard' && <Dashboard candidates={candidates} tasks={tasks} apartments={apartments} onNavigate={setModule} currentUser={currentUser} />}
         {module === 'applicants' && <ApplicantsModule candidates={candidates} onUpdate={update} onDelete={remove} currentUser={currentUser}
-          onAdd={async (fields) => { const c = await insertCandidate({ ...fields, created_by: currentUser }); setCandidates(p => [c, ...p]); return c }} />}
+          onAdd={async (fields) => {
+            try {
+              // Strip any fields that might not exist in the DB schema
+              const safe = { ...fields, created_by: currentUser }
+              const KNOWN = ['full_name_he','full_name_en','phone','email','country','city','dob',
+                'sector','profession','experience','permit_type','permit_number','permit_expiry',
+                'entry_date','current_employer','last_employer','status','form_lang','created_by',
+                'placement','placement_date','placement_notes','work_start_date',
+                'permit_expiry','notes_text']
+              Object.keys(safe).forEach(k => { if (!KNOWN.includes(k)) delete safe[k] })
+              const c = await insertCandidate(safe)
+              setCandidates(p => [c, ...p])
+              return c
+            } catch(err) {
+              console.error('insertCandidate error:', err)
+              throw new Error(err.message || 'שגיאה בשמירה ל-Supabase')
+            }
+          }} />}
         {module === 'workers'    && <WorkersModule    candidates={candidates} onUpdate={update} onDelete={remove} currentUser={currentUser}
-          onAdd={async (fields) => { const c = await insertCandidate({ ...fields, created_by: currentUser }); setCandidates(p => [c, ...p]); return c }} />}
+          onAdd={async (fields) => {
+            try {
+              // Strip any fields that might not exist in the DB schema
+              const safe = { ...fields, created_by: currentUser }
+              const KNOWN = ['full_name_he','full_name_en','phone','email','country','city','dob',
+                'sector','profession','experience','permit_type','permit_number','permit_expiry',
+                'entry_date','current_employer','last_employer','status','form_lang','created_by',
+                'placement','placement_date','placement_notes','work_start_date',
+                'permit_expiry','notes_text']
+              Object.keys(safe).forEach(k => { if (!KNOWN.includes(k)) delete safe[k] })
+              const c = await insertCandidate(safe)
+              setCandidates(p => [c, ...p])
+              return c
+            } catch(err) {
+              console.error('insertCandidate error:', err)
+              throw new Error(err.message || 'שגיאה בשמירה ל-Supabase')
+            }
+          }} />}
         {module === 'apartments' && <ApartmentsModule candidates={candidates} currentUser={currentUser} />}
         {module === 'tasks'      && <TasksModule      candidates={candidates} currentUser={currentUser} />}
         {module === 'documents'  && <DocumentsModule  candidates={candidates} currentUser={currentUser} />}
