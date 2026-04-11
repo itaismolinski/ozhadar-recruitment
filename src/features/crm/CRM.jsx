@@ -3591,13 +3591,12 @@ export default function CRM({ session, onLogout }) {
         {module === 'applicants' && <ApplicantsModule candidates={candidates} onUpdate={update} onDelete={remove} currentUser={currentUser}
           onAdd={async (fields) => {
             try {
-              // Strip any fields that might not exist in the DB schema
-              const safe = { ...fields, created_by: currentUser }
+              // Strip fields not in candidates schema
+              const safe = { ...fields }
               const KNOWN = ['full_name_he','full_name_en','phone','email','country','city','dob',
                 'sector','profession','experience','permit_type','permit_number','permit_expiry',
-                'entry_date','current_employer','last_employer','status','form_lang','created_by',
-                'placement','placement_date','placement_notes','work_start_date',
-                'permit_expiry','notes_text']
+                'entry_date','current_employer','last_employer','status','form_lang',
+                'placement','placement_date','placement_notes','work_start_date']
               Object.keys(safe).forEach(k => { if (!KNOWN.includes(k)) delete safe[k] })
               const c = await insertCandidate(safe)
               setCandidates(p => [c, ...p])
@@ -3610,13 +3609,12 @@ export default function CRM({ session, onLogout }) {
         {module === 'workers'    && <WorkersModule    candidates={candidates} onUpdate={update} onDelete={remove} currentUser={currentUser}
           onAdd={async (fields) => {
             try {
-              // Strip any fields that might not exist in the DB schema
-              const safe = { ...fields, created_by: currentUser }
+              // Strip fields not in candidates schema
+              const safe = { ...fields }
               const KNOWN = ['full_name_he','full_name_en','phone','email','country','city','dob',
                 'sector','profession','experience','permit_type','permit_number','permit_expiry',
-                'entry_date','current_employer','last_employer','status','form_lang','created_by',
-                'placement','placement_date','placement_notes','work_start_date',
-                'permit_expiry','notes_text']
+                'entry_date','current_employer','last_employer','status','form_lang',
+                'placement','placement_date','placement_notes','work_start_date']
               Object.keys(safe).forEach(k => { if (!KNOWN.includes(k)) delete safe[k] })
               const c = await insertCandidate(safe)
               setCandidates(p => [c, ...p])
