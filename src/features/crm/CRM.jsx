@@ -3589,7 +3589,8 @@ export default function CRM({ session, onLogout }) {
 
         {/* Module content */}
         {module === 'dashboard' && <Dashboard candidates={candidates} tasks={tasks} apartments={apartments} onNavigate={setModule} currentUser={currentUser} />}
-        {module === 'applicants' && <ApplicantsModule candidates={candidates} onUpdate={update} onDelete={remove} currentUser={currentUser} />}
+        {module === 'applicants' && <ApplicantsModule candidates={candidates} onUpdate={update} onDelete={remove} currentUser={currentUser}
+          onAdd={async (fields) => { const c = await insertCandidate({ ...fields, created_by: currentUser }); setCandidates(p => [c, ...p]); return c }} />}
         {module === 'workers'    && <WorkersModule    candidates={candidates} onUpdate={update} onDelete={remove} currentUser={currentUser}
           onAdd={async (fields) => { const c = await insertCandidate({ ...fields, created_by: currentUser }); setCandidates(p => [c, ...p]); return c }} />}
         {module === 'apartments' && <ApartmentsModule candidates={candidates} currentUser={currentUser} />}
