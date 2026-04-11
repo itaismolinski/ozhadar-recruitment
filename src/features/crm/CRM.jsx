@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
-  fetchCandidates, updateCandidate, deleteCandidate, getDocUrl, uploadDoc,
+  fetchCandidates, insertCandidate, updateCandidate, deleteCandidate, getDocUrl, uploadDoc,
   fetchTasks, insertTask, updateTask, deleteTask,
   fetchNotes, insertNote, deleteNote,
 } from '../../lib/supabase.js'
@@ -300,6 +300,16 @@ function useStyles() {
       .pg-btn:hover { background:#F1F5F9; color:#0F172A; }
       .pg-btn.on { background:#0066FF; color:#FFF; border-color:#0066FF; box-shadow:0 2px 8px rgba(0,102,255,.3); }
       .pg-btn:disabled { opacity:.35; cursor:not-allowed; }
+      .grid-table { width:100%; border-collapse:collapse; font-size:12px; }
+      .grid-table thead th { position:sticky; top:0; z-index:10; background:#F8FAFC; border-bottom:2px solid #E2E8F0; border-left:1px solid #E2E8F0; padding:9px 12px; text-align:right; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#64748B; font-family:'Manrope',inherit; white-space:nowrap; cursor:pointer; user-select:none; transition:background .13s; }
+      .grid-table thead th:hover { background:#F1F5F9; color:#0F172A; }
+      .grid-table tbody tr { border-bottom:1px solid #F1F5F9; transition:background .08s; cursor:pointer; }
+      .grid-table tbody tr:hover td { background:#F0F4FF !important; }
+      .grid-table tbody td { padding:9px 12px; border-left:1px solid #F1F5F9; color:#334155; vertical-align:middle; white-space:nowrap; }
+      .grid-table tbody td:first-child { position:sticky; right:0; z-index:5; border-left:2px solid #E2E8F0; font-weight:700; }
+      .grid-wrap { overflow:auto; max-height:calc(100vh - 280px); }
+      .grid-wrap::-webkit-scrollbar { width:5px; height:5px; }
+      .grid-wrap::-webkit-scrollbar-thumb { background:#CBD5E1; border-radius:99px; }
       .bulk-btn { padding:6px 12px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; font-size:10px; font-weight:700; color:#64748B; cursor:pointer; letter-spacing:.05em; text-transform:uppercase; font-family:'Manrope',inherit; transition:all .13s; display:flex; align-items:center; gap:5px; }
       .bulk-btn:hover { background:#F1F5F9; color:#0F172A; border-color:#CBD5E1; }
       .bulk-btn.del:hover { background:#FEF2F2; color:#DC2626; border-color:#FECACA; }
@@ -332,6 +342,16 @@ function useStyles() {
       .pg-btn:hover { background:#F1F5F9; color:#0F172A; }
       .pg-btn.on { background:#0066FF; color:#FFF; border-color:#0066FF; box-shadow:0 2px 8px rgba(0,102,255,.3); }
       .pg-btn:disabled { opacity:.35; cursor:not-allowed; }
+      .grid-table { width:100%; border-collapse:collapse; font-size:12px; }
+      .grid-table thead th { position:sticky; top:0; z-index:10; background:#F8FAFC; border-bottom:2px solid #E2E8F0; border-left:1px solid #E2E8F0; padding:9px 12px; text-align:right; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#64748B; font-family:'Manrope',inherit; white-space:nowrap; cursor:pointer; user-select:none; transition:background .13s; }
+      .grid-table thead th:hover { background:#F1F5F9; color:#0F172A; }
+      .grid-table tbody tr { border-bottom:1px solid #F1F5F9; transition:background .08s; cursor:pointer; }
+      .grid-table tbody tr:hover td { background:#F0F4FF !important; }
+      .grid-table tbody td { padding:9px 12px; border-left:1px solid #F1F5F9; color:#334155; vertical-align:middle; white-space:nowrap; }
+      .grid-table tbody td:first-child { position:sticky; right:0; z-index:5; border-left:2px solid #E2E8F0; font-weight:700; }
+      .grid-wrap { overflow:auto; max-height:calc(100vh - 280px); }
+      .grid-wrap::-webkit-scrollbar { width:5px; height:5px; }
+      .grid-wrap::-webkit-scrollbar-thumb { background:#CBD5E1; border-radius:99px; }
       .bulk-btn { padding:6px 12px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; font-size:10px; font-weight:700; color:#64748B; cursor:pointer; letter-spacing:.05em; text-transform:uppercase; font-family:'Manrope',inherit; transition:all .13s; display:flex; align-items:center; gap:5px; }
       .bulk-btn:hover { background:#F1F5F9; color:#0F172A; border-color:#CBD5E1; }
       .bulk-btn.del:hover { background:#FEF2F2; color:#DC2626; border-color:#FECACA; }
@@ -539,8 +559,9 @@ function Dashboard({ candidates, tasks, apartments, onNavigate, currentUser }) {
 }
 
 // ─── APPLICANTS (מועמדים לעבודה) ──────────────────────────────────────────────
-function ApplicantsModule({ candidates, onUpdate, onDelete, currentUser }) {
+function ApplicantsModule({ candidates, onUpdate, onDelete, onAdd, currentUser }) {
   const [search, setSearch] = useState('')
+  const [showAddModal, setShowAddModal] = useState(false)
   const [filterStatus, setFilterStatus] = useState('')
   const [filterSector, setFilterSector] = useState('')
   const [selected, setSelected] = useState(null)
@@ -2474,6 +2495,344 @@ function ReportsModule({ candidates }) {
   )
 }
 
+
+// ─── PAGINATION ───────────────────────────────────────────────────────────────
+function Pagination({ total, perPage, page, setPage }) {
+  const totalPages = Math.ceil(total / perPage)
+  if (totalPages <= 1) return null
+  const start = (page - 1) * perPage + 1
+  const end = Math.min(page * perPage, total)
+  const pages = []
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= page-1 && i <= page+1)) pages.push(i)
+    else if (pages[pages.length-1] !== '…') pages.push('…')
+  }
+  return (
+    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'12px 18px', borderTop:'1px solid #F1F5F9' }}>
+      <span className="label-caps" style={{ color:'#94A3B8' }}>מציג {start}–{end} מתוך {total}</span>
+      <div style={{ display:'flex', gap:4 }}>
+        <button className="pg-btn" onClick={() => setPage(p => Math.max(1,p-1))} disabled={page===1}>‹</button>
+        {pages.map((p,i) => p === '…'
+          ? <span key={'e'+i} style={{ width:30, display:'flex', alignItems:'center', justifyContent:'center', color:'#94A3B8', fontSize:12 }}>…</span>
+          : <button key={p} className={'pg-btn'+(p===page?' on':'')} onClick={() => setPage(p)}>{p}</button>
+        )}
+        <button className="pg-btn" onClick={() => setPage(p => Math.min(totalPages,p+1))} disabled={page===totalPages}>›</button>
+      </div>
+    </div>
+  )
+}
+
+// ─── BULK BAR ─────────────────────────────────────────────────────────────────
+function BulkBar({ selected, onExport, onDelete, onClear, label='פריטים' }) {
+  if (!selected || selected.size === 0) return null
+  return (
+    <div className="fade-in-fast" style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 14px', background:'#EFF6FF', border:'1px solid #BFDBFE', borderRadius:10, marginBottom:12 }}>
+      <span style={{ fontSize:13, fontWeight:700, color:'#1D4ED8' }}>{selected.size} {label} נבחרו</span>
+      <div style={{ flex:1 }} />
+      {onExport && <button className="bulk-btn" onClick={onExport}><span className="material-symbols-outlined" style={{fontSize:14}}>download</span>ייצוא Excel</button>}
+      {onDelete && <button className="bulk-btn del" onClick={onDelete}><span className="material-symbols-outlined" style={{fontSize:14}}>delete</span>מחיקה</button>}
+      <button className="bulk-btn" onClick={onClear}>✕ ביטול</button>
+    </div>
+  )
+}
+
+// ─── MANUAL ADD CANDIDATE MODAL ───────────────────────────────────────────────
+function ManualAddModal({ onSave, onClose, currentUser }) {
+  const EMPTY = { full_name_he:'', full_name_en:'', phone:'', email:'', country:'', city:'', dob:'', sector:'', profession:'', experience:'', permit_type:'', permit_number:'', permit_expiry:'', entry_date:'', current_employer:'', last_employer:'', notes_text:'', status:'new', form_lang:'manual' }
+  const [form, setForm] = useState(EMPTY)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [step, setStep] = useState(1)
+  const sf = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  const save = async () => {
+    if (!form.full_name_he && !form.full_name_en) { setError('חובה להזין שם'); return }
+    if (!form.phone) { setError('חובה להזין טלפון'); return }
+    setSaving(true); setError('')
+    try {
+      const fields = { ...form }
+      Object.keys(fields).forEach(k => { if (fields[k] === '') fields[k] = null })
+      const notesText = fields.notes_text; delete fields.notes_text
+      await onSave(fields, notesText); onClose()
+    } catch(e) { setError(e.message || 'שגיאה בשמירה'); setSaving(false) }
+  }
+
+  const COUNTRIES = ['סין','אוזבקיסטן','מולדובה','סרי לנקה','הודו','פיליפינים','תאילנד','נפאל','רואנדה','אחר']
+  const Field = ({ label, k, type='text', opts, placeholder }) => (
+    <div style={{ marginBottom:13 }}>
+      <label style={{ display:'block', fontSize:10, fontWeight:700, color:GRAY, marginBottom:5, textTransform:'uppercase', letterSpacing:'.05em', fontFamily:'Manrope,sans-serif' }}>{label}</label>
+      {opts
+        ? <select value={form[k]||''} onChange={e => sf(k, e.target.value)} className="v2-input v2-select" style={{ paddingLeft:28 }}>
+            <option value="">— בחר —</option>
+            {opts.map(o => typeof o === 'string' ? <option key={o} value={o}>{o}</option> : <option key={o.v} value={o.v}>{o.l||o.he||o.v}</option>)}
+          </select>
+        : <input type={type} value={form[k]||''} onChange={e => sf(k, e.target.value)} placeholder={placeholder||''} className="v2-input" />
+      }
+    </div>
+  )
+  const STEPS = ['פרטים אישיים', 'עבודה וויזה', 'הערות']
+
+  return (
+    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:9999, padding:16, fontFamily:F }}>
+      <div style={{ background:WHITE, borderRadius:20, width:'100%', maxWidth:580, maxHeight:'90vh', display:'flex', flexDirection:'column', boxShadow:'0 24px 64px rgba(0,0,0,.2)', border:'1px solid '+BORDER }}>
+        {/* Header */}
+        <div style={{ padding:'20px 24px 16px', borderBottom:'1px solid '+BORDER, display:'flex', alignItems:'center', gap:12, flexShrink:0 }}>
+          <div style={{ width:40, height:40, borderRadius:'50%', background:BLUE_L, display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <span className="material-symbols-outlined" style={{ fontSize:20, color:BLUE }}>person_add</span>
+          </div>
+          <div style={{ flex:1 }}>
+            <div className="headline" style={{ fontSize:17, fontWeight:800, color:DARK }}>הוסף מועמד ידנית</div>
+            <div style={{ fontSize:12, color:GRAY2 }}>הזנה ישירה למערכת ATLAS</div>
+          </div>
+          <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', color:GRAY, fontSize:20, lineHeight:1, padding:4 }}>✕</button>
+        </div>
+        {/* Steps */}
+        <div style={{ padding:'14px 24px 0', display:'flex', gap:8, flexShrink:0 }}>
+          {STEPS.map((s,i) => (
+            <button key={i} onClick={() => setStep(i+1)}
+              style={{ flex:1, padding:'8px 0', borderRadius:9, border:'none', cursor:'pointer', fontFamily:'Manrope,sans-serif', fontSize:11, fontWeight:700, transition:'all .15s',
+                background:step===i+1?BLUE:step>i+1?'#F0FDF9':LGRAY, color:step===i+1?WHITE:step>i+1?'#0F766E':GRAY }}>
+              {step>i+1?'✓ ':''}{s}
+            </button>
+          ))}
+        </div>
+        {/* Body */}
+        <div style={{ flex:1, overflowY:'auto', padding:'20px 24px' }}>
+          {step === 1 && (
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0 16px' }}>
+              <Field label="שם מלא בעברית *" k="full_name_he" placeholder="ישראל ישראלי" />
+              <Field label="שם מלא באנגלית" k="full_name_en" placeholder="Israel Israeli" />
+              <Field label="טלפון *" k="phone" type="tel" placeholder="050-0000000" />
+              <Field label="אימייל" k="email" type="email" />
+              <Field label="מדינת מוצא" k="country" opts={COUNTRIES} />
+              <Field label="עיר מגורים" k="city" />
+              <Field label="תאריך לידה" k="dob" type="date" />
+            </div>
+          )}
+          {step === 2 && (
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0 16px' }}>
+              <Field label="ענף" k="sector" opts={SECTORS} />
+              <Field label="מקצוע" k="profession" placeholder="בנאי, חשמלאי..." />
+              <Field label="שנות ניסיון" k="experience" type="number" />
+              <Field label="מעסיק נוכחי" k="current_employer" />
+              <Field label="מעסיק אחרון" k="last_employer" />
+              <div />
+              <Field label="סוג ויזה / היתר" k="permit_type" opts={PERMITS} />
+              <Field label="מספר היתר / דרכון" k="permit_number" />
+              <Field label="תוקף ויזה" k="permit_expiry" type="date" />
+              <Field label="תאריך כניסה לישראל" k="entry_date" type="date" />
+            </div>
+          )}
+          {step === 3 && (
+            <div>
+              <div style={{ marginBottom:14 }}>
+                <label style={{ display:'block', fontSize:10, fontWeight:700, color:GRAY, marginBottom:8, textTransform:'uppercase', letterSpacing:'.05em', fontFamily:'Manrope,sans-serif' }}>סטטוס ראשוני</label>
+                <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                  {[{v:'new',l:'🆕 חדש'},{v:'contacted',l:'📞 נוצר קשר'},{v:'interview',l:'🤝 ראיון'}].map(s => (
+                    <button key={s.v} onClick={() => sf('status', s.v)}
+                      style={{ padding:'7px 14px', borderRadius:20, border:'1.5px solid '+(form.status===s.v?BLUE:BORDER), background:form.status===s.v?BLUE_L:WHITE, color:form.status===s.v?BLUE:GRAY, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:F }}>
+                      {s.l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div style={{ marginBottom:14 }}>
+                <label style={{ display:'block', fontSize:10, fontWeight:700, color:GRAY, marginBottom:5, textTransform:'uppercase', letterSpacing:'.05em', fontFamily:'Manrope,sans-serif' }}>הערה ראשונית</label>
+                <textarea value={form.notes_text||''} onChange={e => sf('notes_text', e.target.value)} rows={4} className="v2-input" style={{ resize:'vertical', lineHeight:1.7 }} placeholder="מקור גיוס, כישורים, הערות..." />
+              </div>
+              <div style={{ background:LGRAY, border:'1px solid '+BORDER, borderRadius:12, padding:'14px 16px' }}>
+                <div className="label-caps" style={{ color:GRAY2, marginBottom:8 }}>סיכום לפני שמירה</div>
+                {[[form.full_name_he||form.full_name_en,'שם'],[form.phone,'טלפון'],[form.country,'מדינה'],[SECTORS.find(s=>s.v===form.sector)?.he,'ענף'],[PERMITS.find(p=>p.v===form.permit_type)?.l,'ויזה'],[form.permit_expiry?fmtDate(form.permit_expiry):null,'תוקף ויזה']].filter(([v])=>v).map(([v,l]) => (
+                  <div key={l} style={{ display:'flex', justifyContent:'space-between', padding:'4px 0', borderBottom:'1px solid '+BORDER }}>
+                    <span style={{ fontSize:12, color:GRAY }}>{l}</span>
+                    <span style={{ fontSize:12, color:DARK, fontWeight:600 }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+        {error && <div style={{ margin:'0 24px', padding:'10px 14px', background:'#FEF2F2', border:'1px solid #FECACA', borderRadius:9, color:'#DC2626', fontSize:13, fontWeight:600, flexShrink:0 }}>⚠️ {error}</div>}
+        <div style={{ padding:'16px 24px', borderTop:'1px solid '+BORDER, display:'flex', gap:10, justifyContent:'space-between', flexShrink:0 }}>
+          <button className="v2-btn v2-btn-ghost" onClick={() => step>1?setStep(s=>s-1):onClose()}>{step>1?'← חזרה':'ביטול'}</button>
+          {step < 3
+            ? <button className="v2-btn v2-btn-primary" onClick={() => { if(step===1&&!form.full_name_he&&!form.full_name_en){setError('חובה להזין שם');return} if(step===1&&!form.phone){setError('חובה להזין טלפון');return} setError('');setStep(s=>s+1) }}>המשך ←</button>
+            : <button className="v2-btn v2-btn-primary" onClick={save} disabled={saving} style={{ minWidth:120 }}>{saving?'שומר...':'✓ שמור מועמד'}</button>
+          }
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── GRID MODULE — Full spreadsheet view ─────────────────────────────────────
+function GridModule({ candidates }) {
+  const [search, setSearch] = useState('')
+  const [filterType, setType] = useState('all')
+  const [sortKey, setSortKey] = useState('created_at')
+  const [sortDir, setSortDir] = useState(-1)
+  const [page, setPage] = useState(1)
+  const [selected, setSelected] = useState(null)
+  const PER_PAGE = 50
+  const WORKER_STATUSES = ['active','in_treatment','escaped','injured','inactive']
+  const statusMap = { active:'✅ פעיל', new:'🆕 חדש', in_treatment:'🏥 בטיפול', injured:'🩹 פצוע', escaped:'🚨 ברחן', inactive:'⭕ לא פעיל', contacted:'📞 נוצר קשר', interview:'🤝 ראיון', placed:'✅ שובץ', rejected:'❌ לא מתאים', waitlist:'⏳ המתנה' }
+  const statusColor = { active:'#059669', new:'#4338CA', in_treatment:'#1D4ED8', injured:'#C2410C', escaped:'#BE123C', inactive:'#64748B', contacted:'#059669', interview:'#D97706', placed:'#0F766E', rejected:'#BE123C', waitlist:'#6E6E73' }
+  const sectorMap = { construction:'בניין', industry:'תעשייה', commerce:'מסחר', agriculture:'חקלאות', restaurant:'מסעדנות', hospitality:'אירוח', other:'אחר' }
+  const permitMap = Object.fromEntries((PERMITS||[]).map(p=>[p.v,p.l]))
+
+  const all = candidates.filter(c => {
+    const q = search.toLowerCase()
+    const matchQ = !q || [c.full_name_he,c.full_name_en,c.phone,c.email,c.country,c.placement,c.profession,c.permit_number].some(v=>(v||'').toLowerCase().includes(q))
+    const isWorker = c.placement || WORKER_STATUSES.includes(c.status)
+    const matchType = filterType==='all' || (filterType==='workers'&&isWorker) || (filterType==='applicants'&&!isWorker)
+    return matchQ && matchType
+  })
+  const sorted = [...all].sort((a,b) => { const va=a[sortKey]||''; const vb=b[sortKey]||''; return va<vb?sortDir:va>vb?-sortDir:0 })
+  const paged = sorted.slice((page-1)*PER_PAGE, page*PER_PAGE)
+  const sort = k => { if(sortKey===k) setSortDir(d=>-d); else { setSortKey(k); setSortDir(-1) }; setPage(1) }
+
+  const TH = ({ k, children }) => (
+    <th style={{ background:sortKey===k?'#EFF6FF':undefined, color:sortKey===k?'#2563EB':undefined }} onClick={() => sort(k)}>
+      {children}{sortKey===k?(sortDir===-1?' ↓':' ↑'):' ↕'}
+    </th>
+  )
+
+  if (selected) {
+    const isWorker = selected.placement || WORKER_STATUSES.includes(selected.status)
+    const fields = [['שם עברית',selected.full_name_he],['שם אנגלית',selected.full_name_en],['טלפון',selected.phone],['אימייל',selected.email],['מדינה',selected.country],['עיר',selected.city],['ת.לידה',selected.dob?fmtDate(selected.dob):null],['ענף',sectorMap[selected.sector]||selected.sector],['מקצוע',selected.profession],['ניסיון',selected.experience?selected.experience+' שנים':null],['מעסיק נוכחי',selected.current_employer],['מעסיק אחרון',selected.last_employer],['ויזה',permitMap[selected.permit_type]||selected.permit_type],['מספר היתר',selected.permit_number],['תוקף ויזה',selected.permit_expiry?fmtDate(selected.permit_expiry):null],['כניסה לישראל',selected.entry_date?fmtDate(selected.entry_date):null],['שיבוץ',selected.placement],['תחילת עבודה',selected.work_start_date?fmtDate(selected.work_start_date):null],['סטטוס',statusMap[selected.status]||selected.status],['תאריך בריחה',selected.escaped_at?fmtDate(selected.escaped_at):null],['תאריך פציעה',selected.injured_at?fmtDate(selected.injured_at):null],['נרשם',fmtDate(selected.created_at)],['מזהה',selected.id?.slice(0,8).toUpperCase()]]
+    return (
+      <div className="fade-in" style={{ padding:'24px 28px' }}>
+        <button className="v2-btn v2-btn-ghost" style={{ marginBottom:18 }} onClick={() => setSelected(null)}>← חזרה לטבלה</button>
+        <div className="v2-card" style={{ padding:'24px 28px', maxWidth:700 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:22 }}>
+            <div style={{ width:52, height:52, borderRadius:'50%', background:isWorker?'linear-gradient(135deg,#F0FDF9,#CCFBF1)':'linear-gradient(135deg,#EEF2FF,#DBEAFE)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, fontWeight:800, color:isWorker?'#0F766E':'#3B82F6', border:'2px solid #E2E8F0' }}>
+              {selected.full_name_he?.[0]||selected.full_name_en?.[0]||'?'}
+            </div>
+            <div>
+              <div className="headline" style={{ fontSize:22, fontWeight:800, color:DARK, letterSpacing:'-.4px' }}>{selected.full_name_he||selected.full_name_en||'—'}</div>
+              <div style={{ display:'flex', gap:8, marginTop:5, flexWrap:'wrap' }}>
+                <span style={{ fontSize:11, fontWeight:700, padding:'2px 9px', borderRadius:99, background:(statusColor[selected.status]||GRAY)+'15', color:statusColor[selected.status]||GRAY }}>{statusMap[selected.status]||selected.status}</span>
+                {selected.placement && <span style={{ fontSize:11, fontWeight:600, color:'#0F766E' }}>🏢 {selected.placement}</span>}
+              </div>
+            </div>
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'2px 20px' }}>
+            {fields.filter(([,v])=>v).map(([label,val]) => (
+              <div key={label} style={{ display:'flex', justifyContent:'space-between', padding:'7px 0', borderBottom:'1px solid #F1F5F9' }}>
+                <span style={{ fontSize:12, color:GRAY }}>{label}</span>
+                <span style={{ fontSize:13, color:DARK, fontWeight:500, maxWidth:'55%', textAlign:'left', wordBreak:'break-word' }}>{val}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="fade-in" style={{ padding:'24px 28px' }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:18 }}>
+        <div>
+          <h3 className="headline" style={{ fontSize:20, fontWeight:800, color:DARK, letterSpacing:'-.5px' }}>טבלה מלאה</h3>
+          <div style={{ fontSize:12, color:GRAY, marginTop:2 }}>{all.length} רשומות · לחץ על שורה לפרטים מלאים</div>
+        </div>
+        <button className="v2-btn v2-btn-ghost" style={{ gap:6 }} onClick={() => exportToExcel(sorted, WORKER_HEADERS_FULL, 'ATLAS_כל_הנתונים')}>
+          <span className="material-symbols-outlined" style={{ fontSize:15 }}>download</span>ייצוא Excel
+        </button>
+      </div>
+      <div style={{ display:'flex', gap:10, marginBottom:14, flexWrap:'wrap' }}>
+        <div style={{ position:'relative', flex:1, minWidth:220 }}>
+          <input value={search} onChange={e=>{setSearch(e.target.value);setPage(1)}} placeholder="חיפוש בכל השדות..."
+            style={{ width:'100%', padding:'8px 14px 8px 34px', background:WHITE, border:'1px solid '+BORDER, borderRadius:10, fontSize:13, fontFamily:F, color:DARK, outline:'none' }}
+            onFocus={e=>{e.target.style.borderColor=BLUE;e.target.style.boxShadow='0 0 0 3px rgba(0,85,221,.1)'}}
+            onBlur={e=>{e.target.style.borderColor=BORDER;e.target.style.boxShadow='none'}} />
+          <span className="material-symbols-outlined" style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)', fontSize:15, color:GRAY2, pointerEvents:'none' }}>search</span>
+        </div>
+        {[['all','הכל'],['workers','עובדים'],['applicants','מועמדים']].map(([v,l]) => (
+          <button key={v} onClick={()=>{setType(v);setPage(1)}}
+            style={{ padding:'7px 14px', borderRadius:9, border:'1.5px solid '+(filterType===v?BLUE:BORDER), background:filterType===v?BLUE_L:WHITE, color:filterType===v?BLUE:GRAY, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:F, transition:'all .13s' }}>
+            {l}
+          </button>
+        ))}
+      </div>
+      <div className="v2-card" style={{ overflow:'hidden', borderRadius:14 }}>
+        <div className="grid-wrap">
+          <table className="grid-table">
+            <thead><tr>
+              <TH k="full_name_he">שם</TH>
+              <TH k="phone">טלפון</TH>
+              <TH k="country">מדינה</TH>
+              <TH k="sector">ענף</TH>
+              <TH k="profession">מקצוע</TH>
+              <TH k="permit_type">ויזה</TH>
+              <TH k="permit_number">מספר היתר</TH>
+              <TH k="permit_expiry">תוקף ויזה</TH>
+              <TH k="entry_date">כניסה לישראל</TH>
+              <TH k="placement">שיבוץ / מעסיק</TH>
+              <TH k="work_start_date">תחילת עבודה</TH>
+              <TH k="status">סטטוס</TH>
+              <TH k="city">עיר</TH>
+              <TH k="experience">ניסיון</TH>
+              <TH k="created_at">תאריך רישום</TH>
+            </tr></thead>
+            <tbody>
+              {paged.length===0 && <tr><td colSpan={15} style={{ textAlign:'center', padding:60, color:GRAY2 }}>אין תוצאות תואמות</td></tr>}
+              {paged.map((c,i) => {
+                const exp=isExpired(c.permit_expiry); const soon=isSoon(c.permit_expiry)
+                const isWorker=c.placement||WORKER_STATUSES.includes(c.status)
+                return (
+                  <tr key={c.id} onClick={()=>setSelected(c)} style={{ background:i%2===0?WHITE:'#FAFBFC' }}>
+                    <td style={{ minWidth:160 }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                        <div style={{ width:26, height:26, borderRadius:'50%', background:isWorker?'#F0FDF9':'#EEF2FF', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:800, color:isWorker?'#0F766E':'#3B82F6', flexShrink:0 }}>
+                          {c.full_name_he?.[0]||c.full_name_en?.[0]||'?'}
+                        </div>
+                        <div>
+                          <div style={{ fontWeight:700, color:DARK, fontSize:12 }}>{c.full_name_he||c.full_name_en||'—'}</div>
+                          {c.full_name_en&&c.full_name_he&&<div style={{ fontSize:10, color:GRAY2 }}>{c.full_name_en}</div>}
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ direction:'ltr', color:GRAY }}>{c.phone||'—'}</td>
+                    <td>{c.country?.split('/')[0]?.trim()||'—'}</td>
+                    <td>{sectorMap[c.sector]||c.sector||'—'}</td>
+                    <td style={{ color:GRAY }}>{c.profession?.split('/')[0]?.trim()||'—'}</td>
+                    <td style={{ color:GRAY }}>{permitMap[c.permit_type]||c.permit_type||'—'}</td>
+                    <td style={{ color:GRAY, fontFamily:'monospace' }}>{c.permit_number||'—'}</td>
+                    <td><span style={{ fontWeight:(exp||soon)?700:400, color:exp?'#EF4444':soon?'#F59E0B':(c.permit_expiry?'#10B981':GRAY2) }}>{c.permit_expiry?fmtDate(c.permit_expiry):'—'}{exp?' 🔴':soon?' 🟡':''}</span></td>
+                    <td style={{ color:GRAY }}>{c.entry_date?fmtDate(c.entry_date):'—'}</td>
+                    <td>{c.placement?<span style={{ fontWeight:600, color:'#0F766E', background:'#F0FDF9', padding:'2px 8px', borderRadius:5, fontSize:11 }}>{c.placement}</span>:<span style={{ color:GRAY2 }}>—</span>}</td>
+                    <td style={{ color:GRAY }}>{c.work_start_date?fmtDate(c.work_start_date):'—'}</td>
+                    <td><span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:99, background:(statusColor[c.status]||GRAY)+'15', color:statusColor[c.status]||GRAY }}>{statusMap[c.status]||c.status||'—'}</span></td>
+                    <td style={{ color:GRAY }}>{c.city?.split('/')[0]?.trim()||'—'}</td>
+                    <td style={{ color:GRAY }}>{c.experience?c.experience+' שנים':'—'}</td>
+                    <td style={{ color:GRAY, fontWeight:500 }}>{fmtDate(c.created_at)}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'12px 18px', borderTop:'1px solid #F1F5F9' }}>
+          <span style={{ fontSize:11, fontWeight:700, color:GRAY2, textTransform:'uppercase', letterSpacing:'.05em' }}>
+            מציג {(page-1)*PER_PAGE+1}–{Math.min(page*PER_PAGE,all.length)} מתוך {all.length}
+          </span>
+          <div style={{ display:'flex', gap:4 }}>
+            <button className="pg-btn" disabled={page===1} onClick={()=>setPage(1)} style={{ fontSize:11 }}>«</button>
+            <button className="pg-btn" disabled={page===1} onClick={()=>setPage(p=>p-1)}>‹</button>
+            {Array.from({length:Math.min(5,Math.ceil(all.length/PER_PAGE))},(_,i)=>{
+              const tot=Math.ceil(all.length/PER_PAGE); let p=page<=3?i+1:page>=tot-2?tot-4+i:page-2+i; p=Math.max(1,Math.min(tot,p))
+              return <button key={p} className={'pg-btn'+(p===page?' on':'')} onClick={()=>setPage(p)}>{p}</button>
+            })}
+            <button className="pg-btn" disabled={page===Math.ceil(all.length/PER_PAGE)} onClick={()=>setPage(p=>p+1)}>›</button>
+            <button className="pg-btn" disabled={page===Math.ceil(all.length/PER_PAGE)} onClick={()=>setPage(Math.ceil(all.length/PER_PAGE))} style={{ fontSize:11 }}>»</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── TOP BAR WITH CLOCK + GREETING ───────────────────────────────────────────
 function TopBar({ module, currentUser, onRefresh, tasks = [] }) {
   const [now, setNow] = useState(new Date())
@@ -2499,6 +2858,18 @@ function TopBar({ module, currentUser, onRefresh, tasks = [] }) {
 
   return (
     <div className="crm-topbar" style={{ padding: '0 20px', display: 'flex', alignItems: 'center', gap: 12, height: 56 }}>
+
+      {/* ATLAS system badge — subtle, left side */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, paddingLeft: 4, borderLeft: '2px solid #E2E8F0', marginLeft: 2 }}>
+        <svg width="14" height="14" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0 }}>
+          <path d="M9 2L15.5 15H2.5L9 2Z" stroke="#0055DD" strokeWidth="1.8" strokeLinejoin="round" fill="none"/>
+          <path d="M5.5 11H12.5" stroke="#0055DD" strokeWidth="1.4" strokeLinecap="round"/>
+        </svg>
+        <div style={{ lineHeight: 1 }}>
+          <div style={{ fontSize: 12, fontWeight: 900, color: '#0F172A', letterSpacing: '-.3px', fontFamily: "'Manrope',sans-serif" }}>ATLAS</div>
+          <div style={{ fontSize: 8.5, fontWeight: 700, color: '#94A3B8', letterSpacing: '.12em', textTransform: 'uppercase', fontFamily: "'Manrope',sans-serif", marginTop: 1 }}>Oz Hadar Group</div>
+        </div>
+      </div>
 
       {/* Breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 120 }}>
@@ -2700,7 +3071,7 @@ export default function CRM({ session, onLogout }) {
           setTimeout(() => setToast(null), 5000)
           // Browser notification
           if (Notification.permission === 'granted') {
-            new Notification('Oz Hadar CRM — משימה חדשה 📋', {
+            new Notification('ATLAS — משימה חדשה 📋', {
               body: task.title + '\nמוגדר לך ע"י ' + task.created_by || 'צוות',
               icon: '/favicon.ico',
               tag: task.id,
@@ -2754,8 +3125,18 @@ export default function CRM({ session, onLogout }) {
   if (loading) {
     return (
       <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', fontFamily: F, background: SIDEBAR_BG, flexDirection: 'column', gap: 16 }}>
-        <div style={{ width: 52, height: 52, borderRadius: 16, background: 'linear-gradient(135deg, ' + BLUE + ' 0%, #0033AA 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 900, color: WHITE, boxShadow: '0 8px 28px rgba(0,102,255,.4)' }}>OZ</div>
-        <div style={{ color: 'rgba(255,255,255,.35)', fontSize: 13, fontWeight: 500, letterSpacing: '.3px' }} className="pulse">טוען מערכת...</div>
+        {/* ATLAS triangle mark */}
+        <div style={{ width: 56, height: 56, borderRadius: 18, background: 'linear-gradient(145deg, #0055DD 0%, #0033AA 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 32px rgba(0,85,221,.45)' }}>
+          <svg width="26" height="26" viewBox="0 0 18 18" fill="none">
+            <path d="M9 2L15.5 15H2.5L9 2Z" stroke="white" strokeWidth="1.5" strokeLinejoin="round" fill="none"/>
+            <path d="M5.5 11H12.5" stroke="white" strokeWidth="1.3" strokeLinecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <div style={{ color: CREAM, fontSize: 22, fontWeight: 900, letterSpacing: '-1px', fontFamily: "'Manrope',sans-serif", lineHeight: 1 }}>ATLAS</div>
+          <div style={{ color: 'rgba(255,255,255,.3)', fontSize: 10, fontWeight: 700, letterSpacing: '.2em', textTransform: 'uppercase', textAlign: 'center', marginTop: 3, fontFamily: "'Manrope',sans-serif" }}>Oz Hadar Group</div>
+        </div>
+        <div style={{ color: 'rgba(255,255,255,.2)', fontSize: 12, fontWeight: 500, letterSpacing: '.2px', marginTop: 4 }} className="pulse">טוען מערכת...</div>
       </div>
     )
   }
@@ -2781,15 +3162,16 @@ export default function CRM({ session, onLogout }) {
         {/* Logo */}
         <div style={{ padding: '18px 18px 16px', borderBottom: '1px solid ' + SIDEBAR_BORDER, marginBottom: 6 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 9, background: BLUE, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <circle cx="8" cy="8" r="6.5" stroke="white" strokeWidth="1.5"/>
-                <path d="M8 1.5C8 1.5 11 5 11 8C11 11 8 14.5 8 14.5M8 1.5C8 1.5 5 5 5 8C5 11 8 14.5 8 14.5M1.5 8H14.5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+            {/* ATLAS logo mark — stylized A */}
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(145deg, #0055DD 0%, #0033AA 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 3px 10px rgba(0,85,221,.35)' }}>
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path d="M9 2L15.5 15H2.5L9 2Z" stroke="white" strokeWidth="1.6" strokeLinejoin="round" fill="none"/>
+                <path d="M5.5 11H12.5" stroke="white" strokeWidth="1.4" strokeLinecap="round"/>
               </svg>
             </div>
             <div>
-              <div className="headline" style={{ fontSize: 15, fontWeight: 900, color: DARK, letterSpacing: '-.5px', lineHeight: 1.1 }}>Ozhadar</div>
-              <div className="label-caps" style={{ color: GRAY2, letterSpacing: '.15em', marginTop: 1 }}>CRM · Recruitment</div>
+              <div style={{ fontSize: 16, fontWeight: 900, color: DARK, letterSpacing: '-.8px', lineHeight: 1, fontFamily: "'Manrope',sans-serif" }}>ATLAS</div>
+              <div style={{ fontSize: 9, fontWeight: 700, color: GRAY2, letterSpacing: '.18em', textTransform: 'uppercase', marginTop: 2, fontFamily: "'Manrope',sans-serif" }}>Oz Hadar Group</div>
             </div>
           </div>
         </div>
@@ -2826,7 +3208,7 @@ export default function CRM({ session, onLogout }) {
         {/* Bottom */}
         <div style={{ padding: '10px 10px 14px', borderTop: '1px solid ' + SIDEBAR_BORDER }}>
           <div style={{ background: LGRAY, borderRadius: 10, padding: '10px 12px', marginBottom: 8 }}>
-            <div style={{ fontSize: 9.5, fontWeight: 700, color: GRAY2, marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.5px' }}>סיכום</div>
+            <div style={{ fontSize: 9, fontWeight: 700, color: GRAY2, marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.6px', fontFamily: "'Manrope',sans-serif" }}>ATLAS · סיכום</div>
             <div style={{ color: DARK, fontSize: 12, marginBottom: 2 }}>👥 {candidates.length} עובדים</div>
             <div style={{ color: DARK, fontSize: 12, marginBottom: 2 }}>✅ {tasks.filter(t => t.status === 'open').length} משימות</div>
             {candidates.filter(c => isSoon(c.permit_expiry)).length > 0 && (
@@ -2852,6 +3234,7 @@ export default function CRM({ session, onLogout }) {
         {module === 'documents'  && <DocumentsModule  candidates={candidates} currentUser={currentUser} />}
         {module === 'reports'    && <ReportsModule    candidates={candidates} />}
         {module === 'employers'  && <EmployersModule candidates={candidates} currentUser={currentUser} />}
+        {module === 'grid'       && <GridModule candidates={candidates} />}
       </div>
     </div>
   )
