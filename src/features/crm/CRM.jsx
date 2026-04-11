@@ -664,7 +664,7 @@ function ApplicantsModule({ candidates, onUpdate, onDelete, onAdd, currentUser }
         </div>
 
         <div style={{ background: WHITE, borderBottom: '1.5px solid #E5E5EA', padding: '0 24px', display: 'flex', gap: 2, overflowX: 'auto', marginTop: 14 }}>
-          {[['info', '📋 פרטים'], ['notes', '📝 מעקב ותרשומות']].map(([k, l]) => (
+          {[['info', '📋 פרטים'], ['docs', '📁 מסמכים'], ['notes', '📝 מעקב ותרשומות']].map(([k, l]) => (
             <button key={k} className={'tab-btn' + (tab === k ? ' active' : '')} onClick={() => setTab(k)}>{l}</button>
           ))}
         </div>
@@ -682,6 +682,10 @@ function ApplicantsModule({ candidates, onUpdate, onDelete, onAdd, currentUser }
               <div style={{ marginTop: 10, fontSize: 11, color: '#D1D5DB', textAlign: 'center' }}>נרשם {fmtDate(selected.created_at)}</div>
             </div>
           )}
+          {tab === 'docs' && (
+            <WorkerDocsTab candidateId={selected.id} currentUser={currentUser} />
+          )}
+
           {tab === 'notes' && (
             <div className="v2-card fade-in" style={{ padding: 22 }}>
               <SectionTitle>📝 מעקב ותרשומות</SectionTitle>
