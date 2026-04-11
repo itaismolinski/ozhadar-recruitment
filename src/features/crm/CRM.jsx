@@ -4,7 +4,7 @@ import {
   fetchTasks, insertTask, updateTask, deleteTask,
   fetchNotes, insertNote, deleteNote,
 } from '../../lib/supabase.js'
-import { SECTORS, PERMITS, STATUSES, DOC_FIELDS } from '../../constants.js'
+import { SECTORS, PERMITS, STATUSES } from '../../constants.js'
 import { supabase } from '../../lib/supabase.js'
 
 // ─── DESIGN TOKENS 2026 ──────────────────────────────────────────────────────
@@ -34,6 +34,21 @@ const SHADOW_LG  = '0 16px 48px rgba(0,0,0,.12), 0 6px 16px rgba(0,0,0,.06)'
 const SHADOW_CARD = '0 0 0 1px rgba(0,0,0,.06), 0 2px 8px rgba(0,0,0,.05)'
 
 const STAFF = ['איתי', 'דוד', 'הודיה', 'מור']
+
+// Extended document types — covers all standard foreign worker docs
+const DOC_FIELDS = [
+  { k: 'passport',      he: 'דרכון',             en: 'Passport',                icon: 'badge',          color: '#0055DD' },
+  { k: 'id',            he: 'תעודת זהות / ת"ז',   en: 'National ID',             icon: 'contacts',       color: '#0055DD' },
+  { k: 'permit',        he: 'היתר עבודה',          en: 'Work Permit',             icon: 'approval',       color: '#059669' },
+  { k: 'visa',          he: 'ויזה / אשרת כניסה',   en: 'Visa',                    icon: 'flight_takeoff', color: '#059669' },
+  { k: 'contract',      he: 'חוזה עבודה',          en: 'Employment Contract',     icon: 'description',    color: '#7C3AED' },
+  { k: 'medical',       he: 'אישור רפואי',          en: 'Medical Certificate',     icon: 'health_and_safety', color: '#C2410C' },
+  { k: 'insurance',     he: 'ביטוח בריאות',         en: 'Health Insurance',        icon: 'shield',         color: '#0891B2' },
+  { k: 'license',       he: 'רישיון מקצועי',        en: 'Professional License',    icon: 'workspace_premium', color: '#B45309' },
+  { k: 'police',        he: 'תעודת יושר / משטרה',  en: 'Police Clearance',        icon: 'verified_user',  color: '#374151' },
+  { k: 'photo',         he: 'תמונת פספורט',         en: 'Passport Photo',          icon: 'person',         color: '#6366F1' },
+  { k: 'other',         he: 'מסמך נוסף',            en: 'Additional Document',     icon: 'attach_file',    color: '#64748B' },
+]
 
 // Extended worker statuses (override constants)
 const WORKER_STATUS_LIST = [
@@ -1072,25 +1087,146 @@ function WorkersModule({ candidates, onUpdate, onDelete, onAdd, currentUser }) {
           })()}
 
           {tab === 'docs' && (
-            <div className="v2-card fade-in" style={{ padding: 22 }}>
-              <SectionTitle>📁 מסמכים</SectionTitle>
-              {DOC_FIELDS.map(d => {
-                const hasDoc = selected['doc_' + d.k]
-                return (
-                  <div key={d.k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 14px', marginBottom: 8, background: LGRAY, borderRadius: 10 }}>
-                    <div><div style={{ fontSize: 13, fontWeight: 600, color: DARK }}>{d.he}</div><div style={{ fontSize: 11, color: GRAY }}>{d.en}</div></div>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      {hasDoc ? <button className="v2-btn v2-btn-ghost" style={{ fontSize: 12, padding: '6px 12px' }} onClick={async () => { const url = await getDocUrl(selected.id, d.k); if (url) window.open(url, '_blank') }}>👁 צפה</button>
-                        : <span style={{ fontSize: 11, color: '#D1D5DB' }}>לא הועלה</span>}
-                      <button className="v2-btn v2-btn-ghost" style={{ fontSize: 12, padding: '6px 12px' }} onClick={() => fileRefs.current[d.k]?.click()}>
-                        {hasDoc ? '🔄 החלף' : '📎 העלה'}
-                      </button>
-                      <input ref={el => fileRefs.current[d.k] = el} type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }}
-                        onChange={async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; await uploadDoc(selected.id, d.k, f); await onUpdate(selected.id, { ['doc_' + d.k]: true }); setSelected(s => ({ ...s, ['doc_' + d.k]: true })) }} />
-                    </div>
+            <div className="fade-in">
+              {/* Header */}
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+                <div>
+                  <div className="headline" style={{ fontSize:15, fontWeight:800, color:DARK }}>מסמכים</div>
+                  <div style={{ fontSize:11, color:GRAY, marginTop:2 }}>
+                    {DOC_FIELDS.filter(d => selected['doc_'+d.k]).length} / {DOC_FIELDS.length} הועלו
                   </div>
-                )
-              })}
+                </div>
+                {/* Progress dots */}
+                <div style={{ display:'flex', gap:4 }}>
+                  {DOC_FIELDS.map(d => (
+                    <div key={d.k} title={d.he}
+                      style={{ width:8, height:8, borderRadius:'50%',
+                        background: selected['doc_'+d.k] ? '#10B981' : '#E2E8F0',
+                        transition:'background .3s' }} />
+                  ))}
+                </div>
+              </div>
+
+              {/* Document cards grid */}
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+                {DOC_FIELDS.map(d => {
+                  const hasDoc = selected['doc_' + d.k]
+                  const [uploading, setUploading] = [false, () => {}]
+                  return (
+                    <div key={d.k}
+                      style={{ background:WHITE, border:'1.5px solid '+(hasDoc ? d.color+'40' : BORDER),
+                        borderRadius:12, padding:'14px 16px',
+                        transition:'all .2s',
+                        boxShadow: hasDoc ? '0 2px 8px '+d.color+'15' : 'none' }}>
+                      {/* Top row */}
+                      <div style={{ display:'flex', alignItems:'flex-start', gap:10, marginBottom:12 }}>
+                        <div style={{ width:36, height:36, borderRadius:9, flexShrink:0,
+                          background: hasDoc ? d.color+'12' : LGRAY,
+                          display:'flex', alignItems:'center', justifyContent:'center',
+                          border:'1px solid '+(hasDoc ? d.color+'25' : BORDER) }}>
+                          <span className="material-symbols-outlined"
+                            style={{ fontSize:18, color: hasDoc ? d.color : GRAY2,
+                              fontVariationSettings: hasDoc ? "'FILL' 1" : "'FILL' 0" }}>
+                            {d.icon}
+                          </span>
+                        </div>
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <div style={{ fontSize:13, fontWeight:700, color:DARK,
+                            overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                            {d.he}
+                          </div>
+                          <div style={{ fontSize:10, color:GRAY2, marginTop:1 }}>{d.en}</div>
+                        </div>
+                        {/* Status badge */}
+                        {hasDoc
+                          ? <span style={{ fontSize:9, fontWeight:800, padding:'2px 7px',
+                              borderRadius:99, background:d.color+'12', color:d.color,
+                              letterSpacing:'.06em', textTransform:'uppercase',
+                              fontFamily:"'Manrope',sans-serif", flexShrink:0 }}>
+                              קיים
+                            </span>
+                          : <span style={{ fontSize:9, fontWeight:700, padding:'2px 7px',
+                              borderRadius:99, background:'#F1F5F9', color:GRAY2,
+                              letterSpacing:'.06em', textTransform:'uppercase',
+                              fontFamily:"'Manrope',sans-serif", flexShrink:0 }}>
+                              חסר
+                            </span>
+                        }
+                      </div>
+
+                      {/* Actions */}
+                      <div style={{ display:'flex', gap:7 }}>
+                        {hasDoc && (
+                          <button
+                            style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center',
+                              gap:5, padding:'7px 0', borderRadius:8,
+                              background:d.color+'10', border:'1px solid '+d.color+'30',
+                              color:d.color, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:F }}
+                            onMouseEnter={e => e.currentTarget.style.background=d.color+'20'}
+                            onMouseLeave={e => e.currentTarget.style.background=d.color+'10'}
+                            onClick={async () => {
+                              const url = await getDocUrl(selected.id, d.k)
+                              if (url) window.open(url, '_blank')
+                              else alert('לא נמצא קובץ')
+                            }}>
+                            <span className="material-symbols-outlined" style={{fontSize:14}}>visibility</span>
+                            צפה
+                          </button>
+                        )}
+                        <button
+                          style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center',
+                            gap:5, padding:'7px 0', borderRadius:8,
+                            background: hasDoc ? LGRAY : BLUE_L,
+                            border:'1px solid '+(hasDoc ? BORDER : BLUE+'40'),
+                            color: hasDoc ? GRAY : BLUE,
+                            fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:F }}
+                          onMouseEnter={e => { e.currentTarget.style.opacity='.8' }}
+                          onMouseLeave={e => { e.currentTarget.style.opacity='1' }}
+                          onClick={() => fileRefs.current[d.k]?.click()}>
+                          <span className="material-symbols-outlined" style={{fontSize:14}}>
+                            {hasDoc ? 'sync' : 'upload_file'}
+                          </span>
+                          {hasDoc ? 'החלף' : 'העלה'}
+                        </button>
+                        <input ref={el => fileRefs.current[d.k] = el}
+                          type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                          style={{ display:'none' }}
+                          onChange={async e => {
+                            const f = e.target.files[0]; e.target.value = ''
+                            if (!f) return
+                            try {
+                              await uploadDoc(selected.id, d.k, f)
+                              await onUpdate(selected.id, { ['doc_'+d.k]: true })
+                              setSelected(s => ({ ...s, ['doc_'+d.k]: true }))
+                            } catch(err) {
+                              alert('שגיאה בהעלאה: ' + err.message)
+                            }
+                          }} />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Summary bar */}
+              <div style={{ marginTop:14, padding:'12px 16px', borderRadius:10,
+                background: DOC_FIELDS.filter(d=>selected['doc_'+d.k]).length === DOC_FIELDS.length
+                  ? '#F0FDF9' : LGRAY,
+                border:'1px solid '+(DOC_FIELDS.filter(d=>selected['doc_'+d.k]).length === DOC_FIELDS.length
+                  ? '#BBF7D0' : BORDER) }}>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                  <span style={{ fontSize:12, color:GRAY, fontWeight:500 }}>
+                    <span style={{ fontWeight:700, color:DARK }}>
+                      {DOC_FIELDS.filter(d=>selected['doc_'+d.k]).length}
+                    </span> מתוך {DOC_FIELDS.length} מסמכים הועלו
+                  </span>
+                  {/* Progress bar */}
+                  <div style={{ width:120, height:5, background:'#E2E8F0', borderRadius:99, overflow:'hidden' }}>
+                    <div style={{ height:'100%', borderRadius:99, background:'#10B981', transition:'width .5s',
+                      width: (DOC_FIELDS.filter(d=>selected['doc_'+d.k]).length / DOC_FIELDS.length * 100) + '%' }} />
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
