@@ -3212,13 +3212,28 @@ function WorkerDocsTab({ candidateId, currentUser }) {
   const fileInputRef            = useRef({})
 
   // Load existing documents
+  const [tableError, setTableError] = useState(false)
+
   const loadDocs = async () => {
-    const { data, error } = await supabase
-      .from('candidate_documents')
-      .select('*')
-      .eq('candidate_id', candidateId)
-      .order('created_at', { ascending: false })
-    if (!error) setDocs(data || [])
+    try {
+      const { data, error } = await supabase
+        .from('candidate_documents')
+        .select('*')
+        .eq('candidate_id', candidateId)
+        .order('created_at', { ascending: false })
+      if (error) {
+        console.error('candidate_documents error:', error)
+        if (error.code === '42P01' || error.message?.includes('does not exist')) {
+          setTableError(true)
+        } else {
+          setError('שגיאה בטעינת מסמכים: ' + error.message)
+        }
+      } else {
+        setDocs(data || [])
+      }
+    } catch(e) {
+      setError('שגיאה: ' + e.message)
+    }
     setLoading(false)
   }
 
@@ -3271,6 +3286,37 @@ function WorkerDocsTab({ candidateId, currentUser }) {
 
   if (loading) return (
     <div style={{ textAlign:'center', padding:40, color:GRAY2, fontSize:13 }}>טוען מסמכים...</div>
+  )
+
+  if (tableError) return (
+    <div style={{ padding:24, background:'#FFF7ED', border:'1px solid #FED7AA', borderRadius:12, textAlign:'center' }}>
+      <div style={{ fontSize:18, marginBottom:10 }}>⚠️</div>
+      <div style={{ fontSize:14, fontWeight:700, color:'#C2410C', marginBottom:8 }}>
+        טבלת המסמכים לא קיימת עדיין
+      </div>
+      <div style={{ fontSize:12, color:'#92400E', lineHeight:1.6 }}>
+        יש להריץ את ה-SQL הבא ב-Supabase SQL Editor:
+      </div>
+      <pre style={{ margin:'12px 0', padding:'10px 14px', background:'#FFF', borderRadius:8,
+        fontSize:11, textAlign:'left', direction:'ltr', border:'1px solid #FED7AA',
+        color:'#374151', overflow:'auto' }}>
+        {"create table if not exists public.candidate_documents (\n" +
+         "  id uuid default gen_random_uuid() primary key,\n" +
+         "  created_at timestamptz default now(),\n" +
+         "  candidate_id uuid references public.candidates(id) on delete cascade,\n" +
+         "  doc_type text not null,\n" +
+         "  doc_name text,\n" +
+         "  file_path text not null,\n" +
+         "  uploaded_by text\n" +
+         ");\n" +
+         "alter table public.candidate_documents enable row level security;\n" +
+         "create policy \"docs_auth\" on public.candidate_documents\n" +
+         "  for all using (auth.role() = 'authenticated');"}
+      </pre>
+      <button className="v2-btn v2-btn-ghost" onClick={loadDocs} style={{ marginTop:8 }}>
+        נסה שוב
+      </button>
+    </div>
   )
 
   return (
