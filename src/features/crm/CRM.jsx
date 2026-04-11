@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import * as XLSX from 'xlsx'
 import {
   fetchCandidates, insertCandidate, updateCandidate, deleteCandidate, getDocUrl, uploadDoc,
   fetchTasks, insertTask, updateTask, deleteTask,
@@ -680,6 +681,7 @@ function Dashboard({ candidates, tasks, apartments, onNavigate, currentUser }) {
 function ApplicantsModule({ candidates, onUpdate, onDelete, onAdd, currentUser }) {
   const [search, setSearch] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showImport, setShowImport] = useState(false)
   const [filterStatus, setFilterStatus] = useState('')
   const [filterSector, setFilterSector] = useState('')
   const [selected, setSelected] = useState(null)
@@ -806,6 +808,16 @@ function ApplicantsModule({ candidates, onUpdate, onDelete, onAdd, currentUser }
   return (
     <div style={{ padding: '24px 28px' }} className="fade-in">
 
+      {/* ── EXCEL IMPORT MODAL ── */}
+      {showImport && (
+        <ExcelImportModal currentUser={currentUser} onClose={() => setShowImport(false)}
+          onImport={async (count) => {
+            // Trigger full data reload in parent
+            window.__atlasReload && window.__atlasReload()
+          }}
+        />
+      )}
+
       {/* ── MANUAL ADD MODAL ── */}
       {showAddModal && (
         <ManualAddModal currentUser={currentUser} onClose={() => setShowAddModal(false)}
@@ -828,6 +840,11 @@ function ApplicantsModule({ candidates, onUpdate, onDelete, onAdd, currentUser }
           <div style={{ fontSize: 12, color: GRAY, marginTop: 2 }}>{filtered.length} רשומות</div>
         </div>
         <div style={{ display: 'flex', gap: 9, alignItems: 'center' }}>
+          {/* ── IMPORT BUTTON ── */}
+          <button className="v2-btn v2-btn-ghost" onClick={() => setShowImport(true)} style={{ gap:6, flexShrink:0 }}>
+            <span className="material-symbols-outlined" style={{ fontSize:15 }}>table_view</span>
+            ייבוא Excel
+          </button>
           {/* ── ADD BUTTON ── */}
           <button className="v2-btn v2-btn-primary" onClick={() => setShowAddModal(true)}
             style={{ gap: 6, flexShrink: 0 }}>
@@ -4011,6 +4028,362 @@ function InlineTextarea({ label, value, onSave, rows = 3, emptyText = 'לחץ ל
   )
 }
 
+
+// ─── EXCEL IMPORT MODAL ───────────────────────────────────────────────────────
+// Maps common Hebrew/English Excel column headers to candidate DB fields
+const EXCEL_FIELD_MAP = {
+  // שם
+  'שם מלא': 'full_name_he', 'שם': 'full_name_he', 'שם בעברית': 'full_name_he',
+  'full name': 'full_name_he', 'name': 'full_name_he',
+  'שם באנגלית': 'full_name_en', 'שם לועזי': 'full_name_en', 'name latin': 'full_name_en',
+  // קשר
+  'טלפון': 'phone', 'נייד': 'phone', 'phone': 'phone', 'mobile': 'phone', 'tel': 'phone',
+  'אימייל': 'email', 'מייל': 'email', 'email': 'email',
+  // מיקום
+  'מדינה': 'country', 'country': 'country', 'לאום': 'country', 'nationality': 'country',
+  'עיר': 'city', 'city': 'city',
+  // ת.לידה
+  'תאריך לידה': 'dob', 'ת.לידה': 'dob', 'date of birth': 'dob', 'dob': 'dob',
+  // עבודה
+  'ענף': 'sector', 'sector': 'sector', 'תחום': 'sector',
+  'מקצוע': 'profession', 'profession': 'profession', 'תפקיד': 'profession', 'role': 'profession',
+  'ניסיון': 'experience', 'שנות ניסיון': 'experience', 'experience': 'experience',
+  'מעסיק נוכחי': 'current_employer', 'מעסיק': 'current_employer', 'employer': 'current_employer',
+  'מעסיק אחרון': 'last_employer',
+  // ויזה
+  'סוג ויזה': 'permit_type', 'ויזה': 'permit_type', 'היתר': 'permit_type', 'permit': 'permit_type',
+  'מספר היתר': 'permit_number', 'permit number': 'permit_number', 'מספר דרכון': 'permit_number',
+  'תוקף ויזה': 'permit_expiry', 'תוקף': 'permit_expiry', 'expiry': 'permit_expiry', 'permit expiry': 'permit_expiry',
+  'כניסה לישראל': 'entry_date', 'תאריך כניסה': 'entry_date', 'entry date': 'entry_date',
+  // שיבוץ
+  'שיבוץ': 'placement', 'מעסיק שיבוץ': 'placement', 'placement': 'placement',
+  // הערות
+  'הערות': 'notes_import', 'הערה': 'notes_import', 'notes': 'notes_import', 'comments': 'notes_import',
+}
+
+const CANDIDATE_FIELDS = [
+  { k: 'full_name_he',      he: 'שם בעברית'           },
+  { k: 'full_name_en',      he: 'שם באנגלית'           },
+  { k: 'phone',             he: 'טלפון'                },
+  { k: 'email',             he: 'אימייל'               },
+  { k: 'country',           he: 'מדינה'                },
+  { k: 'city',              he: 'עיר'                  },
+  { k: 'dob',               he: 'תאריך לידה'           },
+  { k: 'sector',            he: 'ענף'                  },
+  { k: 'profession',        he: 'מקצוע'                },
+  { k: 'experience',        he: 'ניסיון (שנים)'        },
+  { k: 'current_employer',  he: 'מעסיק נוכחי'          },
+  { k: 'last_employer',     he: 'מעסיק אחרון'          },
+  { k: 'permit_type',       he: 'סוג ויזה'             },
+  { k: 'permit_number',     he: 'מספר היתר'            },
+  { k: 'permit_expiry',     he: 'תוקף ויזה'            },
+  { k: 'entry_date',        he: 'כניסה לישראל'         },
+  { k: 'placement',         he: 'שיבוץ'                },
+  { k: 'notes_import',      he: 'הערות'                },
+  { k: '_skip',             he: '— דלג על עמודה —'     },
+]
+
+function ExcelImportModal({ onClose, onImport, currentUser }) {
+  const [step,       setStep]       = useState(1) // 1=upload, 2=map, 3=preview, 4=done
+  const [rows,       setRows]       = useState([]) // raw rows from excel
+  const [headers,    setHeaders]    = useState([]) // excel column headers
+  const [mapping,    setMapping]    = useState({}) // { excelCol: dbField }
+  const [preview,    setPreview]    = useState([]) // mapped candidate objects
+  const [importing,  setImporting]  = useState(false)
+  const [imported,   setImported]   = useState(0)
+  const [errors,     setErrors]     = useState([])
+  const [fileName,   setFileName]   = useState('')
+  const fileRef = useRef()
+
+  // ── Parse Excel file ──────────────────────────────────────────────────────
+  const parseFile = (file) => {
+    setFileName(file.name)
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true })
+        const ws = wb.Sheets[wb.SheetNames[0]]
+        const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' })
+        if (!data || data.length < 2) { alert('הקובץ ריק או לא תקין'); return }
+
+        const hdrs = data[0].map(h => String(h || '').trim())
+        const dataRows = data.slice(1).filter(r => r.some(c => c !== ''))
+        setHeaders(hdrs)
+        setRows(dataRows)
+
+        // Auto-map columns
+        const autoMap = {}
+        hdrs.forEach(h => {
+          const lower = h.toLowerCase().trim()
+          const match = EXCEL_FIELD_MAP[h] || EXCEL_FIELD_MAP[lower]
+          autoMap[h] = match || '_skip'
+        })
+        setMapping(autoMap)
+        setStep(2)
+      } catch(e) {
+        alert('שגיאה בקריאת הקובץ: ' + e.message)
+      }
+    }
+    reader.readAsArrayBuffer(file)
+  }
+
+  // ── Build preview from mapping ─────────────────────────────────────────────
+  const buildPreview = () => {
+    const mapped = rows.slice(0, 200).map((row, ri) => {
+      const obj = { _row: ri + 2 }
+      headers.forEach((h, hi) => {
+        const field = mapping[h]
+        if (!field || field === '_skip') return
+        let val = row[hi]
+        if (val === undefined || val === '') return
+        // Format dates
+        if (val instanceof Date) {
+          val = val.toISOString().split('T')[0]
+        } else if (typeof val === 'number' && (field.includes('date') || field.includes('expiry') || field === 'dob')) {
+          // Excel serial date
+          const d = new Date((val - 25569) * 86400 * 1000)
+          val = d.toISOString().split('T')[0]
+        } else {
+          val = String(val).trim()
+        }
+        obj[field] = val
+      })
+      return obj
+    }).filter(r => r.full_name_he || r.full_name_en || r.phone)
+    setPreview(mapped)
+    setStep(3)
+  }
+
+  // ── Import to Supabase ─────────────────────────────────────────────────────
+  const doImport = async () => {
+    setImporting(true)
+    let count = 0
+    const errs = []
+    const KNOWN = ['full_name_he','full_name_en','phone','email','country','city','dob',
+      'sector','profession','experience','current_employer','last_employer',
+      'permit_type','permit_number','permit_expiry','entry_date','placement','status','form_lang']
+
+    for (const row of preview) {
+      try {
+        const fields = { status: 'new', form_lang: 'excel' }
+        KNOWN.forEach(k => { if (row[k]) fields[k] = row[k] })
+        const newCand = await insertCandidate(fields)
+        // Save notes if any
+        if (row.notes_import && newCand?.id) {
+          await supabase.from('candidate_notes').insert([{
+            candidate_id: newCand.id, text: row.notes_import,
+            note_date: new Date().toISOString().split('T')[0], created_by: currentUser
+          }])
+        }
+        count++
+        setImported(count)
+      } catch(e) {
+        errs.push('שורה ' + row._row + ': ' + e.message)
+      }
+    }
+    setErrors(errs)
+    setImporting(false)
+    setStep(4)
+    onImport && onImport(count)
+  }
+
+  const INP = { padding:'8px 12px', background:'#F8FAFC', border:'1.5px solid '+BORDER,
+    borderRadius:9, fontSize:12, fontFamily:F, color:DARK, outline:'none', width:'100%',
+    cursor:'pointer' }
+
+  return (
+    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.5)', backdropFilter:'blur(3px)',
+      display:'flex', alignItems:'center', justifyContent:'center', zIndex:9999, padding:20, fontFamily:F }}>
+      <div style={{ background:WHITE, borderRadius:20, width:'100%', maxWidth:720,
+        maxHeight:'92vh', display:'flex', flexDirection:'column',
+        boxShadow:'0 32px 80px rgba(0,0,0,.22)', border:'1px solid '+BORDER }}>
+
+        {/* ── HEADER ── */}
+        <div style={{ background:'linear-gradient(135deg,#0055DD 0%,#0033AA 100%)',
+          borderRadius:'20px 20px 0 0', padding:'20px 26px', flexShrink:0 }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+              <div style={{ width:42, height:42, borderRadius:11, background:'rgba(255,255,255,.15)',
+                display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <span className="material-symbols-outlined" style={{ color:WHITE, fontSize:22 }}>table_view</span>
+              </div>
+              <div>
+                <div style={{ color:WHITE, fontSize:17, fontWeight:900, letterSpacing:'-.4px' }}>ייבוא מ-Excel</div>
+                <div style={{ color:'rgba(255,255,255,.55)', fontSize:11, marginTop:2, letterSpacing:'.04em', textTransform:'uppercase' }}>ATLAS · Import Wizard</div>
+              </div>
+            </div>
+            <button onClick={onClose} style={{ width:32, height:32, borderRadius:8,
+              background:'rgba(255,255,255,.15)', border:'1px solid rgba(255,255,255,.2)',
+              color:WHITE, fontSize:16, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:F }}>✕</button>
+          </div>
+          {/* Step bar */}
+          <div style={{ display:'flex', gap:0, marginTop:18 }}>
+            {[['1','העלאה'],['2','מיפוי'],['3','תצוגה מקדימה'],['4','סיום']].map(([n,l],i) => (
+              <div key={n} style={{ display:'flex', alignItems:'center', flex: i<3?1:'none' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:7 }}>
+                  <div style={{ width:26, height:26, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center',
+                    fontSize:12, fontWeight:800, fontFamily:"'Manrope',sans-serif", flexShrink:0,
+                    background: step>i+1?'rgba(255,255,255,.9)':step===i+1?WHITE:'rgba(255,255,255,.2)',
+                    color:       step>i+1?'#059669':step===i+1?'#0055DD':'rgba(255,255,255,.5)' }}>
+                    {step>i+1?<span className="material-symbols-outlined" style={{fontSize:13,fontVariationSettings:"'FILL' 1"}}>check</span>:n}
+                  </div>
+                  <span style={{ fontSize:10, fontWeight:700, letterSpacing:'.05em', textTransform:'uppercase', whiteSpace:'nowrap', fontFamily:"'Manrope',sans-serif",
+                    color: step===i+1?WHITE:'rgba(255,255,255,.45)' }}>{l}</span>
+                </div>
+                {i<3 && <div style={{ flex:1, height:1, margin:'0 10px', background: step>i+1?'rgba(255,255,255,.5)':'rgba(255,255,255,.18)' }} />}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── BODY ── */}
+        <div style={{ flex:1, overflowY:'auto', padding:'24px 26px' }}>
+
+          {/* STEP 1 — Upload */}
+          {step === 1 && (
+            <div>
+              <div style={{ textAlign:'center', padding:'32px 20px', border:'2px dashed '+BORDER,
+                borderRadius:14, background:LGRAY, cursor:'pointer', transition:'all .2s' }}
+                onClick={() => fileRef.current?.click()}
+                onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor=BLUE; e.currentTarget.style.background=BLUE_L }}
+                onDragLeave={e => { e.currentTarget.style.borderColor=BORDER; e.currentTarget.style.background=LGRAY }}
+                onDrop={e => { e.preventDefault(); e.currentTarget.style.borderColor=BORDER; e.currentTarget.style.background=LGRAY; const f=e.dataTransfer.files[0]; if(f) parseFile(f) }}>
+                <span className="material-symbols-outlined" style={{ fontSize:44, color:BLUE, display:'block', marginBottom:12, opacity:.7 }}>upload_file</span>
+                <div style={{ fontSize:15, fontWeight:700, color:DARK, marginBottom:6 }}>גרור קובץ Excel לכאן</div>
+                <div style={{ fontSize:13, color:GRAY }}>או לחץ לבחירת קובץ</div>
+                <div style={{ fontSize:11, color:GRAY2, marginTop:8 }}>.xlsx · .xls · .csv</div>
+              </div>
+              <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" style={{ display:'none' }}
+                onChange={e => { const f=e.target.files[0]; e.target.value=''; if(f) parseFile(f) }} />
+
+              <div style={{ marginTop:20, padding:'14px 16px', background:'#F0F7FF', border:'1px solid #BFDBFE', borderRadius:12 }}>
+                <div style={{ fontSize:12, fontWeight:700, color:BLUE, marginBottom:8 }}>
+                  <span className="material-symbols-outlined" style={{fontSize:14,verticalAlign:'middle',marginLeft:6}}>info</span>
+                  כותרות מזוהות אוטומטית
+                </div>
+                <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+                  {['שם מלא','טלפון','מדינה','ענף','מקצוע','ויזה','תוקף','כניסה לישראל','מעסיק'].map(h => (
+                    <span key={h} style={{ fontSize:11, padding:'2px 9px', borderRadius:99, background:WHITE, border:'1px solid #BFDBFE', color:BLUE, fontWeight:600 }}>{h}</span>
+                  ))}
+                  <span style={{ fontSize:11, color:GRAY2 }}>...ועוד</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 2 — Map columns */}
+          {step === 2 && (
+            <div>
+              <div style={{ marginBottom:16 }}>
+                <div style={{ fontSize:14, fontWeight:700, color:DARK }}>מיפוי עמודות</div>
+                <div style={{ fontSize:12, color:GRAY, marginTop:3 }}>
+                  {fileName} · {rows.length} שורות · {headers.length} עמודות
+                </div>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr auto 1fr', gap:'8px 12px', alignItems:'center' }}>
+                <div style={{ fontSize:10, fontWeight:700, color:GRAY2, textTransform:'uppercase', letterSpacing:'.06em' }}>עמודה בקובץ</div>
+                <div />
+                <div style={{ fontSize:10, fontWeight:700, color:GRAY2, textTransform:'uppercase', letterSpacing:'.06em' }}>שדה במערכת</div>
+                {headers.map(h => (
+                  <>
+                    <div key={'h'+h} style={{ padding:'8px 12px', background:LGRAY, border:'1px solid '+BORDER, borderRadius:8, fontSize:13, fontWeight:600, color:DARK, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                      {h || '(ריק)'}
+                    </div>
+                    <span style={{ color:GRAY2, fontSize:16, textAlign:'center' }}>→</span>
+                    <select key={'m'+h} value={mapping[h]||'_skip'} onChange={e => setMapping(m => ({...m,[h]:e.target.value}))} style={{ ...INP, appearance:'none' }}>
+                      {CANDIDATE_FIELDS.map(f => <option key={f.k} value={f.k}>{f.he}</option>)}
+                    </select>
+                  </>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3 — Preview */}
+          {step === 3 && (
+            <div>
+              <div style={{ marginBottom:14, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <div>
+                  <div style={{ fontSize:14, fontWeight:700, color:DARK }}>תצוגה מקדימה</div>
+                  <div style={{ fontSize:12, color:GRAY, marginTop:3 }}>{preview.length} רשומות מוכנות לייבוא</div>
+                </div>
+              </div>
+              <div style={{ overflow:'auto', maxHeight:340, borderRadius:10, border:'1px solid '+BORDER }}>
+                <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+                  <thead>
+                    <tr style={{ background:'#F8FAFC' }}>
+                      {['#','שם','טלפון','מדינה','ענף','ויזה','שיבוץ'].map(h => (
+                        <th key={h} style={{ padding:'9px 12px', textAlign:'right', fontSize:10, fontWeight:700, color:GRAY2, borderBottom:'2px solid '+BORDER, textTransform:'uppercase', letterSpacing:'.05em', whiteSpace:'nowrap' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {preview.slice(0,50).map((r,i) => (
+                      <tr key={i} style={{ borderBottom:'1px solid #F9FAFB', background: i%2===0?WHITE:'#FAFBFC' }}>
+                        <td style={{ padding:'8px 12px', color:GRAY2, fontSize:11 }}>{r._row}</td>
+                        <td style={{ padding:'8px 12px', fontWeight:600, color:DARK }}>{r.full_name_he||r.full_name_en||'—'}</td>
+                        <td style={{ padding:'8px 12px', color:GRAY, direction:'ltr' }}>{r.phone||'—'}</td>
+                        <td style={{ padding:'8px 12px', color:GRAY }}>{r.country||'—'}</td>
+                        <td style={{ padding:'8px 12px', color:GRAY }}>{r.sector||'—'}</td>
+                        <td style={{ padding:'8px 12px', color:GRAY }}>{r.permit_type||'—'}</td>
+                        <td style={{ padding:'8px 12px', color:r.placement?'#059669':GRAY2, fontWeight:r.placement?600:400 }}>{r.placement||'—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {preview.length > 50 && <div style={{ fontSize:11, color:GRAY2, textAlign:'center', marginTop:8 }}>מוצגות 50 מתוך {preview.length} שורות</div>}
+            </div>
+          )}
+
+          {/* STEP 4 — Done */}
+          {step === 4 && (
+            <div style={{ textAlign:'center', padding:'32px 20px' }}>
+              <div style={{ fontSize:48, marginBottom:16 }}>{errors.length === 0 ? '🎉' : '⚠️'}</div>
+              <div style={{ fontSize:20, fontWeight:800, color:DARK, marginBottom:8 }}>
+                {importing ? 'מייבא...' : imported + ' רשומות יובאו בהצלחה'}
+              </div>
+              {errors.length > 0 && (
+                <div style={{ margin:'16px 0', padding:'12px 16px', background:'#FEF2F2', border:'1px solid #FECACA', borderRadius:10, textAlign:'right' }}>
+                  <div style={{ fontSize:12, fontWeight:700, color:'#DC2626', marginBottom:6 }}>{errors.length} שגיאות:</div>
+                  {errors.map((e,i) => <div key={i} style={{ fontSize:11, color:'#9F1239' }}>{e}</div>)}
+                </div>
+              )}
+              <button className="v2-btn v2-btn-primary" style={{ marginTop:12 }} onClick={onClose}>
+                <span className="material-symbols-outlined" style={{fontSize:15}}>check_circle</span>
+                סגור ועדכן רשימה
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* ── FOOTER ── */}
+        {step < 4 && (
+          <div style={{ padding:'14px 26px', borderTop:'1px solid '+BORDER, display:'flex', justifyContent:'space-between', alignItems:'center', background:'#FAFBFC', borderRadius:'0 0 20px 20px', flexShrink:0 }}>
+            <button className="v2-btn v2-btn-ghost" onClick={() => step>1?setStep(s=>s-1):onClose()}>
+              {step>1?'← חזרה':'ביטול'}
+            </button>
+            <span style={{ fontSize:11, color:GRAY2 }}>שלב {step} מתוך 4</span>
+            {step === 2 && (
+              <button className="v2-btn v2-btn-primary" onClick={buildPreview}
+                disabled={!Object.values(mapping).some(v=>v!=='_skip')}>
+                תצוגה מקדימה ←
+              </button>
+            )}
+            {step === 3 && (
+              <button className="v2-btn v2-btn-primary" onClick={doImport} disabled={importing||preview.length===0}
+                style={{ gap:6 }}>
+                <span className="material-symbols-outlined" style={{fontSize:15}}>cloud_upload</span>
+                {importing ? 'מייבא...' : 'ייבא ' + preview.length + ' רשומות'}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── MAIN CRM ─────────────────────────────────────────────────────────────────
 export default function CRM({ session, onLogout }) {
   useStyles()
@@ -4061,6 +4434,8 @@ export default function CRM({ session, onLogout }) {
       .subscribe()
     return () => supabase.removeChannel(channel)
   }, [currentUser])
+
+  useEffect(() => { window.__atlasReload = loadAll }, [loadAll])
 
   const loadAll = useCallback(async () => {
     try {
