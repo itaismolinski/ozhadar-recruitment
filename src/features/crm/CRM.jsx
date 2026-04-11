@@ -2609,15 +2609,16 @@ function ManualAddModal({ onSave, onClose, currentUser }) {
   }
 
   const COUNTRIES = ['סין','אוזבקיסטן','מולדובה','סרי לנקה','הודו','פיליפינים','תאילנד','נפאל','רואנדה','אחר']
-  const Field = ({ label, k, type='text', opts, placeholder }) => (
-    <div style={{ marginBottom:13 }}>
+  // renderField — plain function, NOT a component, avoids remount-on-keystroke
+  const renderField = (label, k, type='text', opts=null, placeholder='') => (
+    <div key={k} style={{ marginBottom:13 }}>
       <label style={{ display:'block', fontSize:10, fontWeight:700, color:GRAY, marginBottom:5, textTransform:'uppercase', letterSpacing:'.05em', fontFamily:'Manrope,sans-serif' }}>{label}</label>
       {opts
         ? <select value={form[k]||''} onChange={e => sf(k, e.target.value)} className="v2-input v2-select" style={{ paddingLeft:28 }}>
             <option value="">— בחר —</option>
             {opts.map(o => typeof o === 'string' ? <option key={o} value={o}>{o}</option> : <option key={o.v} value={o.v}>{o.l||o.he||o.v}</option>)}
           </select>
-        : <input type={type} value={form[k]||''} onChange={e => sf(k, e.target.value)} placeholder={placeholder||''} className="v2-input" />
+        : <input type={type} value={form[k]||''} onChange={e => sf(k, e.target.value)} placeholder={placeholder} className="v2-input" />
       }
     </div>
   )
@@ -2651,27 +2652,27 @@ function ManualAddModal({ onSave, onClose, currentUser }) {
         <div style={{ flex:1, overflowY:'auto', padding:'20px 24px' }}>
           {step === 1 && (
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0 16px' }}>
-              <Field label="שם מלא בעברית *" k="full_name_he" placeholder="ישראל ישראלי" />
-              <Field label="שם מלא באנגלית" k="full_name_en" placeholder="Israel Israeli" />
-              <Field label="טלפון *" k="phone" type="tel" placeholder="050-0000000" />
-              <Field label="אימייל" k="email" type="email" />
-              <Field label="מדינת מוצא" k="country" opts={COUNTRIES} />
-              <Field label="עיר מגורים" k="city" />
-              <Field label="תאריך לידה" k="dob" type="date" />
+              {renderField("שם מלא בעברית *", "full_name_he", "text", null, "ישראל ישראלי")}
+              {renderField("שם מלא באנגלית", "full_name_en", "text", null, "Israel Israeli")}
+              {renderField("טלפון *", "phone", "tel", null, "050-0000000")}
+              {renderField("אימייל", "email", "email", null, "")}
+              {renderField("מדינת מוצא", "country", "text", COUNTRIES, "")}
+              {renderField("עיר מגורים", "city", "text", null, "")}
+              {renderField("תאריך לידה", "dob", "date", null, "")}
             </div>
           )}
           {step === 2 && (
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0 16px' }}>
-              <Field label="ענף" k="sector" opts={SECTORS} />
-              <Field label="מקצוע" k="profession" placeholder="בנאי, חשמלאי..." />
-              <Field label="שנות ניסיון" k="experience" type="number" />
-              <Field label="מעסיק נוכחי" k="current_employer" />
-              <Field label="מעסיק אחרון" k="last_employer" />
+              {renderField("ענף", "sector", "text", SECTORS, "")}
+              {renderField("מקצוע", "profession", "text", null, "בנאי, חשמלאי...")}
+              {renderField("שנות ניסיון", "experience", "number", null, "")}
+              {renderField("מעסיק נוכחי", "current_employer", "text", null, "")}
+              {renderField("מעסיק אחרון", "last_employer", "text", null, "")}
               <div />
-              <Field label="סוג ויזה / היתר" k="permit_type" opts={PERMITS} />
-              <Field label="מספר היתר / דרכון" k="permit_number" />
-              <Field label="תוקף ויזה" k="permit_expiry" type="date" />
-              <Field label="תאריך כניסה לישראל" k="entry_date" type="date" />
+              {renderField("סוג ויזה / היתר", "permit_type", "text", PERMITS, "")}
+              {renderField("מספר היתר / דרכון", "permit_number", "text", null, "")}
+              {renderField("תוקף ויזה", "permit_expiry", "date", null, "")}
+              {renderField("תאריך כניסה לישראל", "entry_date", "date", null, "")}
             </div>
           )}
           {step === 3 && (
