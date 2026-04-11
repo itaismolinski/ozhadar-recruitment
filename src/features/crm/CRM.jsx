@@ -3728,8 +3728,9 @@ function MyTasksModule({ candidates, currentUser, allTasks, onTaskUpdate }) {
 }
 
 // ─── TOP BAR WITH CLOCK + GREETING ───────────────────────────────────────────
-function TopBar({ module, currentUser, onRefresh, tasks = [] }) {
+function TopBar({ module, currentUser, onRefresh, tasks = [], onNavigate }) {
   const [now, setNow] = useState(new Date())
+  const [bellOpen, setBellOpen] = useState(false)
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(t)
@@ -3801,23 +3802,105 @@ function TopBar({ module, currentUser, onRefresh, tasks = [] }) {
       <div style={{ width: 1, height: 20, background: BORDER }} />
 
       {/* Refresh */}
-      <button onClick={onRefresh}
-        style={{ width: 34, height: 34, borderRadius: 8, border: '1px solid ' + BORDER, background: WHITE, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: GRAY, fontSize: 15, transition: 'all .15s' }}
-        onMouseEnter={e => e.currentTarget.style.background = LGRAY}
-        onMouseLeave={e => e.currentTarget.style.background = WHITE}>
+      <button onClick={() => { const btn = document.activeElement; btn.style.transform='rotate(360deg)'; btn.style.transition='transform .5s'; setTimeout(() => { btn.style.transform=''; btn.style.transition=''; }, 520); onRefresh && onRefresh() }}
+        title="רענן נתונים"
+        style={{ width: 34, height: 34, borderRadius: 8, border: '1px solid ' + BORDER, background: WHITE, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: GRAY, fontSize: 17, transition: 'background .15s', fontFamily: 'inherit' }}
+        onMouseEnter={e => { e.currentTarget.style.background = LGRAY; e.currentTarget.style.color = BLUE }}
+        onMouseLeave={e => { e.currentTarget.style.background = WHITE; e.currentTarget.style.color = GRAY }}>
         ↻
       </button>
 
-      {/* Bell */}
+      {/* Bell + notifications dropdown */}
       <div style={{ position: 'relative' }}>
-        <button style={{ width: 34, height: 34, borderRadius: 8, border: '1px solid ' + BORDER, background: WHITE, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 15 }}>
+        <button onClick={() => setBellOpen(s => !s)} title="התראות"
+          style={{ width: 34, height: 34, borderRadius: 8, border: '1px solid ' + (bellOpen ? BLUE : BORDER),
+            background: bellOpen ? BLUE_L : WHITE, display: 'flex', alignItems: 'center',
+            justifyContent: 'center', cursor: 'pointer', fontSize: 15, transition: 'all .15s' }}
+          onMouseEnter={e => { if (!bellOpen) { e.currentTarget.style.background=LGRAY; e.currentTarget.style.borderColor=BLUE+'50' } }}
+          onMouseLeave={e => { if (!bellOpen) { e.currentTarget.style.background=WHITE; e.currentTarget.style.borderColor=BORDER } }}>
           🔔
         </button>
+        {/* Badge */}
         {tasks.filter(t => t.status === 'open' && t.assigned_to === currentUser).length > 0 && (
-          <div style={{ position: 'absolute', top: -4, right: -4, width: 16, height: 16, background: '#EF4444', borderRadius: '50%', fontSize: 9, fontWeight: 800, color: WHITE, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid ' + WHITE }}>
+          <div style={{ position: 'absolute', top: -4, right: -4, width: 17, height: 17,
+            background: '#EF4444', borderRadius: '50%', fontSize: 9, fontWeight: 800,
+            color: WHITE, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            border: '2px solid ' + WHITE, pointerEvents: 'none' }}>
             {tasks.filter(t => t.status === 'open' && t.assigned_to === currentUser).length}
           </div>
         )}
+        {/* Dropdown */}
+        {bellOpen && (() => {
+          const myOpen = tasks.filter(t => t.status === 'open' && t.assigned_to === currentUser)
+          const urgent = myOpen.filter(t => t.priority === 'urgent')
+          return (
+            <div className="fade-in-fast"
+              style={{ position: 'absolute', top: 42, left: 0, width: 310, background: WHITE,
+                border: '1.5px solid ' + BORDER, borderRadius: 14, boxShadow: SHADOW_LG,
+                zIndex: 9999, overflow: 'hidden' }}>
+              {/* Header */}
+              <div style={{ padding: '13px 16px', borderBottom: '1px solid ' + BORDER,
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ fontSize: 13, fontWeight: 800, color: DARK }}>התראות</div>
+                {myOpen.length > 0 && (
+                  <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99,
+                    background: '#FEF2F2', color: '#DC2626' }}>
+                    {myOpen.length} פתוחות
+                  </span>
+                )}
+              </div>
+              {/* Content */}
+              {myOpen.length === 0 ? (
+                <div style={{ padding: '28px 16px', textAlign: 'center', color: GRAY2, fontSize: 13 }}>
+                  <div style={{ fontSize: 24, marginBottom: 8 }}>✅</div>
+                  אין משימות ממתינות
+                </div>
+              ) : (
+                <div style={{ maxHeight: 280, overflowY: 'auto' }}>
+                  {urgent.length > 0 && (
+                    <div style={{ padding: '8px 16px 4px', fontSize: 10, fontWeight: 700,
+                      color: '#DC2626', textTransform: 'uppercase', letterSpacing: '.08em' }}>
+                      דחוף
+                    </div>
+                  )}
+                  {myOpen.slice(0, 8).map(t => {
+                    const over = t.due_date && new Date(t.due_date) < now
+                    return (
+                      <div key={t.id}
+                        style={{ padding: '10px 16px', borderBottom: '1px solid #F9FAFB',
+                          cursor: 'pointer', transition: 'background .1s' }}
+                        onMouseEnter={e => e.currentTarget.style.background = LGRAY}
+                        onMouseLeave={e => e.currentTarget.style.background = WHITE}
+                        onClick={() => { setBellOpen(false); onNavigate && onNavigate('mytasks') }}>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                          <div style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, marginTop: 5,
+                            background: t.priority === 'urgent' ? '#EF4444' : t.priority === 'high' ? '#F59E0B' : BLUE }} />
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: DARK }}>{t.title}</div>
+                            {t.due_date && (
+                              <div style={{ fontSize: 11, color: over ? '#DC2626' : GRAY2, marginTop: 2 }}>
+                                {over ? '⏰ באיחור — ' : ''}{fmtDate(t.due_date)}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+              {/* Footer */}
+              <div style={{ padding: '10px 16px', borderTop: '1px solid ' + BORDER }}>
+                <button onClick={() => { setBellOpen(false); onNavigate && onNavigate('mytasks') }}
+                  style={{ width: '100%', padding: '8px 0', borderRadius: 8, border: 'none',
+                    background: BLUE_L, color: BLUE, fontSize: 12, fontWeight: 700,
+                    cursor: 'pointer', fontFamily: F }}>
+                  ← לכל המשימות שלי
+                </button>
+              </div>
+            </div>
+          )
+        })()}
       </div>
 
       {/* Avatar */}
@@ -4118,7 +4201,7 @@ export default function CRM({ session, onLogout }) {
 
       {/* ── MAIN ── */}
       <div style={{ flex: 1, overflow: 'auto', background: CREAM, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <TopBar module={module} currentUser={currentUser} onRefresh={loadAll} tasks={tasks} />
+        <TopBar module={module} currentUser={currentUser} onRefresh={loadAll} tasks={tasks} onNavigate={setModule} />
 
         {/* Module content */}
         {module === 'dashboard' && <Dashboard candidates={candidates} tasks={tasks} apartments={apartments} onNavigate={setModule} currentUser={currentUser} />}
