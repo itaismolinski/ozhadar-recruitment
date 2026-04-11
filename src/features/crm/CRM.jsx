@@ -665,7 +665,7 @@ function ApplicantsModule({ candidates, onUpdate, onDelete, onAdd, currentUser }
 
         <div style={{ background: WHITE, borderBottom: '1.5px solid #E5E5EA', padding: '0 24px', display: 'flex', gap: 2, overflowX: 'auto', marginTop: 14 }}>
           {[['info', '📋 פרטים'], ['notes', '📝 מעקב ותרשומות']].map(([k, l]) => (
-            <button key={k} className={'tab-btn' + tab === k ? ' active' : ''} onClick={() => setTab(k)}>{l}</button>
+            <button key={k} className={'tab-btn' + (tab === k ? ' active' : '')} onClick={() => setTab(k)}>{l}</button>
           ))}
         </div>
 
@@ -939,7 +939,7 @@ function WorkersModule({ candidates, onUpdate, onDelete, onAdd, currentUser }) {
 
       <div style={{ background: WHITE, borderBottom: '1.5px solid #E5E5EA', padding: '0 24px', display: 'flex', gap: 2, overflowX: 'auto', marginTop: 12 }}>
           {[['info', '📋 פרטים'], ['placement', '🏢 שיבוץ'], ['finances', '💰 פיננסים'], ['events', '📅 אירועים'], ['docs', '📁 מסמכים'], ['notes', '📝 תרשומות']].map(([k, l]) => (
-            <button key={k} className={'tab-btn' + tab === k ? ' active' : ''} onClick={() => setTab(k)}>{l}</button>
+            <button key={k} className={'tab-btn' + (tab === k ? ' active' : '')} onClick={() => setTab(k)}>{l}</button>
           ))}
         </div>
 
@@ -1356,7 +1356,7 @@ function ApartmentsModule({ candidates, currentUser }) {
         </div>
         <div style={{ background: WHITE, borderBottom: '1.5px solid #E5E5EA', padding: '0 24px', display: 'flex', gap: 2, overflowX: 'auto' }}>
           {[['info', '📋 פרטים'], ['residents', '👥 דיירים'], ['notes', '📝 תרשומות']].map(([k, l]) => (
-            <button key={k} className={'tab-btn' + tab === k ? ' active' : ''} onClick={() => setTab(k)}>{l}</button>
+            <button key={k} className={'tab-btn' + (tab === k ? ' active' : '')} onClick={() => setTab(k)}>{l}</button>
           ))}
         </div>
         <div style={{ maxWidth: 700, margin: '22px auto', padding: '0 20px 60px' }}>
@@ -1842,7 +1842,7 @@ function EmployersModule({ candidates, currentUser }) {
 
         <div style={{ background: WHITE, borderBottom: '1.5px solid #E5E5EA', padding: '0 24px', display: 'flex', gap: 2, overflowX: 'auto' }}>
           {[['info','📋 פרטים'],['workers','👥 עובדים משובצים (' + myWorkers.length + ')'],['notes','📝 תרשומות']].map(([k,l]) => (
-            <button key={k} className={'tab-btn' + tab===k?' active':''} onClick={() => setTab(k)}>{l}</button>
+            <button key={k} className={'tab-btn' + (tab===k?' active':'')} onClick={() => setTab(k)}>{l}</button>
           ))}
         </div>
 
