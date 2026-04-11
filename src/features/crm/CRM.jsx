@@ -2587,6 +2587,69 @@ function BulkBar({ selected, onExport, onDelete, onClear, label='פריטים' }
   )
 }
 
+
+// ─── COUNTRY COMBOBOX ─────────────────────────────────────────────────────────
+function CountryCombobox({ value, onChange, options }) {
+  const [query, setQuery]   = useState(value || '')
+  const [open, setOpen]     = useState(false)
+  const [hiIdx, setHiIdx]   = useState(0)
+  const ref = useRef()
+
+  // Sync if external value changes
+  useEffect(() => { setQuery(value || '') }, [value])
+
+  const filtered = options.filter(o => o.includes(query) || query === '')
+
+  const select = (opt) => {
+    setQuery(opt)
+    onChange(opt)
+    setOpen(false)
+  }
+
+  const handleKey = (e) => {
+    if (!open) { setOpen(true); return }
+    if (e.key === 'ArrowDown') { e.preventDefault(); setHiIdx(i => Math.min(i+1, filtered.length-1)) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setHiIdx(i => Math.max(i-1, 0)) }
+    else if (e.key === 'Enter') { e.preventDefault(); if (filtered[hiIdx]) select(filtered[hiIdx]) }
+    else if (e.key === 'Escape') { setOpen(false) }
+  }
+
+  // Close on outside click
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  return (
+    <div className="combo-wrap" ref={ref}>
+      <input
+        className="v2-input"
+        value={query}
+        placeholder="הקלד לחיפוש מדינה..."
+        onChange={e => { setQuery(e.target.value); setHiIdx(0); setOpen(true); if (!e.target.value) onChange('') }}
+        onFocus={() => setOpen(true)}
+        onKeyDown={handleKey}
+        autoComplete="off"
+      />
+      {open && (
+        <div className="combo-list">
+          {filtered.length === 0
+            ? <div className="combo-empty">לא נמצאה מדינה</div>
+            : filtered.map((opt, i) => (
+                <div key={opt}
+                  className={'combo-item' + (i === hiIdx ? ' active' : '')}
+                  onMouseDown={() => select(opt)}>
+                  {opt}
+                </div>
+              ))
+          }
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── MANUAL ADD CANDIDATE MODAL ───────────────────────────────────────────────
 function ManualAddModal({ onSave, onClose, currentUser }) {
   const EMPTY = { full_name_he:'', full_name_en:'', phone:'', email:'', country:'', city:'', dob:'', sector:'', profession:'', experience:'', permit_type:'', permit_number:'', permit_expiry:'', entry_date:'', current_employer:'', last_employer:'', notes_text:'', status:'new', form_lang:'manual' }
@@ -2631,10 +2694,16 @@ function ManualAddModal({ onSave, onClose, currentUser }) {
     'אחר',
   ]
   // renderField — plain function, NOT a component, avoids remount-on-keystroke
-  const renderField = (label, k, type='text', opts=null, placeholder='') => (
+  const renderField = (label, k, type='text', opts=null, placeholder='', searchable=false) => (
     <div key={k} style={{ marginBottom:13 }}>
       <label style={{ display:'block', fontSize:10, fontWeight:700, color:GRAY, marginBottom:5, textTransform:'uppercase', letterSpacing:'.05em', fontFamily:'Manrope,sans-serif' }}>{label}</label>
-      {opts
+      {opts && searchable
+        ? <CountryCombobox
+            value={form[k]||''}
+            onChange={v => sf(k, v)}
+            options={opts.filter(o => typeof o === 'string')}
+          />
+        : opts
         ? <select value={form[k]||''} onChange={e => sf(k, e.target.value)} className="v2-input v2-select" style={{ paddingLeft:28 }}>
             <option value="">— בחר —</option>
             {opts.map(o => typeof o === 'string' ? <option key={o} value={o}>{o}</option> : <option key={o.v} value={o.v}>{o.l||o.he||o.v}</option>)}
@@ -2677,7 +2746,7 @@ function ManualAddModal({ onSave, onClose, currentUser }) {
               {renderField("שם מלא באנגלית", "full_name_en", "text", null, "Israel Israeli")}
               {renderField("טלפון *", "phone", "tel", null, "050-0000000")}
               {renderField("אימייל", "email", "email", null, "")}
-              {renderField("מדינת מוצא", "country", "text", COUNTRIES, "")}
+              {renderField("מדינת מוצא", "country", "text", COUNTRIES, "", true)}
               {renderField("עיר מגורים", "city", "text", null, "")}
               {renderField("תאריך לידה", "dob", "date", null, "")}
             </div>
