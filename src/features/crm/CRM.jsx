@@ -3194,293 +3194,235 @@ function GridModule({ candidates }) {
 
 
 // ─── WORKER DOCS TAB ─────────────────────────────────────────────────────────
-const WORKER_DOC_TYPES = [
-  { k: 'passport',  he: 'דרכון',              icon: 'badge',             color: '#0055DD' },
-  { k: 'id',        he: 'תעודת זהות',          icon: 'contacts',          color: '#0055DD' },
-  { k: 'permit',    he: 'היתר עבודה',           icon: 'approval',          color: '#059669' },
-  { k: 'visa',      he: 'ויזה / אשרת כניסה',   icon: 'flight_takeoff',    color: '#059669' },
-  { k: 'contract',  he: 'חוזה עבודה',           icon: 'description',       color: '#7C3AED' },
-  { k: 'medical',   he: 'אישור רפואי',           icon: 'health_and_safety', color: '#C2410C' },
-  { k: 'insurance', he: 'ביטוח בריאות',          icon: 'shield',            color: '#0891B2' },
-  { k: 'license',   he: 'רישיון מקצועי',         icon: 'workspace_premium', color: '#B45309' },
-  { k: 'police',    he: 'תעודת יושר',            icon: 'verified_user',     color: '#374151' },
-  { k: 'photo',     he: 'תמונת פספורט',          icon: 'person',            color: '#6366F1' },
-  { k: 'other',     he: 'מסמך נוסף',             icon: 'attach_file',       color: '#64748B' },
-]
-
 function WorkerDocsTab({ candidateId, currentUser }) {
-  const [docs, setDocs]         = useState([])     // [{id, doc_type, doc_name, file_path, created_at, uploaded_by}]
-  const [loading, setLoading]   = useState(true)
-  const [uploading, setUploading] = useState(null) // which doc_type is uploading
-  const [error, setError]       = useState('')
-  const fileInputRef            = useRef({})
-
-  // Load existing documents
+  const [docs,       setDocs]       = useState([])
+  const [templates,  setTemplates]  = useState([])
+  const [loading,    setLoading]    = useState(true)
   const [tableError, setTableError] = useState(false)
+  const [uploading,  setUploading]  = useState(false)
+  const [showUpload, setShowUpload] = useState(false)
+  const [showFromTemplate, setShowFromTemplate] = useState(false)
+  const [docName,    setDocName]    = useState('')
+  const [error,      setError]      = useState('')
+  const fileRef  = useRef()
+  const nameRef  = useRef()
 
-  const loadDocs = async () => {
+  const load = async () => {
     try {
       const { data, error } = await supabase
         .from('candidate_documents')
         .select('*')
         .eq('candidate_id', candidateId)
         .order('created_at', { ascending: false })
-      if (error) {
-        console.error('candidate_documents error:', error)
-        if (error.code === '42P01' || error.message?.includes('does not exist')) {
-          setTableError(true)
-        } else {
-          setError('שגיאה בטעינת מסמכים: ' + error.message)
-        }
-      } else {
-        setDocs(data || [])
-      }
-    } catch(e) {
-      setError('שגיאה: ' + e.message)
-    }
+      if (error) { if (error.code === '42P01') setTableError(true); else setError(error.message) }
+      else setDocs(data || [])
+    } catch(e) { setError(e.message) }
     setLoading(false)
   }
 
-  useEffect(() => { loadDocs() }, [candidateId])
+  const loadTemplates = async () => {
+    const { data } = await supabase.from('document_templates').select('*').order('name')
+    setTemplates(data || [])
+  }
 
-  // Get latest doc of each type
-  const docByType = {}
-  docs.forEach(d => { if (!docByType[d.doc_type]) docByType[d.doc_type] = d })
+  useEffect(() => { load() }, [candidateId])
+  useEffect(() => { if (showFromTemplate) loadTemplates() }, [showFromTemplate])
 
-  const uploadFile = async (docType, file) => {
-    setUploading(docType); setError('')
+  // ── Upload a file ────────────────────────────────────────────────────────
+  const uploadFile = async (file, name) => {
+    setUploading(true); setError('')
     try {
       const ext  = file.name.split('.').pop().toLowerCase()
-      const path = candidateId + '/' + docType + '_' + Date.now() + '.' + ext
-      // Upload to storage
-      const { error: upErr } = await supabase.storage
-        .from('candidate-docs')
-        .upload(path, file, { upsert: true })
+      const path = candidateId + '/' + Date.now() + '_' + file.name
+      const { error: upErr } = await supabase.storage.from('candidate-docs').upload(path, file, { upsert: true })
       if (upErr) throw upErr
-      // Save record in DB
-      const { data, error: dbErr } = await supabase
-        .from('candidate_documents')
-        .insert([{ candidate_id: candidateId, doc_type: docType,
-          doc_name: file.name, file_path: path, uploaded_by: currentUser }])
+      const { data, error: dbErr } = await supabase.from('candidate_documents')
+        .insert([{ candidate_id: candidateId, doc_type: 'file', doc_name: name || file.name,
+          file_path: path, uploaded_by: currentUser }])
         .select().single()
       if (dbErr) throw dbErr
-      setDocs(prev => [data, ...prev.filter(d => d.doc_type !== docType)])
-    } catch(e) {
-      setError('שגיאה בהעלאה: ' + (e.message || e))
+      setDocs(p => [data, ...p])
+      setShowUpload(false); setDocName('')
+    } catch(e) { setError('שגיאה בהעלאה: ' + e.message) }
+    setUploading(false)
+  }
+
+  // ── Attach a template ────────────────────────────────────────────────────
+  const attachTemplate = async (tmpl) => {
+    setError('')
+    try {
+      const { data, error: dbErr } = await supabase.from('candidate_documents')
+        .insert([{ candidate_id: candidateId, doc_type: 'template',
+          doc_name: tmpl.name, file_path: tmpl.file_path || '',
+          uploaded_by: currentUser, notes: tmpl.id }])
+        .select().single()
+      if (dbErr) throw dbErr
+      setDocs(p => [data, ...p])
+      setShowFromTemplate(false)
+    } catch(e) { setError('שגיאה: ' + e.message) }
+  }
+
+  // ── View ─────────────────────────────────────────────────────────────────
+  const viewDoc = async (doc) => {
+    if (doc.doc_type === 'template') {
+      // View from document_templates module
+      const tmplId = doc.notes
+      if (tmplId) {
+        const { data } = await supabase.from('document_templates').select('content,name').eq('id', tmplId).single()
+        if (data?.content) {
+          const w = window.open('', '_blank')
+          w.document.write('<pre style="font-family:Arial;padding:20px;direction:rtl">' + data.content + '</pre>')
+          return
+        }
+      }
+      if (doc.file_path) {
+        const { data } = await supabase.storage.from('document-templates').createSignedUrl(doc.file_path, 3600)
+        if (data?.signedUrl) window.open(data.signedUrl, '_blank')
+      }
+    } else {
+      const { data } = await supabase.storage.from('candidate-docs').createSignedUrl(doc.file_path, 3600)
+      if (data?.signedUrl) window.open(data.signedUrl, '_blank')
+      else alert('לא ניתן לפתוח')
     }
-    setUploading(null)
   }
 
-  const viewDoc = async (filePath) => {
-    const { data } = await supabase.storage
-      .from('candidate-docs')
-      .createSignedUrl(filePath, 3600)
-    if (data?.signedUrl) window.open(data.signedUrl, '_blank')
-    else alert('לא ניתן לפתוח את הקובץ')
-  }
-
+  // ── Delete ───────────────────────────────────────────────────────────────
   const deleteDoc = async (doc) => {
-    if (!window.confirm('למחוק את המסמך ' + (doc.doc_name || doc.doc_type) + '?')) return
-    await supabase.storage.from('candidate-docs').remove([doc.file_path])
+    if (!window.confirm('למחוק את "' + doc.doc_name + '"?')) return
+    if (doc.doc_type === 'file' && doc.file_path) {
+      await supabase.storage.from('candidate-docs').remove([doc.file_path])
+    }
     await supabase.from('candidate_documents').delete().eq('id', doc.id)
-    setDocs(prev => prev.filter(d => d.id !== doc.id))
+    setDocs(p => p.filter(d => d.id !== doc.id))
   }
 
-  const uploaded = WORKER_DOC_TYPES.filter(t => docByType[t.k]).length
-
-  if (loading) return (
-    <div style={{ textAlign:'center', padding:40, color:GRAY2, fontSize:13 }}>טוען מסמכים...</div>
-  )
+  // ── States ───────────────────────────────────────────────────────────────
+  if (loading) return <div style={{ textAlign:'center', padding:40, color:GRAY2 }}>טוען...</div>
 
   if (tableError) return (
-    <div style={{ padding:24, background:'#FFF7ED', border:'1px solid #FED7AA', borderRadius:12, textAlign:'center' }}>
-      <div style={{ fontSize:18, marginBottom:10 }}>⚠️</div>
-      <div style={{ fontSize:14, fontWeight:700, color:'#C2410C', marginBottom:8 }}>
-        טבלת המסמכים לא קיימת עדיין
-      </div>
-      <div style={{ fontSize:12, color:'#92400E', lineHeight:1.6 }}>
-        יש להריץ את ה-SQL הבא ב-Supabase SQL Editor:
-      </div>
-      <pre style={{ margin:'12px 0', padding:'10px 14px', background:'#FFF', borderRadius:8,
-        fontSize:11, textAlign:'left', direction:'ltr', border:'1px solid #FED7AA',
-        color:'#374151', overflow:'auto' }}>
-        {"create table if not exists public.candidate_documents (\n" +
-         "  id uuid default gen_random_uuid() primary key,\n" +
-         "  created_at timestamptz default now(),\n" +
-         "  candidate_id uuid references public.candidates(id) on delete cascade,\n" +
-         "  doc_type text not null,\n" +
-         "  doc_name text,\n" +
-         "  file_path text not null,\n" +
-         "  uploaded_by text\n" +
-         ");\n" +
-         "alter table public.candidate_documents enable row level security;\n" +
-         "create policy \"docs_auth\" on public.candidate_documents\n" +
-         "  for all using (auth.role() = 'authenticated');"}
-      </pre>
-      <button className="v2-btn v2-btn-ghost" onClick={loadDocs} style={{ marginTop:8 }}>
-        נסה שוב
-      </button>
+    <div style={{ padding:20, background:'#FFF7ED', border:'1px solid #FED7AA', borderRadius:12, textAlign:'center' }}>
+      <div style={{ fontSize:14, fontWeight:700, color:'#C2410C', marginBottom:8 }}>⚠️ יש להריץ SQL תחילה</div>
+      <div style={{ fontSize:11, color:'#92400E' }}>הרץ את add_candidate_documents.sql ב-Supabase</div>
+      <button className="v2-btn v2-btn-ghost" style={{ marginTop:10 }} onClick={load}>נסה שוב</button>
     </div>
   )
 
   return (
     <div className="fade-in">
-      {/* Header */}
+
+      {/* ── HEADER + ACTION BUTTONS ── */}
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
         <div>
           <div className="headline" style={{ fontSize:15, fontWeight:800, color:DARK }}>מסמכים</div>
-          <div style={{ fontSize:11, color:GRAY, marginTop:2 }}>{uploaded} / {WORKER_DOC_TYPES.length} הועלו</div>
+          <div style={{ fontSize:11, color:GRAY2, marginTop:1 }}>{docs.length} מסמכים</div>
         </div>
-        {/* Progress dots */}
-        <div style={{ display:'flex', gap:4 }}>
-          {WORKER_DOC_TYPES.map(t => (
-            <div key={t.k} title={t.he} style={{ width:8, height:8, borderRadius:'50%',
-              background: docByType[t.k] ? '#10B981' : '#E2E8F0', transition:'background .3s' }} />
-          ))}
+        <div style={{ display:'flex', gap:8 }}>
+          <button className="v2-btn v2-btn-ghost" onClick={() => setShowFromTemplate(s => !s)}
+            style={{ gap:6, fontSize:12 }}>
+            <span className="material-symbols-outlined" style={{fontSize:14}}>description</span>
+            תיוק מתבנית
+          </button>
+          <button className="v2-btn v2-btn-primary" onClick={() => { setShowUpload(s => !s); setTimeout(() => nameRef.current?.focus(), 50) }}
+            style={{ gap:6, fontSize:12 }}>
+            <span className="material-symbols-outlined" style={{fontSize:14}}>upload_file</span>
+            העלה מסמך
+          </button>
         </div>
       </div>
 
       {error && (
-        <div style={{ padding:'10px 14px', background:'#FEF2F2', border:'1px solid #FECACA',
-          borderRadius:9, color:'#DC2626', fontSize:13, marginBottom:12 }}>
+        <div style={{ padding:'10px 14px', background:'#FEF2F2', border:'1px solid #FECACA', borderRadius:9, color:'#DC2626', fontSize:13, marginBottom:12 }}>
           {error}
         </div>
       )}
 
-      {/* Document grid */}
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
-        {WORKER_DOC_TYPES.map(t => {
-          const doc   = docByType[t.k]
-          const isUp  = uploading === t.k
+      {/* ── UPLOAD PANEL ── */}
+      {showUpload && (
+        <div className="fade-in-fast" style={{ background:'#F0F7FF', border:'1px solid #BFDBFE', borderRadius:12, padding:16, marginBottom:14 }}>
+          <div style={{ fontSize:12, fontWeight:700, color:BLUE, marginBottom:10 }}>העלאת מסמך חדש</div>
+          <div style={{ marginBottom:10 }}>
+            <label style={{ display:'block', fontSize:10, fontWeight:700, color:GRAY, marginBottom:5, textTransform:'uppercase', letterSpacing:'.05em' }}>שם המסמך</label>
+            <input ref={nameRef} value={docName} onChange={e => setDocName(e.target.value)}
+              placeholder="לדוגמה: דרכון, חוזה עבודה, ת.לידה..."
+              className="v2-input" style={{ background:'#FFF' }} />
+          </div>
+          <button className="v2-btn v2-btn-primary" style={{ width:'100%', justifyContent:'center', gap:7 }}
+            onClick={() => fileRef.current?.click()} disabled={uploading}>
+            <span className="material-symbols-outlined" style={{fontSize:15}}>attach_file</span>
+            {uploading ? 'מעלה...' : 'בחר קובץ (PDF, Word, תמונה)'}
+          </button>
+          <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style={{ display:'none' }}
+            onChange={e => { const f = e.target.files[0]; e.target.value = ''; if (f) uploadFile(f, docName || f.name) }} />
+        </div>
+      )}
 
-          return (
-            <div key={t.k} style={{ background:WHITE,
-              border:'1.5px solid '+(doc ? t.color+'40' : BORDER),
-              borderRadius:12, padding:'14px 16px', transition:'all .2s',
-              boxShadow: doc ? '0 2px 8px '+t.color+'18' : 'none' }}>
-
-              {/* Icon + name row */}
-              <div style={{ display:'flex', alignItems:'flex-start', gap:10, marginBottom:12 }}>
-                <div style={{ width:36, height:36, borderRadius:9, flexShrink:0,
-                  background: doc ? t.color+'12' : LGRAY,
-                  display:'flex', alignItems:'center', justifyContent:'center',
-                  border:'1px solid '+(doc ? t.color+'25' : BORDER) }}>
-                  <span className="material-symbols-outlined"
-                    style={{ fontSize:18, color: doc ? t.color : GRAY2,
-                      fontVariationSettings: doc ? "'FILL' 1" : "'FILL' 0" }}>
-                    {t.icon}
-                  </span>
-                </div>
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:13, fontWeight:700, color:DARK,
-                    overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                    {t.he}
+      {/* ── TEMPLATE PICKER ── */}
+      {showFromTemplate && (
+        <div className="fade-in-fast" style={{ background:LGRAY, border:'1px solid '+BORDER, borderRadius:12, padding:16, marginBottom:14 }}>
+          <div style={{ fontSize:12, fontWeight:700, color:DARK, marginBottom:10 }}>תיוק תבנית לעובד זה</div>
+          {templates.length === 0
+            ? <div style={{ fontSize:12, color:GRAY2, textAlign:'center', padding:'12px 0' }}>אין תבניות — העלה תבניות במודול מסמכים</div>
+            : <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                {templates.map(t => (
+                  <div key={t.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'9px 12px', background:WHITE, borderRadius:9, border:'1px solid '+BORDER, cursor:'pointer' }}
+                    onClick={() => attachTemplate(t)}
+                    onMouseEnter={e => e.currentTarget.style.borderColor=BLUE}
+                    onMouseLeave={e => e.currentTarget.style.borderColor=BORDER}>
+                    <span className="material-symbols-outlined" style={{ fontSize:16, color:BLUE }}>description</span>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:13, fontWeight:600, color:DARK }}>{t.name}</div>
+                      {t.description && <div style={{ fontSize:10, color:GRAY2 }}>{t.description}</div>}
+                    </div>
+                    <span className="material-symbols-outlined" style={{ fontSize:14, color:GRAY2 }}>add</span>
                   </div>
-                  {doc
-                    ? <div style={{ fontSize:10, color:GRAY2, marginTop:1,
-                        overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                        {doc.doc_name} · {new Date(doc.created_at).toLocaleDateString('he-IL')}
-                      </div>
-                    : <div style={{ fontSize:10, color:'#D1D5DB', marginTop:1 }}>לא הועלה</div>
-                  }
-                </div>
-                {/* Badge */}
-                <span style={{ fontSize:9, fontWeight:800, padding:'2px 7px', borderRadius:99,
-                  background: doc ? t.color+'12' : '#F1F5F9',
-                  color: doc ? t.color : GRAY2, letterSpacing:'.06em',
-                  textTransform:'uppercase', fontFamily:"'Manrope',sans-serif", flexShrink:0 }}>
-                  {doc ? 'קיים' : 'חסר'}
+                ))}
+              </div>
+          }
+        </div>
+      )}
+
+      {/* ── DOCUMENTS LIST ── */}
+      {docs.length === 0 ? (
+        <div style={{ textAlign:'center', padding:'40px 20px', color:GRAY2 }}>
+          <span className="material-symbols-outlined" style={{ fontSize:40, display:'block', marginBottom:10, opacity:.3 }}>folder_open</span>
+          <div style={{ fontSize:13, fontWeight:600, color:GRAY }}>אין מסמכים עדיין</div>
+          <div style={{ fontSize:12, color:GRAY2, marginTop:4 }}>לחץ "העלה מסמך" כדי להוסיף</div>
+        </div>
+      ) : (
+        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+          {docs.map(doc => (
+            <div key={doc.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'11px 14px', background:WHITE, border:'1px solid '+BORDER, borderRadius:11, transition:'all .15s' }}
+              onMouseEnter={e => e.currentTarget.style.borderColor=BLUE+'60'}
+              onMouseLeave={e => e.currentTarget.style.borderColor=BORDER}>
+              {/* Icon */}
+              <div style={{ width:36, height:36, borderRadius:9, background:doc.doc_type==='template'?'#EDE9FE':'#EFF6FF', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <span className="material-symbols-outlined" style={{ fontSize:18, color:doc.doc_type==='template'?'#7C3AED':BLUE, fontVariationSettings:"'FILL' 1" }}>
+                  {doc.doc_type === 'template' ? 'description' : 'insert_drive_file'}
                 </span>
               </div>
-
-              {/* Action buttons */}
-              <div style={{ display:'flex', gap:7 }}>
-                {doc && (
-                  <button onClick={() => viewDoc(doc.file_path)}
-                    style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center',
-                      gap:5, padding:'7px 0', borderRadius:8,
-                      background:t.color+'10', border:'1px solid '+t.color+'30',
-                      color:t.color, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:F }}
-                    onMouseEnter={e => e.currentTarget.style.background=t.color+'20'}
-                    onMouseLeave={e => e.currentTarget.style.background=t.color+'10'}>
-                    <span className="material-symbols-outlined" style={{fontSize:14}}>visibility</span>
-                    צפה
-                  </button>
-                )}
-                <button
-                  disabled={isUp}
-                  onClick={() => fileInputRef.current[t.k]?.click()}
-                  style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center',
-                    gap:5, padding:'7px 0', borderRadius:8,
-                    background: doc ? LGRAY : BLUE_L,
-                    border:'1px solid '+(doc ? BORDER : BLUE+'40'),
-                    color: doc ? GRAY : BLUE, fontSize:12, fontWeight:700,
-                    cursor: isUp ? 'wait' : 'pointer', fontFamily:F, opacity: isUp ? .6 : 1 }}>
-                  <span className="material-symbols-outlined" style={{fontSize:14}}>
-                    {isUp ? 'hourglass_empty' : doc ? 'sync' : 'upload_file'}
-                  </span>
-                  {isUp ? 'מעלה...' : doc ? 'החלף' : 'העלה'}
+              {/* Info */}
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontSize:13, fontWeight:600, color:DARK, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                  {doc.doc_name}
+                </div>
+                <div style={{ fontSize:10, color:GRAY2, marginTop:2 }}>
+                  {doc.doc_type === 'template' ? '📄 תבנית' : '📎 קובץ'} · {new Date(doc.created_at).toLocaleDateString('he-IL')} · {doc.uploaded_by || '—'}
+                </div>
+              </div>
+              {/* Actions */}
+              <div style={{ display:'flex', gap:6, flexShrink:0 }}>
+                <button onClick={() => viewDoc(doc)}
+                  style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:8, background:BLUE_L, border:'1px solid '+BLUE+'30', color:BLUE, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:F }}>
+                  <span className="material-symbols-outlined" style={{fontSize:13}}>visibility</span>
+                  צפה
                 </button>
-                {doc && (
-                  <button onClick={() => deleteDoc(doc)}
-                    style={{ width:34, display:'flex', alignItems:'center', justifyContent:'center',
-                      padding:'7px 0', borderRadius:8, background:'#FFF1F2',
-                      border:'1px solid #FECDD3', color:'#BE123C', fontSize:12,
-                      cursor:'pointer', fontFamily:F }}
-                    onMouseEnter={e => e.currentTarget.style.background='#FEE2E2'}
-                    onMouseLeave={e => e.currentTarget.style.background='#FFF1F2'}>
-                    <span className="material-symbols-outlined" style={{fontSize:14}}>delete</span>
-                  </button>
-                )}
-                <input ref={el => fileInputRef.current[t.k] = el}
-                  type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                  style={{ display:'none' }}
-                  onChange={e => {
-                    const f = e.target.files[0]; e.target.value = ''
-                    if (f) uploadFile(t.k, f)
-                  }} />
+                <button onClick={() => deleteDoc(doc)}
+                  style={{ width:30, height:30, borderRadius:8, background:'#FFF1F2', border:'1px solid #FECDD3', color:'#BE123C', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', fontFamily:F }}
+                  onMouseEnter={e => e.currentTarget.style.background='#FEE2E2'}
+                  onMouseLeave={e => e.currentTarget.style.background='#FFF1F2'}>
+                  <span className="material-symbols-outlined" style={{fontSize:14}}>delete</span>
+                </button>
               </div>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Progress summary */}
-      <div style={{ marginTop:14, padding:'12px 16px', borderRadius:10,
-        background: uploaded === WORKER_DOC_TYPES.length ? '#F0FDF9' : LGRAY,
-        border:'1px solid '+(uploaded === WORKER_DOC_TYPES.length ? '#BBF7D0' : BORDER) }}>
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-          <span style={{ fontSize:12, color:GRAY }}>
-            <span style={{ fontWeight:700, color:DARK }}>{uploaded}</span> מתוך {WORKER_DOC_TYPES.length} מסמכים הועלו
-          </span>
-          <div style={{ width:120, height:5, background:'#E2E8F0', borderRadius:99, overflow:'hidden' }}>
-            <div style={{ height:'100%', borderRadius:99, background:'#10B981',
-              width: (uploaded / WORKER_DOC_TYPES.length * 100) + '%', transition:'width .5s' }} />
-          </div>
-        </div>
-      </div>
-
-      {/* Upload history for current worker */}
-      {docs.length > 0 && (
-        <div style={{ marginTop:14 }}>
-          <div style={{ fontSize:11, fontWeight:700, color:GRAY2, textTransform:'uppercase',
-            letterSpacing:'.08em', fontFamily:"'Manrope',sans-serif", marginBottom:8 }}>
-            היסטוריית העלאות
-          </div>
-          {docs.map(d => (
-            <div key={d.id} style={{ display:'flex', alignItems:'center', gap:10,
-              padding:'8px 12px', background:LGRAY, borderRadius:8, marginBottom:5 }}>
-              <span className="material-symbols-outlined" style={{ fontSize:14, color:GRAY2 }}>insert_drive_file</span>
-              <div style={{ flex:1, fontSize:12, color:DARK, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                {d.doc_name || d.doc_type}
-              </div>
-              <div style={{ fontSize:10, color:GRAY2, flexShrink:0 }}>
-                {WORKER_DOC_TYPES.find(t=>t.k===d.doc_type)?.he} · {new Date(d.created_at).toLocaleDateString('he-IL')}
-              </div>
-              <button onClick={() => viewDoc(d.file_path)}
-                style={{ background:'none', border:'none', color:BLUE, cursor:'pointer', fontSize:12, fontFamily:F }}>
-                <span className="material-symbols-outlined" style={{fontSize:14}}>open_in_new</span>
-              </button>
             </div>
           ))}
         </div>
@@ -3488,6 +3430,7 @@ function WorkerDocsTab({ candidateId, currentUser }) {
     </div>
   )
 }
+
 
 // ─── TOP BAR WITH CLOCK + GREETING ───────────────────────────────────────────
 function TopBar({ module, currentUser, onRefresh, tasks = [] }) {
