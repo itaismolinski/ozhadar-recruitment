@@ -683,9 +683,35 @@ function ApplicantsModule({ candidates, onUpdate, onDelete, onAdd, currentUser }
 
   return (
     <div style={{ padding: '24px 28px' }} className="fade-in">
+
+      {/* ── MANUAL ADD MODAL ── */}
+      {showAddModal && (
+        <ManualAddModal currentUser={currentUser} onClose={() => setShowAddModal(false)}
+          onSave={async (fields, notesText) => {
+            if (onAdd) {
+              const newCand = await onAdd(fields)
+              if (notesText && newCand?.id) {
+                await insertNote({ candidate_id: newCand.id, text: notesText,
+                  note_date: new Date().toISOString().split('T')[0], created_by: currentUser })
+              }
+            }
+          }}
+        />
+      )}
+
+      {/* ── HEADER ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, flexWrap: 'wrap', gap: 10 }}>
-        <h3 style={{ fontSize: 18, fontWeight: 800, color: DARK, letterSpacing: '-0.3px' }}>🎯 מועמדים ({filtered.length})</h3>
-        <div style={{ display: 'flex', gap: 9 }}>
+        <div>
+          <h3 className="headline" style={{ fontSize: 20, fontWeight: 800, color: DARK, letterSpacing: '-0.5px' }}>מועמדים</h3>
+          <div style={{ fontSize: 12, color: GRAY, marginTop: 2 }}>{filtered.length} רשומות</div>
+        </div>
+        <div style={{ display: 'flex', gap: 9, alignItems: 'center' }}>
+          {/* ── ADD BUTTON ── */}
+          <button className="v2-btn v2-btn-primary" onClick={() => setShowAddModal(true)}
+            style={{ gap: 6, flexShrink: 0 }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 15 }}>person_add</span>
+            + מועמד חדש
+          </button>
           <input placeholder="🔍 חיפוש שם, טלפון..." value={search} onChange={e => setSearch(e.target.value)}
             className="v2-input" style={{ minWidth: 200, fontSize: 13 }} />
           <select value={filterSector} onChange={e => setFilterSector(e.target.value)} className="v2-input v2-select" style={{ fontSize: 13, minWidth: 110, paddingLeft: 28 }}>
@@ -806,12 +832,13 @@ function ApartmentLink({ candidateId, currentApartmentId, onUpdate }) {
 }
 
 // ─── WORKERS MODULE ───────────────────────────────────────────────────────────
-function WorkersModule({ candidates, onUpdate, onDelete, currentUser }) {
+function WorkersModule({ candidates, onUpdate, onDelete, onAdd, currentUser }) {
   const [search, setSearch] = useState('')
   const [filterSector, setSector] = useState('')
   const [filterStatus, setStatus] = useState('')
   const [selected, setSelected] = useState(null)
   const [tab, setTab] = useState('info')
+  const [showAddWorker, setShowAddWorker] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [form, setForm] = useState({})
   const [saving, setSaving] = useState(false)
@@ -1123,12 +1150,36 @@ function WorkersModule({ candidates, onUpdate, onDelete, currentUser }) {
 
   return (
     <div style={{ padding: '24px 28px' }} className="fade-in">
+
+      {/* ── MANUAL ADD WORKER MODAL ── */}
+      {showAddWorker && (
+        <ManualAddModal currentUser={currentUser} onClose={() => setShowAddWorker(false)}
+          onSave={async (fields, notesText) => {
+            if (onAdd) {
+              // Workers default to 'new' if not set — auto promote when placement given
+              if (!fields.status) fields.status = 'new'
+              const newWorker = await onAdd(fields)
+              if (notesText && newWorker?.id) {
+                await insertNote({ candidate_id: newWorker.id, text: notesText,
+                  note_date: new Date().toISOString().split('T')[0], created_by: currentUser })
+              }
+            }
+          }}
+        />
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, flexWrap: 'wrap', gap: 10 }}>
         <div>
           <h3 className="headline" style={{ fontSize: 20, fontWeight: 800, color: DARK, letterSpacing: '-0.5px', lineHeight: 1 }}>עובדים</h3>
           <div style={{ fontSize: 12, color: GRAY, marginTop: 2 }}>{filtered.length} רשומות</div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {/* ── ADD BUTTON ── */}
+          <button className="v2-btn v2-btn-primary" onClick={() => setShowAddWorker(true)}
+            style={{ gap: 6, flexShrink: 0 }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 15 }}>person_add</span>
+            + עובד חדש
+          </button>
           <div style={{ position: 'relative' }}>
             <input placeholder="חיפוש שם / טלפון / שיבוץ..." value={search} onChange={e => setSearch(e.target.value)}
               className="v2-input" style={{ minWidth: 240, fontSize: 13, paddingRight: 36 }} />
@@ -3228,7 +3279,8 @@ export default function CRM({ session, onLogout }) {
         {/* Module content */}
         {module === 'dashboard' && <Dashboard candidates={candidates} tasks={tasks} apartments={apartments} onNavigate={setModule} currentUser={currentUser} />}
         {module === 'applicants' && <ApplicantsModule candidates={candidates} onUpdate={update} onDelete={remove} currentUser={currentUser} />}
-        {module === 'workers'    && <WorkersModule    candidates={candidates} onUpdate={update} onDelete={remove} currentUser={currentUser} />}
+        {module === 'workers'    && <WorkersModule    candidates={candidates} onUpdate={update} onDelete={remove} currentUser={currentUser}
+          onAdd={async (fields) => { const c = await insertCandidate({ ...fields, created_by: currentUser }); setCandidates(p => [c, ...p]); return c }} />}
         {module === 'apartments' && <ApartmentsModule candidates={candidates} currentUser={currentUser} />}
         {module === 'tasks'      && <TasksModule      candidates={candidates} currentUser={currentUser} />}
         {module === 'documents'  && <DocumentsModule  candidates={candidates} currentUser={currentUser} />}
