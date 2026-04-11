@@ -2652,12 +2652,33 @@ function CountryCombobox({ value, onChange, options }) {
 
 // ─── MANUAL ADD CANDIDATE MODAL ───────────────────────────────────────────────
 function ManualAddModal({ onSave, onClose, currentUser }) {
-  const EMPTY = { full_name_he:'', full_name_en:'', phone:'', email:'', country:'', city:'', dob:'', sector:'', profession:'', experience:'', permit_type:'', permit_number:'', permit_expiry:'', entry_date:'', current_employer:'', last_employer:'', notes_text:'', status:'new', form_lang:'manual' }
-  const [form, setForm] = useState(EMPTY)
+  const EMPTY = {
+    full_name_he:'', full_name_en:'', phone:'', email:'',
+    country:'', city:'', dob:'',
+    sector:'', profession:'', experience:'',
+    permit_type:'', permit_number:'', permit_expiry:'', entry_date:'',
+    current_employer:'', last_employer:'',
+    notes_text:'', status:'new', form_lang:'manual'
+  }
+  const [form, setForm]     = useState(EMPTY)
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
-  const [step, setStep] = useState(1)
+  const [error, setError]   = useState('')
+  const [step, setStep]     = useState(1)
   const sf = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  const COUNTRIES = [
+    'סין','הודו','פיליפינים','תאילנד','נפאל','סרי לנקה',
+    'בנגלדש','פקיסטן','אינדונזיה','וייטנאם','מיאנמר','קמבודיה',
+    'לאוס','מונגוליה','קירגיזסטן','טג׳יקיסטן','טורקמניסטן',
+    'אוזבקיסטן','קזחסטן','אזרבייג׳ן','גאורגיה','ארמניה','מולדובה','אוקראינה',
+    'אתיופיה','אריתריאה','סומליה','קניה','טנזניה','אוגנדה',
+    'רואנדה','בורונדי','דרום סודן','סודן','ג׳יבוטי','מדגסקר',
+    'ניגריה','גאנה','קמרון','קוט דיוואר','סנגל','מאלי',
+    'קונגו','קונגו דמוקרטית','אנגולה','מוזמביק',
+    'מלאווי','זמביה','זימבבואה','דרום אפריקה','לסוטו','סווזילנד',
+    'מצרים','מרוקו','תוניסיה','אלג׳יריה','לוב',
+    'קולומביה','פרו','מקסיקו','ברזיל','אקוודור','אחר',
+  ]
 
   const save = async () => {
     if (!form.full_name_he && !form.full_name_en) { setError('חובה להזין שם'); return }
@@ -2671,141 +2692,340 @@ function ManualAddModal({ onSave, onClose, currentUser }) {
     } catch(e) { setError(e.message || 'שגיאה בשמירה'); setSaving(false) }
   }
 
-  const COUNTRIES = [
-    // אסיה
-    'סין', 'הודו', 'פיליפינים', 'תאילנד', 'נפאל', 'סרי לנקה',
-    'בנגלדש', 'פקיסטן', 'אינדונזיה', 'וייטנאם', 'מיאנמר', 'קמבודיה',
-    'לאוס', 'מונגוליה', 'קירגיזסטן', 'טג׳יקיסטן', 'טורקמניסטן',
-    // מרכז אסיה / ברה"מ לשעבר
-    'אוזבקיסטן', 'קזחסטן', 'אזרבייג׳ן', 'גאורגיה', 'ארמניה', 'מולדובה', 'אוקראינה',
-    // אפריקה — מזרח
-    'אתיופיה', 'אריתריאה', 'סומליה', 'קניה', 'טנזניה', 'אוגנדה',
-    'רואנדה', 'בורונדי', 'דרום סודן', 'סודן', 'ג׳יבוטי', 'מדגסקר',
-    // אפריקה — מרכז ומערב
-    'ניגריה', 'גאנה', 'קמרון', 'קוט דיוואר', 'סנגל', 'מאלי',
-    'קונגו', 'קונגו דמוקרטית', 'אנגולה', 'מוזמביק',
-    // אפריקה — דרום
-    'מלאווי', 'זמביה', 'זימבבואה', 'דרום אפריקה', 'לסוטו', 'סווזילנד',
-    // אפריקה — צפון
-    'מצרים', 'מרוקו', 'תוניסיה', 'אלג׳יריה', 'לוב',
-    // אמריקה לטינית
-    'קולומביה', 'פרו', 'מקסיקו', 'ברזיל', 'אקוודור',
-    // אחר
-    'אחר',
-  ]
-  // renderField — plain function, NOT a component, avoids remount-on-keystroke
-  const renderField = (label, k, type='text', opts=null, placeholder='', searchable=false) => (
-    <div key={k} style={{ marginBottom:13 }}>
-      <label style={{ display:'block', fontSize:10, fontWeight:700, color:GRAY, marginBottom:5, textTransform:'uppercase', letterSpacing:'.05em', fontFamily:'Manrope,sans-serif' }}>{label}</label>
-      {opts && searchable
-        ? <CountryCombobox
-            value={form[k]||''}
-            onChange={v => sf(k, v)}
-            options={opts.filter(o => typeof o === 'string')}
-          />
-        : opts
-        ? <select value={form[k]||''} onChange={e => sf(k, e.target.value)} className="v2-input v2-select" style={{ paddingLeft:28 }}>
-            <option value="">— בחר —</option>
-            {opts.map(o => typeof o === 'string' ? <option key={o} value={o}>{o}</option> : <option key={o.v} value={o.v}>{o.l||o.he||o.v}</option>)}
-          </select>
-        : <input type={type} value={form[k]||''} onChange={e => sf(k, e.target.value)} placeholder={placeholder} className="v2-input" />
-      }
+  const advance = () => {
+    if (step === 1 && !form.full_name_he && !form.full_name_en) { setError('חובה להזין שם'); return }
+    if (step === 1 && !form.phone) { setError('חובה להזין טלפון'); return }
+    setError(''); setStep(s => s + 1)
+  }
+
+  // ── Render helpers ────────────────────────────────────────────────────────
+  const LBL = ({ children }) => (
+    <label style={{ display:'block', fontSize:10, fontWeight:700, color:'#64748B',
+      marginBottom:6, textTransform:'uppercase', letterSpacing:'.08em',
+      fontFamily:"'Manrope',sans-serif" }}>
+      {children}
+    </label>
+  )
+
+  const renderText = (label, k, type='text', placeholder='', required=false) => (
+    <div key={k}>
+      <LBL>{label}{required && <span style={{ color:'#EF4444', marginRight:3 }}>*</span>}</LBL>
+      <input type={type} value={form[k]||''} onChange={e => sf(k, e.target.value)}
+        placeholder={placeholder} className="v2-input"
+        style={{ background:'#F8FAFC' }}
+        onFocus={e => { e.target.style.background='#FFF'; e.target.style.borderColor=BLUE }}
+        onBlur={e  => { e.target.style.background='#F8FAFC'; e.target.style.borderColor=BORDER }} />
     </div>
   )
-  const STEPS = ['פרטים אישיים', 'עבודה וויזה', 'הערות']
+
+  const renderSelect = (label, k, opts) => (
+    <div key={k}>
+      <LBL>{label}</LBL>
+      <select value={form[k]||''} onChange={e => sf(k, e.target.value)}
+        className="v2-input v2-select" style={{ background:'#F8FAFC', paddingLeft:28 }}>
+        <option value="">— בחר —</option>
+        {opts.map(o => typeof o === 'string'
+          ? <option key={o} value={o}>{o}</option>
+          : <option key={o.v} value={o.v}>{o.l||o.he}</option>)}
+      </select>
+    </div>
+  )
+
+  const renderCombo = (label, k, opts) => (
+    <div key={k}>
+      <LBL>{label}</LBL>
+      <CountryCombobox value={form[k]||''} onChange={v => sf(k, v)} options={opts} />
+    </div>
+  )
+
+  const STEPS = [
+    { n:1, icon:'person', label:'פרטים אישיים' },
+    { n:2, icon:'work',   label:'עבודה וויזה'  },
+    { n:3, icon:'notes',  label:'סיום'          },
+  ]
+
+  // ── Shared field styles ───────────────────────────────────────────────────
+  const G2 = { display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px 20px' }
+  const G1 = { display:'grid', gridTemplateColumns:'1fr',     gap:'16px' }
 
   return (
-    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:9999, padding:16, fontFamily:F }}>
-      <div style={{ background:WHITE, borderRadius:20, width:'100%', maxWidth:580, maxHeight:'90vh', display:'flex', flexDirection:'column', boxShadow:'0 24px 64px rgba(0,0,0,.2)', border:'1px solid '+BORDER }}>
-        {/* Header */}
-        <div style={{ padding:'20px 24px 16px', borderBottom:'1px solid '+BORDER, display:'flex', alignItems:'center', gap:12, flexShrink:0 }}>
-          <div style={{ width:40, height:40, borderRadius:'50%', background:BLUE_L, display:'flex', alignItems:'center', justifyContent:'center' }}>
-            <span className="material-symbols-outlined" style={{ fontSize:20, color:BLUE }}>person_add</span>
-          </div>
-          <div style={{ flex:1 }}>
-            <div className="headline" style={{ fontSize:17, fontWeight:800, color:DARK }}>הוסף מועמד ידנית</div>
-            <div style={{ fontSize:12, color:GRAY2 }}>הזנה ישירה למערכת ATLAS</div>
-          </div>
-          <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', color:GRAY, fontSize:20, lineHeight:1, padding:4 }}>✕</button>
-        </div>
-        {/* Steps */}
-        <div style={{ padding:'14px 24px 0', display:'flex', gap:8, flexShrink:0 }}>
-          {STEPS.map((s,i) => (
-            <button key={i} onClick={() => setStep(i+1)}
-              style={{ flex:1, padding:'8px 0', borderRadius:9, border:'none', cursor:'pointer', fontFamily:'Manrope,sans-serif', fontSize:11, fontWeight:700, transition:'all .15s',
-                background:step===i+1?BLUE:step>i+1?'#F0FDF9':LGRAY, color:step===i+1?WHITE:step>i+1?'#0F766E':GRAY }}>
-              {step>i+1?'✓ ':''}{s}
+    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.45)', backdropFilter:'blur(3px)',
+      display:'flex', alignItems:'center', justifyContent:'center', zIndex:9999, padding:20, fontFamily:F }}>
+      <div style={{ background:WHITE, borderRadius:20, width:'100%', maxWidth:640,
+        maxHeight:'92vh', display:'flex', flexDirection:'column',
+        boxShadow:'0 32px 80px rgba(0,0,0,.22)', border:'1px solid '+BORDER }}>
+
+        {/* ── TOP STRIP ── */}
+        <div style={{ background:'linear-gradient(135deg, #0055DD 0%, #0033AA 100%)',
+          borderRadius:'20px 20px 0 0', padding:'22px 28px', flexShrink:0 }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:14 }}>
+              <div style={{ width:44, height:44, borderRadius:12,
+                background:'rgba(255,255,255,.15)', border:'1px solid rgba(255,255,255,.2)',
+                display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <span className="material-symbols-outlined" style={{ color:WHITE, fontSize:22 }}>person_add</span>
+              </div>
+              <div>
+                <div style={{ color:WHITE, fontSize:18, fontWeight:900,
+                  letterSpacing:'-.5px', fontFamily:"'Manrope',sans-serif", lineHeight:1.1 }}>
+                  הוסף מועמד
+                </div>
+                <div style={{ color:'rgba(255,255,255,.55)', fontSize:11, marginTop:3,
+                  fontFamily:"'Manrope',sans-serif", letterSpacing:'.05em', textTransform:'uppercase' }}>
+                  ATLAS · הזנה ידנית
+                </div>
+              </div>
+            </div>
+            <button onClick={onClose}
+              style={{ width:34, height:34, borderRadius:8, background:'rgba(255,255,255,.15)',
+                border:'1px solid rgba(255,255,255,.2)', color:WHITE, fontSize:16,
+                cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center',
+                fontFamily:F, transition:'background .15s' }}
+              onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,.25)'}
+              onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,.15)'}>
+              ✕
             </button>
-          ))}
+          </div>
+
+          {/* Step indicator */}
+          <div style={{ display:'flex', alignItems:'center', marginTop:20, gap:0 }}>
+            {STEPS.map((s, i) => (
+              <div key={s.n} style={{ display:'flex', alignItems:'center', flex: i < STEPS.length-1 ? 1 : 'none' }}>
+                <div onClick={() => step > s.n && setStep(s.n)}
+                  style={{ display:'flex', alignItems:'center', gap:8,
+                    cursor: step > s.n ? 'pointer' : 'default' }}>
+                  <div style={{ width:28, height:28, borderRadius:'50%', flexShrink:0,
+                    display:'flex', alignItems:'center', justifyContent:'center',
+                    fontSize:12, fontWeight:800, fontFamily:"'Manrope',sans-serif",
+                    background: step === s.n ? WHITE
+                               : step > s.n  ? 'rgba(255,255,255,.9)'
+                               :               'rgba(255,255,255,.2)',
+                    color:      step === s.n ? '#0055DD'
+                               : step > s.n  ? '#059669'
+                               :               'rgba(255,255,255,.6)',
+                    border: step === s.n ? '2px solid rgba(255,255,255,.8)' : 'none',
+                    transition:'all .2s' }}>
+                    {step > s.n
+                      ? <span className="material-symbols-outlined" style={{ fontSize:14, fontVariationSettings:"'FILL' 1" }}>check</span>
+                      : s.n}
+                  </div>
+                  <span style={{ fontSize:10, fontWeight:700, letterSpacing:'.06em',
+                    textTransform:'uppercase', fontFamily:"'Manrope',sans-serif",
+                    color: step === s.n ? WHITE : 'rgba(255,255,255,.5)',
+                    whiteSpace:'nowrap' }}>
+                    {s.label}
+                  </span>
+                </div>
+                {i < STEPS.length-1 && (
+                  <div style={{ flex:1, height:1, margin:'0 12px',
+                    background: step > s.n ? 'rgba(255,255,255,.5)' : 'rgba(255,255,255,.2)' }} />
+                )}
+              </div>
+            ))}
+          </div>
         </div>
-        {/* Body */}
-        <div style={{ flex:1, overflowY:'auto', padding:'20px 24px' }}>
+
+        {/* ── FORM BODY ── */}
+        <div style={{ flex:1, overflowY:'auto', padding:'28px 28px 20px' }}>
+
+          {/* STEP 1 */}
           {step === 1 && (
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0 16px' }}>
-              {renderField("שם מלא בעברית *", "full_name_he", "text", null, "ישראל ישראלי")}
-              {renderField("שם מלא באנגלית", "full_name_en", "text", null, "Israel Israeli")}
-              {renderField("טלפון *", "phone", "tel", null, "050-0000000")}
-              {renderField("אימייל", "email", "email", null, "")}
-              {renderField("מדינת מוצא", "country", "text", COUNTRIES, "", true)}
-              {renderField("עיר מגורים", "city", "text", null, "")}
-              {renderField("תאריך לידה", "dob", "date", null, "")}
+            <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+              {/* Name row */}
+              <div>
+                <div style={{ fontSize:11, fontWeight:700, color:'#94A3B8',
+                  textTransform:'uppercase', letterSpacing:'.1em',
+                  fontFamily:"'Manrope',sans-serif", marginBottom:14,
+                  paddingBottom:8, borderBottom:'1px solid #F1F5F9' }}>
+                  שם
+                </div>
+                <div style={G2}>
+                  {renderText('שם בעברית', 'full_name_he', 'text', 'ישראל ישראלי', true)}
+                  {renderText('שם באנגלית / לטיני', 'full_name_en', 'text', 'Israel Israeli')}
+                </div>
+              </div>
+              {/* Contact row */}
+              <div>
+                <div style={{ fontSize:11, fontWeight:700, color:'#94A3B8',
+                  textTransform:'uppercase', letterSpacing:'.1em',
+                  fontFamily:"'Manrope',sans-serif", marginBottom:14,
+                  paddingBottom:8, borderBottom:'1px solid #F1F5F9' }}>
+                  פרטי קשר
+                </div>
+                <div style={G2}>
+                  {renderText('טלפון', 'phone', 'tel', '050-0000000', true)}
+                  {renderText('אימייל', 'email', 'email', 'name@email.com')}
+                </div>
+              </div>
+              {/* Location row */}
+              <div>
+                <div style={{ fontSize:11, fontWeight:700, color:'#94A3B8',
+                  textTransform:'uppercase', letterSpacing:'.1em',
+                  fontFamily:"'Manrope',sans-serif", marginBottom:14,
+                  paddingBottom:8, borderBottom:'1px solid #F1F5F9' }}>
+                  מוצא ומיקום
+                </div>
+                <div style={G2}>
+                  {renderCombo('מדינת מוצא', 'country', COUNTRIES)}
+                  {renderText('עיר מגורים', 'city', 'text', 'תל אביב')}
+                  {renderText('תאריך לידה', 'dob', 'date')}
+                </div>
+              </div>
             </div>
           )}
+
+          {/* STEP 2 */}
           {step === 2 && (
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0 16px' }}>
-              {renderField("ענף", "sector", "text", SECTORS, "")}
-              {renderField("מקצוע", "profession", "text", null, "בנאי, חשמלאי...")}
-              {renderField("שנות ניסיון", "experience", "number", null, "")}
-              {renderField("מעסיק נוכחי", "current_employer", "text", null, "")}
-              {renderField("מעסיק אחרון", "last_employer", "text", null, "")}
-              <div />
-              {renderField("סוג ויזה / היתר", "permit_type", "text", PERMITS, "")}
-              {renderField("מספר היתר / דרכון", "permit_number", "text", null, "")}
-              {renderField("תוקף ויזה", "permit_expiry", "date", null, "")}
-              {renderField("תאריך כניסה לישראל", "entry_date", "date", null, "")}
+            <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+              <div>
+                <div style={{ fontSize:11, fontWeight:700, color:'#94A3B8',
+                  textTransform:'uppercase', letterSpacing:'.1em',
+                  fontFamily:"'Manrope',sans-serif", marginBottom:14,
+                  paddingBottom:8, borderBottom:'1px solid #F1F5F9' }}>
+                  תחום מקצועי
+                </div>
+                <div style={G2}>
+                  {renderSelect('ענף', 'sector', SECTORS)}
+                  {renderText('מקצוע', 'profession', 'text', 'בנאי, חשמלאי...')}
+                  {renderText('שנות ניסיון', 'experience', 'number', '0')}
+                  {renderText('מעסיק נוכחי', 'current_employer', 'text', 'שם החברה')}
+                  {renderText('מעסיק אחרון', 'last_employer', 'text', 'שם החברה')}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize:11, fontWeight:700, color:'#94A3B8',
+                  textTransform:'uppercase', letterSpacing:'.1em',
+                  fontFamily:"'Manrope',sans-serif", marginBottom:14,
+                  paddingBottom:8, borderBottom:'1px solid #F1F5F9' }}>
+                  ויזה והיתר
+                </div>
+                <div style={G2}>
+                  {renderSelect('סוג ויזה / היתר', 'permit_type', PERMITS)}
+                  {renderText('מספר היתר / דרכון', 'permit_number', 'text', 'P1234567')}
+                  {renderText('תוקף ויזה', 'permit_expiry', 'date')}
+                  {renderText('תאריך כניסה לישראל', 'entry_date', 'date')}
+                </div>
+              </div>
             </div>
           )}
+
+          {/* STEP 3 */}
           {step === 3 && (
-            <div>
-              <div style={{ marginBottom:14 }}>
-                <label style={{ display:'block', fontSize:10, fontWeight:700, color:GRAY, marginBottom:8, textTransform:'uppercase', letterSpacing:'.05em', fontFamily:'Manrope,sans-serif' }}>סטטוס ראשוני</label>
+            <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+              {/* Status */}
+              <div>
+                <div style={{ fontSize:11, fontWeight:700, color:'#94A3B8',
+                  textTransform:'uppercase', letterSpacing:'.1em',
+                  fontFamily:"'Manrope',sans-serif", marginBottom:14,
+                  paddingBottom:8, borderBottom:'1px solid #F1F5F9' }}>
+                  סטטוס ראשוני
+                </div>
                 <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-                  {[{v:'new',l:'🆕 חדש'},{v:'contacted',l:'📞 נוצר קשר'},{v:'interview',l:'🤝 ראיון'}].map(s => (
+                  {[{v:'new',l:'חדש',icon:'fiber_new'},{v:'contacted',l:'נוצר קשר',icon:'phone_in_talk'},{v:'interview',l:'ראיון',icon:'handshake'}].map(s => (
                     <button key={s.v} onClick={() => sf('status', s.v)}
-                      style={{ padding:'7px 14px', borderRadius:20, border:'1.5px solid '+(form.status===s.v?BLUE:BORDER), background:form.status===s.v?BLUE_L:WHITE, color:form.status===s.v?BLUE:GRAY, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:F }}>
+                      style={{ display:'flex', alignItems:'center', gap:7,
+                        padding:'9px 16px', borderRadius:10, cursor:'pointer',
+                        border:'1.5px solid '+(form.status===s.v ? BLUE : BORDER),
+                        background: form.status===s.v ? BLUE_L : '#F8FAFC',
+                        color: form.status===s.v ? BLUE : GRAY,
+                        fontSize:13, fontWeight:700, fontFamily:F, transition:'all .15s' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize:16 }}>{s.icon}</span>
                       {s.l}
                     </button>
                   ))}
                 </div>
               </div>
-              <div style={{ marginBottom:14 }}>
-                <label style={{ display:'block', fontSize:10, fontWeight:700, color:GRAY, marginBottom:5, textTransform:'uppercase', letterSpacing:'.05em', fontFamily:'Manrope,sans-serif' }}>הערה ראשונית</label>
-                <textarea value={form.notes_text||''} onChange={e => sf('notes_text', e.target.value)} rows={4} className="v2-input" style={{ resize:'vertical', lineHeight:1.7 }} placeholder="מקור גיוס, כישורים, הערות..." />
+
+              {/* Notes */}
+              <div>
+                <LBL>הערה ראשונית</LBL>
+                <textarea value={form.notes_text||''} onChange={e => sf('notes_text', e.target.value)}
+                  rows={3} className="v2-input"
+                  style={{ resize:'vertical', lineHeight:1.7, background:'#F8FAFC' }}
+                  placeholder="מקור גיוס, כישורים, הערות כלליות..."
+                  onFocus={e => { e.target.style.background='#FFF'; e.target.style.borderColor=BLUE }}
+                  onBlur={e  => { e.target.style.background='#F8FAFC'; e.target.style.borderColor=BORDER }} />
               </div>
-              <div style={{ background:LGRAY, border:'1px solid '+BORDER, borderRadius:12, padding:'14px 16px' }}>
-                <div className="label-caps" style={{ color:GRAY2, marginBottom:8 }}>סיכום לפני שמירה</div>
-                {[[form.full_name_he||form.full_name_en,'שם'],[form.phone,'טלפון'],[form.country,'מדינה'],[SECTORS.find(s=>s.v===form.sector)?.he,'ענף'],[PERMITS.find(p=>p.v===form.permit_type)?.l,'ויזה'],[form.permit_expiry?fmtDate(form.permit_expiry):null,'תוקף ויזה']].filter(([v])=>v).map(([v,l]) => (
-                  <div key={l} style={{ display:'flex', justifyContent:'space-between', padding:'4px 0', borderBottom:'1px solid '+BORDER }}>
-                    <span style={{ fontSize:12, color:GRAY }}>{l}</span>
-                    <span style={{ fontSize:12, color:DARK, fontWeight:600 }}>{v}</span>
-                  </div>
-                ))}
+
+              {/* Summary card */}
+              <div style={{ background:'#F8FAFC', border:'1px solid '+BORDER,
+                borderRadius:12, overflow:'hidden' }}>
+                <div style={{ padding:'12px 16px', borderBottom:'1px solid '+BORDER,
+                  background:LGRAY, display:'flex', alignItems:'center', gap:8 }}>
+                  <span className="material-symbols-outlined" style={{ fontSize:15, color:GRAY }}>summarize</span>
+                  <span style={{ fontSize:10, fontWeight:700, color:GRAY,
+                    textTransform:'uppercase', letterSpacing:'.1em',
+                    fontFamily:"'Manrope',sans-serif" }}>סיכום לפני שמירה</span>
+                </div>
+                <div style={{ padding:'4px 0' }}>
+                  {[
+                    [form.full_name_he || form.full_name_en, 'שם'],
+                    [form.phone, 'טלפון'],
+                    [form.country, 'מדינה'],
+                    [SECTORS.find(s=>s.v===form.sector)?.he, 'ענף'],
+                    [form.profession, 'מקצוע'],
+                    [PERMITS.find(p=>p.v===form.permit_type)?.l, 'ויזה'],
+                    [form.permit_expiry ? fmtDate(form.permit_expiry) : null, 'תוקף ויזה'],
+                    [form.placement, 'שיבוץ'],
+                  ].filter(([v]) => v).map(([v, l]) => (
+                    <div key={l} style={{ display:'flex', justifyContent:'space-between',
+                      alignItems:'center', padding:'8px 16px', borderBottom:'1px solid #F1F5F9' }}>
+                      <span style={{ fontSize:12, color:GRAY }}>{l}</span>
+                      <span style={{ fontSize:13, color:DARK, fontWeight:600 }}>{v}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
         </div>
-        {error && <div style={{ margin:'0 24px', padding:'10px 14px', background:'#FEF2F2', border:'1px solid #FECACA', borderRadius:9, color:'#DC2626', fontSize:13, fontWeight:600, flexShrink:0 }}>⚠️ {error}</div>}
-        <div style={{ padding:'16px 24px', borderTop:'1px solid '+BORDER, display:'flex', gap:10, justifyContent:'space-between', flexShrink:0 }}>
-          <button className="v2-btn v2-btn-ghost" onClick={() => step>1?setStep(s=>s-1):onClose()}>{step>1?'← חזרה':'ביטול'}</button>
-          {step < 3
-            ? <button className="v2-btn v2-btn-primary" onClick={() => { if(step===1&&!form.full_name_he&&!form.full_name_en){setError('חובה להזין שם');return} if(step===1&&!form.phone){setError('חובה להזין טלפון');return} setError('');setStep(s=>s+1) }}>המשך ←</button>
-            : <button className="v2-btn v2-btn-primary" onClick={save} disabled={saving} style={{ minWidth:120 }}>{saving?'שומר...':'✓ שמור מועמד'}</button>
-          }
+
+        {/* ── ERROR ── */}
+        {error && (
+          <div style={{ margin:'0 28px 8px', padding:'10px 14px',
+            background:'#FEF2F2', border:'1px solid #FECACA', borderRadius:9,
+            color:'#DC2626', fontSize:13, fontWeight:600,
+            display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
+            <span className="material-symbols-outlined" style={{ fontSize:16 }}>error</span>
+            {error}
+          </div>
+        )}
+
+        {/* ── FOOTER ── */}
+        <div style={{ padding:'16px 28px', borderTop:'1px solid '+BORDER,
+          display:'flex', gap:10, justifyContent:'space-between',
+          flexShrink:0, background:'#FAFBFC', borderRadius:'0 0 20px 20px' }}>
+          <button className="v2-btn v2-btn-ghost"
+            onClick={() => step > 1 ? setStep(s => s-1) : onClose()}>
+            {step > 1
+              ? <><span className="material-symbols-outlined" style={{fontSize:15}}>arrow_back</span>חזרה</>
+              : 'ביטול'}
+          </button>
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <span style={{ fontSize:11, color:GRAY2, fontFamily:"'Manrope',sans-serif" }}>
+              שלב {step} מתוך 3
+            </span>
+            {step < 3
+              ? <button className="v2-btn v2-btn-primary" onClick={advance}
+                  style={{ gap:6 }}>
+                  המשך
+                  <span className="material-symbols-outlined" style={{fontSize:15}}>arrow_forward</span>
+                </button>
+              : <button className="v2-btn v2-btn-primary" onClick={save}
+                  disabled={saving} style={{ minWidth:130, gap:6 }}>
+                  {saving
+                    ? <><span className="pulse" style={{display:'inline-block'}}>●</span> שומר...</>
+                    : <><span className="material-symbols-outlined" style={{fontSize:15}}>check_circle</span>שמור מועמד</>}
+                </button>
+            }
+          </div>
         </div>
+
       </div>
     </div>
   )
 }
+
 
 // ─── GRID MODULE — Full spreadsheet view ─────────────────────────────────────
 function GridModule({ candidates }) {
