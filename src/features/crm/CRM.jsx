@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import * as XLSX from 'xlsx'
 import {
   fetchCandidates, insertCandidate, updateCandidate, deleteCandidate, getDocUrl, uploadDoc,
   fetchTasks, insertTask, updateTask, deleteTask,
@@ -455,15 +454,10 @@ function NotesWidget({ notes, loading, onAdd, onDelete, currentUser }) {
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
 function Dashboard({ candidates, tasks, apartments, onNavigate, currentUser }) {
-  const [now, setNow] = useState(new Date())
+  const [now, setNow]           = useState(new Date())
   const [greetIdx, setGreetIdx] = useState(0)
+  useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t) }, [])
 
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 1000)
-    return () => clearInterval(t)
-  }, [])
-
-  // ── Stats ──────────────────────────────────────────────────────────────────
   const WORKER_STATUSES = ['active', 'in_treatment', 'placed']
   const workers      = candidates.filter(c => c.placement || WORKER_STATUSES.includes(c.status))
   const newApplicants= candidates.filter(c => !c.placement && !WORKER_STATUSES.includes(c.status))
@@ -473,64 +467,34 @@ function Dashboard({ candidates, tasks, apartments, onNavigate, currentUser }) {
   const urgentTasks  = openTasks.filter(t => t.priority === 'urgent')
   const myTasks      = openTasks.filter(t => t.assigned_to === currentUser)
   const placed       = candidates.filter(c => c.placement)
-  const doneTodayCount = tasks.filter(t => {
-    if (t.status !== 'done' || !t.completed_at) return false
-    const d = new Date(t.completed_at)
-    return d.toDateString() === now.toDateString()
-  }).length
-  const recent = [...candidates].sort((a,b) => new Date(b.created_at)-new Date(a.created_at)).slice(0,5)
-
-  // ── Dynamic greetings ──────────────────────────────────────────────────────
+  const recent       = [...candidates].sort((a,b) => new Date(b.created_at)-new Date(a.created_at)).slice(0,5)
+  const doneTodayCount = tasks.filter(t =>
+    t.status==='done' && t.completed_at &&
+    new Date(t.completed_at).toDateString()===now.toDateString()
+  ).length
   const h = now.getHours()
-  const firstName = currentUser?.split(' ')[0] || currentUser
+  const firstName = (currentUser||'').split(' ')[0] || currentUser
 
-  const GREET_POOLS = {
-    morning: [
-      { text: 'בוקר טוב,', sub: 'קפה טוב — יום טוב. בוא נתחיל.' },
-      { text: 'צ\'או,', sub: 'השמש זרחה, הנתונים מחכים.' },
-      { text: 'שלום שלום,', sub: 'הכל מוכן ומחכה לך.' },
-      { text: 'בוקר אור,', sub: 'מתחילים את היום בגדול.' },
-    ],
-    afternoon: [
-      { text: 'צהריים טובים,', sub: 'חצי יום מאחורינו — בוא נמשיך.' },
-      { text: 'שלום,', sub: 'היום מתקדם יפה.' },
-      { text: 'היי,', sub: 'שעת הצהריים — אנרגיה מתחדשת.' },
-    ],
-    evening: [
-      { text: 'ערב טוב,', sub: 'יום עמוס מאחורינו.' },
-      { text: 'שלומות,', sub: 'שעת סיכום — מה הושג היום?' },
-      { text: 'אחה"צ שקט,', sub: 'הזמן לסגור קצוות פתוחים.' },
-    ],
-    night: [
-      { text: 'לילה טוב,', sub: 'מאוחר — אבל אתה כאן. מרשים.' },
-      { text: 'שלום,', sub: 'עמל לילי — מוערך.' },
-    ],
-  }
-
-  // Bonus greetings based on performance
-  const BONUS = []
-  if (doneTodayCount >= 3) BONUS.push({ text: doneTodayCount + ' משימות הושלמו היום 🔥', sub: 'אתה בכושר. תמשיך ככה.' })
-  if (doneTodayCount >= 1 && doneTodayCount < 3) BONUS.push({ text: 'עובד,', sub: doneTodayCount + ' משימה' + (doneTodayCount>1?'ות':'') + ' הושלמ' + (doneTodayCount>1?'ו':'ה') + ' היום — טוב.' })
-  if (myTasks.length === 0 && openTasks.length > 0) BONUS.push({ text: 'נקי 🎯', sub: 'כל המשימות שלך הושלמו. הנה אתה.' })
-  if (urgentTasks.length > 0) BONUS.push({ text: 'שים לב,', sub: urgentTasks.length + ' משימ' + (urgentTasks.length>1?'ות דחופות':'ה דחופה') + ' ממתינות לטיפול.' })
-  if (expiredVisa.length > 0) BONUS.push({ text: 'נדרש טיפול,', sub: expiredVisa.length + ' עובד' + (expiredVisa.length>1?'ים':'') + ' עם ויזה פגת תוקף.' })
-
-  const timeKey = h >= 5 && h < 12 ? 'morning' : h < 16 ? 'afternoon' : h < 21 ? 'evening' : 'night'
-  const pool = [...BONUS, ...GREET_POOLS[timeKey]]
-
-  // Rotate greetings every 8 seconds
+  const POOL = [
+    ...(doneTodayCount >= 3 ? [doneTodayCount + ' משימות הושלמו היום'] : []),
+    ...(doneTodayCount > 0 && doneTodayCount < 3 ? [doneTodayCount + ' משימה הושלמה היום'] : []),
+    ...(myTasks.length === 0 && openTasks.length > 0 ? ['כל המשימות שלך הושלמו'] : []),
+    ...(urgentTasks.length > 0 ? [urgentTasks.length + ' משימות דחופות ממתינות'] : []),
+    ...(h>=5&&h<12 ? ['בוקר טוב','בוקר אור','התחלה טובה'] :
+        h<17       ? ['צהריים טובים','המשך יום טוב'] :
+        h<21       ? ['ערב טוב','שעת סיכום'] : ['לילה טוב','מאוחר — אבל אתה כאן']),
+  ]
+  const poolLen = POOL.length
   useEffect(() => {
-    const t = setInterval(() => setGreetIdx(i => (i + 1) % pool.length), 8000)
+    if (poolLen < 2) return
+    const t = setInterval(() => setGreetIdx(i => (i + 1) % poolLen), 8000)
     return () => clearInterval(t)
-  }, [pool.length])
+  }, [poolLen])
+  const greet = POOL[greetIdx % Math.max(1, POOL.length)] || 'שלום'
 
-  const greet = pool[greetIdx % pool.length]
-
-  // ── StatCard ───────────────────────────────────────────────────────────────
   const StatCard = ({ icon, label, value, sub, color, onClick }) => (
     <div className="stat-card" onClick={onClick}
-      style={{ cursor:onClick?'pointer':'default', position:'relative', overflow:'hidden',
-        transition:'transform .2s, box-shadow .2s' }}
+      style={{ cursor:onClick?'pointer':'default', position:'relative', overflow:'hidden', transition:'transform .2s' }}
       onMouseEnter={e => onClick && (e.currentTarget.style.transform='translateY(-2px)')}
       onMouseLeave={e => onClick && (e.currentTarget.style.transform='none')}>
       <div style={{ position:'absolute', top:-20, left:-20, width:80, height:80, borderRadius:'50%', background:(color||BLUE)+'08', pointerEvents:'none' }} />
@@ -540,67 +504,32 @@ function Dashboard({ candidates, tasks, apartments, onNavigate, currentUser }) {
       </div>
       <div style={{ fontSize:38, fontWeight:900, color:color||DARK, letterSpacing:'-2px', lineHeight:1, marginBottom:5, fontVariantNumeric:'tabular-nums' }}>{value}</div>
       <div style={{ fontSize:12, color:GRAY2, fontWeight:500 }}>{label}</div>
-      {onClick && <div style={{ position:'absolute', bottom:0, left:0, right:0, height:2, background:'linear-gradient(90deg,'+(color||BLUE)+',transparent)', opacity:.3 }} />}
     </div>
   )
 
   return (
     <div style={{ padding:'28px 32px', maxWidth:1120 }}>
-
-      {/* ── GREETING HEADER ── */}
-      <div style={{ marginBottom:28, display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:20 }}>
-        <div style={{ flex:1 }}>
-          {/* Animated greeting */}
-          <div style={{ display:'flex', alignItems:'baseline', gap:10, flexWrap:'wrap' }}>
-            <h2 className="headline fade-in" key={greetIdx}
-              style={{ fontSize:30, fontWeight:900, color:DARK, letterSpacing:'-1px', lineHeight:1.1 }}>
-              {greet.text}
-            </h2>
-            <h2 className="headline"
-              style={{ fontSize:30, fontWeight:900, letterSpacing:'-1px', lineHeight:1.1,
-                background:'linear-gradient(135deg,#0055DD,#7C3AED)',
-                WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
-              {firstName}
-            </h2>
+      <div style={{ marginBottom:26, display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:20 }}>
+        <div>
+          <div style={{ display:'flex', alignItems:'baseline', gap:10, flexWrap:'wrap', marginBottom:4 }}>
+            <h2 className="headline" style={{ fontSize:28, fontWeight:900, color:DARK, letterSpacing:'-1px' }}>{greet},</h2>
+            <h2 className="headline" style={{ fontSize:28, fontWeight:900, letterSpacing:'-1px', background:'linear-gradient(135deg,#0055DD,#7C3AED)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>{firstName}</h2>
           </div>
-          <p className="fade-in" key={'sub'+greetIdx}
-            style={{ fontSize:14, color:GRAY, marginTop:6, fontWeight:400 }}>
-            {greet.sub}
-          </p>
-          <p style={{ fontSize:12, color:GRAY2, marginTop:3 }}>
-            {now.toLocaleDateString('he-IL', { weekday:'long', year:'numeric', month:'long', day:'numeric' })}
-          </p>
+          <p style={{ fontSize:12, color:GRAY2 }}>{now.toLocaleDateString('he-IL', { weekday:'long', year:'numeric', month:'long', day:'numeric' })}</p>
         </div>
-
-        {/* Clock + my tasks chip */}
         <div style={{ display:'flex', flexDirection:'column', gap:8, alignItems:'flex-end', flexShrink:0 }}>
-          <div style={{ background:WHITE, border:'1px solid '+BORDER, borderRadius:12, padding:'10px 18px', textAlign:'center', boxShadow:SHADOW_XS }}>
-            <div style={{ fontSize:22, fontWeight:900, color:DARK, letterSpacing:'-1px', fontVariantNumeric:'tabular-nums' }}>
-              {now.toLocaleTimeString('he-IL', { hour:'2-digit', minute:'2-digit' })}
-            </div>
+          <div style={{ background:WHITE, border:'1px solid '+BORDER, borderRadius:12, padding:'10px 16px', textAlign:'center', boxShadow:SHADOW_XS }}>
+            <div style={{ fontSize:20, fontWeight:900, color:DARK, letterSpacing:'-1px', fontVariantNumeric:'tabular-nums' }}>{now.toLocaleTimeString('he-IL', { hour:'2-digit', minute:'2-digit' })}</div>
             <div style={{ fontSize:10, color:GRAY2, marginTop:1 }}>שעה מקומית</div>
           </div>
           {myTasks.length > 0 && (
             <button onClick={() => onNavigate('mytasks')}
-              style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 12px',
-                background:'linear-gradient(135deg,#0055DD,#7C3AED)', color:WHITE,
-                border:'none', borderRadius:10, fontSize:12, fontWeight:700,
-                cursor:'pointer', fontFamily:F, boxShadow:'0 3px 12px rgba(0,85,221,.3)' }}>
-              <span className="material-symbols-outlined" style={{fontSize:14}}>task_alt</span>
-              {myTasks.length} משימות ממתינות לי
+              style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 12px', background:'linear-gradient(135deg,#0055DD,#7C3AED)', color:WHITE, border:'none', borderRadius:10, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:F, boxShadow:'0 3px 12px rgba(0,85,221,.3)' }}>
+              {String.fromCodePoint(0x26A1)} {myTasks.length} {'משימות ממתינות לי'}
             </button>
-          )}
-          {myTasks.length === 0 && doneTodayCount > 0 && (
-            <div style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 12px',
-              background:'#F0FDF9', color:'#059669', border:'1px solid #BBF7D0',
-              borderRadius:10, fontSize:12, fontWeight:700 }}>
-              ✓ כל המשימות הושלמו היום
-            </div>
           )}
         </div>
       </div>
-
-      {/* ── STATS ── */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(180px, 1fr))', gap:14, marginBottom:28 }}>
         <StatCard icon="👥" label="עובדים פעילים" value={workers.length} color={BLUE} onClick={() => onNavigate('workers')} />
         <StatCard icon="🎯" label="מועמדים חדשים" value={newApplicants.length} sub={newApplicants.length>0?'ממתינים':null} color="#7C3AED" onClick={() => onNavigate('applicants')} />
@@ -608,31 +537,26 @@ function Dashboard({ candidates, tasks, apartments, onNavigate, currentUser }) {
         <StatCard icon="🏠" label="דירות" value={apartments.length} color="#D97706" onClick={() => onNavigate('apartments')} />
         <StatCard icon="✅" label="משימות פתוחות" value={openTasks.length} sub={urgentTasks.length>0?urgentTasks.length+' דחופות':null} color={urgentTasks.length>0?'#DC2626':DARK} onClick={() => onNavigate('tasks')} />
       </div>
-
-      {/* ── ALERTS ── */}
       {(expiredVisa.length > 0 || expiringVisa.length > 0) && (
         <div style={{ display:'flex', gap:12, marginBottom:24, flexWrap:'wrap' }}>
           {expiredVisa.length > 0 && (
             <div onClick={() => onNavigate('workers')} style={{ flex:1, minWidth:220, background:'#FFF1F2', border:'1.5px solid #FECDD3', borderRadius:12, padding:'13px 16px', cursor:'pointer' }}>
-              <div style={{ fontSize:13, fontWeight:700, color:'#BE123C', marginBottom:4 }}>🔴 ויזות פגות — {expiredVisa.length} עובדים</div>
+              <div style={{ fontSize:13, fontWeight:700, color:'#BE123C', marginBottom:4 }}>{'🔴'} ויזות פגות — {expiredVisa.length} עובדים</div>
               <div style={{ fontSize:12, color:'#9F1239' }}>{expiredVisa.slice(0,3).map(c=>c.full_name_he||c.full_name_en).join(' · ')}</div>
             </div>
           )}
           {expiringVisa.length > 0 && (
             <div onClick={() => onNavigate('workers')} style={{ flex:1, minWidth:220, background:'#FFFBEB', border:'1.5px solid #FDE68A', borderRadius:12, padding:'13px 16px', cursor:'pointer' }}>
-              <div style={{ fontSize:13, fontWeight:700, color:'#B45309', marginBottom:4 }}>🟡 ויזות קרובות לפוג — {expiringVisa.length} עובדים</div>
+              <div style={{ fontSize:13, fontWeight:700, color:'#B45309', marginBottom:4 }}>{'🟡'} ויזות קרובות לפוג — {expiringVisa.length} עובדים</div>
               <div style={{ fontSize:12, color:'#92400E' }}>{expiringVisa.slice(0,3).map(c=>c.full_name_he||c.full_name_en).join(' · ')}</div>
             </div>
           )}
         </div>
       )}
-
-      {/* ── BOTTOM GRID ── */}
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:18 }}>
-        {/* Recent candidates */}
         <div className="v2-card" style={{ padding:'18px 20px' }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
-            <div style={{ fontSize:14, fontWeight:700, color:DARK }}>🆕 הרשמות אחרונות</div>
+            <div style={{ fontSize:14, fontWeight:700, color:DARK }}>{'🆕'} הרשמות אחרונות</div>
             <button className="v2-btn v2-btn-ghost" style={{ fontSize:12, padding:'5px 12px' }} onClick={() => onNavigate('applicants')}>הכל</button>
           </div>
           {recent.map(c => (
@@ -645,31 +569,25 @@ function Dashboard({ candidates, tasks, apartments, onNavigate, currentUser }) {
             </div>
           ))}
         </div>
-
-        {/* My tasks quick view */}
         <div className="v2-card" style={{ padding:'18px 20px' }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
-            <div style={{ fontSize:14, fontWeight:700, color:DARK }}>⚡ המשימות שלי</div>
+            <div style={{ fontSize:14, fontWeight:700, color:DARK }}>{'⚡'} המשימות שלי</div>
             <button className="v2-btn v2-btn-ghost" style={{ fontSize:12, padding:'5px 12px' }} onClick={() => onNavigate('mytasks')}>לוח אישי</button>
           </div>
           {myTasks.length === 0
             ? <div style={{ textAlign:'center', padding:'24px 0', color:GRAY, fontSize:13 }}>
-                <div style={{ fontSize:28, marginBottom:8 }}>🎉</div>
-                אין משימות פתוחות — כל הכבוד!
+                <div style={{ fontSize:28, marginBottom:8 }}>{'🎉'}</div>
+                אין משימות פתוחות
               </div>
-            : myTasks.slice(0,5).map(t => {
-                const over = t.due_date && new Date(t.due_date) < now
-                return (
-                  <div key={t.id} style={{ display:'flex', gap:10, alignItems:'flex-start', padding:'9px 0', borderBottom:'1px solid #F3F4F6' }}>
-                    <div style={{ width:8, height:8, borderRadius:'50%', marginTop:5, flexShrink:0,
-                      background:t.priority==='urgent'?'#DC2626':t.priority==='high'?'#D97706':BLUE }} />
-                    <div style={{ flex:1 }}>
-                      <div style={{ fontSize:13, fontWeight:600, color:DARK }}>{t.title}</div>
-                      {t.due_date && <div style={{ fontSize:11, color:over?'#DC2626':GRAY }}>{over?'⏰ באיחור — ':''}{fmtDate(t.due_date)}</div>}
-                    </div>
+            : myTasks.slice(0,5).map(t => (
+                <div key={t.id} style={{ display:'flex', gap:10, alignItems:'flex-start', padding:'9px 0', borderBottom:'1px solid #F3F4F6' }}>
+                  <div style={{ width:8, height:8, borderRadius:'50%', marginTop:5, flexShrink:0, background:t.priority==='urgent'?'#DC2626':t.priority==='high'?'#D97706':BLUE }} />
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:13, fontWeight:600, color:DARK }}>{t.title}</div>
+                    {t.due_date && <div style={{ fontSize:11, color:new Date(t.due_date)<now?'#DC2626':GRAY }}>{fmtDate(t.due_date)}</div>}
                   </div>
-                )
-              })
+                </div>
+              ))
           }
         </div>
       </div>
@@ -681,7 +599,6 @@ function Dashboard({ candidates, tasks, apartments, onNavigate, currentUser }) {
 function ApplicantsModule({ candidates, onUpdate, onDelete, onAdd, currentUser }) {
   const [search, setSearch] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
-  const [showImport, setShowImport] = useState(false)
   const [filterStatus, setFilterStatus] = useState('')
   const [filterSector, setFilterSector] = useState('')
   const [selected, setSelected] = useState(null)
@@ -808,16 +725,6 @@ function ApplicantsModule({ candidates, onUpdate, onDelete, onAdd, currentUser }
   return (
     <div style={{ padding: '24px 28px' }} className="fade-in">
 
-      {/* ── EXCEL IMPORT MODAL ── */}
-      {showImport && (
-        <ExcelImportModal currentUser={currentUser} onClose={() => setShowImport(false)}
-          onImport={async (count) => {
-            // Trigger full data reload in parent
-            window.__atlasReload && window.__atlasReload()
-          }}
-        />
-      )}
-
       {/* ── MANUAL ADD MODAL ── */}
       {showAddModal && (
         <ManualAddModal currentUser={currentUser} onClose={() => setShowAddModal(false)}
@@ -840,11 +747,6 @@ function ApplicantsModule({ candidates, onUpdate, onDelete, onAdd, currentUser }
           <div style={{ fontSize: 12, color: GRAY, marginTop: 2 }}>{filtered.length} רשומות</div>
         </div>
         <div style={{ display: 'flex', gap: 9, alignItems: 'center' }}>
-          {/* ── IMPORT BUTTON ── */}
-          <button className="v2-btn v2-btn-ghost" onClick={() => setShowImport(true)} style={{ gap:6, flexShrink:0 }}>
-            <span className="material-symbols-outlined" style={{ fontSize:15 }}>table_view</span>
-            ייבוא Excel
-          </button>
           {/* ── ADD BUTTON ── */}
           <button className="v2-btn v2-btn-primary" onClick={() => setShowAddModal(true)}
             style={{ gap: 6, flexShrink: 0 }}>
@@ -3746,182 +3648,113 @@ function MyTasksModule({ candidates, currentUser, allTasks, onTaskUpdate }) {
 
 // ─── TOP BAR WITH CLOCK + GREETING ───────────────────────────────────────────
 function TopBar({ module, currentUser, onRefresh, tasks = [], onNavigate }) {
-  const [now, setNow] = useState(new Date())
+  const [now, setNow]       = useState(new Date())
   const [bellOpen, setBellOpen] = useState(false)
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 1000)
-    return () => clearInterval(t)
-  }, [])
+  useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t) }, [])
 
   const h = now.getHours()
-  const greeting =
-    h >= 5  && h < 10 ? 'בוקר טוב ☀️' :
-    h >= 10 && h < 12 ? 'זמן קפה ☕' :
-    h >= 12 && h < 14 ? 'צהריים טובים 🍽️' :
-    h >= 14 && h < 17 ? 'אחר הצהריים 🌤️' :
-    h >= 17 && h < 21 ? 'ערב טוב 🌆' :
-    h >= 21            ? 'לילה טוב 🌙' : 'טוב שחזרת 🦉'
+  const greeting = h>=5&&h<10 ? 'בוקר טוב' : h<12 ? 'זמן קפה' : h<14 ? 'צהריים טובים' : h<17 ? 'אחר הצהריים' : h<21 ? 'ערב טוב' : 'לילה טוב'
 
   const NAV_LABELS = {
     dashboard:'דשבורד', applicants:'מועמדים', workers:'עובדים',
     apartments:'דירות', employers:'מעסיקים', tasks:'משימות',
-    documents:'מסמכים', reports:'דוחות'
+    documents:'מסמכים', reports:'דוחות', mytasks:'הלוח שלי', grid:'טבלה מלאה'
   }
 
-  return (
-    <div className="crm-topbar" style={{ padding: '0 20px', display: 'flex', alignItems: 'center', gap: 12, height: 56 }}>
+  const myOpen = tasks.filter(t => t.status === 'open' && t.assigned_to === currentUser)
 
-      {/* ATLAS system badge — subtle, left side */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 7, paddingLeft: 4, borderLeft: '2px solid #E2E8F0', marginLeft: 2 }}>
-        <svg width="14" height="14" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0 }}>
+  return (
+    <div className="crm-topbar" style={{ padding:'0 20px', display:'flex', alignItems:'center', gap:12, height:56 }}>
+      <div style={{ display:'flex', alignItems:'center', gap:7, paddingLeft:4, borderLeft:'2px solid #E2E8F0', marginLeft:2 }}>
+        <svg width="14" height="14" viewBox="0 0 18 18" fill="none" style={{ flexShrink:0 }}>
           <path d="M9 2L15.5 15H2.5L9 2Z" stroke="#0055DD" strokeWidth="1.8" strokeLinejoin="round" fill="none"/>
           <path d="M5.5 11H12.5" stroke="#0055DD" strokeWidth="1.4" strokeLinecap="round"/>
         </svg>
-        <div style={{ lineHeight: 1 }}>
-          <div style={{ fontSize: 12, fontWeight: 900, color: '#0F172A', letterSpacing: '-.3px', fontFamily: "'Manrope',sans-serif" }}>ATLAS</div>
-          <div style={{ fontSize: 8.5, fontWeight: 700, color: '#94A3B8', letterSpacing: '.12em', textTransform: 'uppercase', fontFamily: "'Manrope',sans-serif", marginTop: 1 }}>Oz Hadar Group</div>
+        <div style={{ lineHeight:1 }}>
+          <div style={{ fontSize:12, fontWeight:900, color:'#0F172A', letterSpacing:'-.3px', fontFamily:"'Manrope',sans-serif" }}>ATLAS</div>
+          <div style={{ fontSize:8.5, fontWeight:700, color:'#94A3B8', letterSpacing:'.12em', textTransform:'uppercase', fontFamily:"'Manrope',sans-serif", marginTop:1 }}>Oz Hadar Group</div>
         </div>
       </div>
 
-      {/* Breadcrumb */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 120 }}>
-        <span className="label-caps" style={{ color: GRAY }}>{NAV_LABELS[module] || ''}</span>
-        <span style={{ color: GRAY2, fontSize: 12 }}>›</span>
-        <span className="label-caps" style={{ color: DARK }}>{currentUser}</span>
+      <div style={{ display:'flex', alignItems:'center', gap:6, minWidth:120 }}>
+        <span className="label-caps" style={{ color:GRAY }}>{NAV_LABELS[module]||''}</span>
+        <span style={{ color:GRAY2, fontSize:12 }}>›</span>
+        <span className="label-caps" style={{ color:DARK }}>{currentUser}</span>
       </div>
 
-      {/* Search — centered */}
-      <div style={{ flex: 1, maxWidth: 380, position: 'relative' }}>
-        <input
-          placeholder="חיפוש..."
-          style={{ width: '100%', padding: '8px 14px 8px 34px', background: LGRAY, border: '1px solid ' + BORDER, borderRadius: 10, fontSize: 13, fontFamily: F, color: DARK, outline: 'none', transition: 'all .15s' }}
-          onFocus={e => { e.target.style.background = WHITE; e.target.style.borderColor = BLUE; e.target.style.boxShadow = '0 0 0 3px rgba(0,102,255,.1)' }}
-          onBlur={e => { e.target.style.background = LGRAY; e.target.style.borderColor = BORDER; e.target.style.boxShadow = 'none' }}
-        />
-        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-          <circle cx="6" cy="6" r="4.5" stroke={GRAY2} strokeWidth="1.5"/>
-          <path d="M10 10L12.5 12.5" stroke={GRAY2} strokeWidth="1.5" strokeLinecap="round"/>
-        </svg>
+      <div style={{ flex:1, maxWidth:380, position:'relative' }}>
+        <input placeholder="חיפוש..."
+          style={{ width:'100%', padding:'8px 14px 8px 34px', background:LGRAY, border:'1px solid '+BORDER, borderRadius:10, fontSize:13, fontFamily:F, color:DARK, outline:'none' }}
+          onFocus={e => { e.target.style.background=WHITE; e.target.style.borderColor=BLUE }}
+          onBlur={e  => { e.target.style.background=LGRAY; e.target.style.borderColor=BORDER }} />
+        <span className="material-symbols-outlined" style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)', fontSize:14, color:GRAY2, pointerEvents:'none' }}>search</span>
       </div>
 
-      <div style={{ flex: 1 }} />
+      <div style={{ flex:1 }} />
 
-      {/* Clock */}
-      <div style={{ fontSize: 12.5, fontWeight: 600, color: DARK, fontVariantNumeric: 'tabular-nums', letterSpacing: '.5px' }}>
-        {now.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
+      <div style={{ fontSize:12.5, fontWeight:600, color:DARK, fontVariantNumeric:'tabular-nums' }}>
+        {now.toLocaleTimeString('he-IL', { hour:'2-digit', minute:'2-digit' })}
       </div>
 
-      {/* Greeting pill */}
-      <div style={{ fontSize: 11.5, color: GRAY, background: LGRAY, padding: '4px 10px', borderRadius: 20, fontWeight: 500 }}>
+      <div style={{ fontSize:11.5, color:GRAY, background:LGRAY, padding:'4px 10px', borderRadius:20, fontWeight:500 }}>
         {greeting}
       </div>
 
-      <div style={{ width: 1, height: 20, background: BORDER }} />
+      <div style={{ width:1, height:20, background:BORDER }} />
 
-      {/* Refresh */}
-      <button onClick={() => { const btn = document.activeElement; btn.style.transform='rotate(360deg)'; btn.style.transition='transform .5s'; setTimeout(() => { btn.style.transform=''; btn.style.transition=''; }, 520); onRefresh && onRefresh() }}
-        title="רענן נתונים"
-        style={{ width: 34, height: 34, borderRadius: 8, border: '1px solid ' + BORDER, background: WHITE, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: GRAY, fontSize: 17, transition: 'background .15s', fontFamily: 'inherit' }}
-        onMouseEnter={e => { e.currentTarget.style.background = LGRAY; e.currentTarget.style.color = BLUE }}
-        onMouseLeave={e => { e.currentTarget.style.background = WHITE; e.currentTarget.style.color = GRAY }}>
-        ↻
+      <button onClick={() => onRefresh && onRefresh()} title="רענן נתונים"
+        style={{ width:34, height:34, borderRadius:8, border:'1px solid '+BORDER, background:WHITE, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color:GRAY, fontSize:17, fontFamily:'inherit' }}
+        onMouseEnter={e => { e.currentTarget.style.background=LGRAY; e.currentTarget.style.color=BLUE }}
+        onMouseLeave={e => { e.currentTarget.style.background=WHITE; e.currentTarget.style.color=GRAY }}>
+        {'↻'}
       </button>
 
-      {/* Bell + notifications dropdown */}
-      <div style={{ position: 'relative' }}>
+      <div style={{ position:'relative' }}>
         <button onClick={() => setBellOpen(s => !s)} title="התראות"
-          style={{ width: 34, height: 34, borderRadius: 8, border: '1px solid ' + (bellOpen ? BLUE : BORDER),
-            background: bellOpen ? BLUE_L : WHITE, display: 'flex', alignItems: 'center',
-            justifyContent: 'center', cursor: 'pointer', fontSize: 15, transition: 'all .15s' }}
-          onMouseEnter={e => { if (!bellOpen) { e.currentTarget.style.background=LGRAY; e.currentTarget.style.borderColor=BLUE+'50' } }}
-          onMouseLeave={e => { if (!bellOpen) { e.currentTarget.style.background=WHITE; e.currentTarget.style.borderColor=BORDER } }}>
-          🔔
+          style={{ width:34, height:34, borderRadius:8, border:'1px solid '+(bellOpen?BLUE:BORDER), background:bellOpen?BLUE_L:WHITE, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', fontSize:15 }}
+          onMouseEnter={e => { if (!bellOpen) e.currentTarget.style.background=LGRAY }}
+          onMouseLeave={e => { if (!bellOpen) e.currentTarget.style.background=WHITE }}>
+          {'🔔'}
         </button>
-        {/* Badge */}
-        {tasks.filter(t => t.status === 'open' && t.assigned_to === currentUser).length > 0 && (
-          <div style={{ position: 'absolute', top: -4, right: -4, width: 17, height: 17,
-            background: '#EF4444', borderRadius: '50%', fontSize: 9, fontWeight: 800,
-            color: WHITE, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            border: '2px solid ' + WHITE, pointerEvents: 'none' }}>
-            {tasks.filter(t => t.status === 'open' && t.assigned_to === currentUser).length}
+        {myOpen.length > 0 && (
+          <div style={{ position:'absolute', top:-4, right:-4, width:17, height:17, background:'#EF4444', borderRadius:'50%', fontSize:9, fontWeight:800, color:WHITE, display:'flex', alignItems:'center', justifyContent:'center', border:'2px solid '+WHITE, pointerEvents:'none' }}>
+            {myOpen.length}
           </div>
         )}
-        {/* Dropdown */}
-        {bellOpen && (() => {
-          const myOpen = tasks.filter(t => t.status === 'open' && t.assigned_to === currentUser)
-          const urgent = myOpen.filter(t => t.priority === 'urgent')
-          return (
-            <div className="fade-in-fast"
-              style={{ position: 'absolute', top: 42, left: 0, width: 310, background: WHITE,
-                border: '1.5px solid ' + BORDER, borderRadius: 14, boxShadow: SHADOW_LG,
-                zIndex: 9999, overflow: 'hidden' }}>
-              {/* Header */}
-              <div style={{ padding: '13px 16px', borderBottom: '1px solid ' + BORDER,
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ fontSize: 13, fontWeight: 800, color: DARK }}>התראות</div>
-                {myOpen.length > 0 && (
-                  <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99,
-                    background: '#FEF2F2', color: '#DC2626' }}>
-                    {myOpen.length} פתוחות
-                  </span>
-                )}
-              </div>
-              {/* Content */}
-              {myOpen.length === 0 ? (
-                <div style={{ padding: '28px 16px', textAlign: 'center', color: GRAY2, fontSize: 13 }}>
-                  <div style={{ fontSize: 24, marginBottom: 8 }}>✅</div>
+        {bellOpen && (
+          <div className="fade-in-fast" style={{ position:'absolute', top:42, left:0, width:300, background:WHITE, border:'1.5px solid '+BORDER, borderRadius:14, boxShadow:SHADOW_LG, zIndex:9999, overflow:'hidden' }}>
+            <div style={{ padding:'13px 16px', borderBottom:'1px solid '+BORDER, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+              <div style={{ fontSize:13, fontWeight:800, color:DARK }}>התראות</div>
+              {myOpen.length > 0 && <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:99, background:'#FEF2F2', color:'#DC2626' }}>{myOpen.length} פתוחות</span>}
+            </div>
+            {myOpen.length === 0
+              ? <div style={{ padding:'28px 16px', textAlign:'center', color:GRAY2, fontSize:13 }}>
+                  <div style={{ fontSize:24, marginBottom:8 }}>{'✅'}</div>
                   אין משימות ממתינות
                 </div>
-              ) : (
-                <div style={{ maxHeight: 280, overflowY: 'auto' }}>
-                  {urgent.length > 0 && (
-                    <div style={{ padding: '8px 16px 4px', fontSize: 10, fontWeight: 700,
-                      color: '#DC2626', textTransform: 'uppercase', letterSpacing: '.08em' }}>
-                      דחוף
+              : <div style={{ maxHeight:280, overflowY:'auto' }}>
+                  {myOpen.slice(0,8).map(t => (
+                    <div key={t.id} style={{ padding:'10px 16px', borderBottom:'1px solid #F9FAFB', cursor:'pointer' }}
+                      onClick={() => { setBellOpen(false); onNavigate && onNavigate('mytasks') }}
+                      onMouseEnter={e => e.currentTarget.style.background=LGRAY}
+                      onMouseLeave={e => e.currentTarget.style.background=WHITE}>
+                      <div style={{ fontSize:13, fontWeight:600, color:DARK }}>{t.title}</div>
+                      {t.due_date && <div style={{ fontSize:11, color:new Date(t.due_date)<now?'#DC2626':GRAY2, marginTop:2 }}>{fmtDate(t.due_date)}</div>}
                     </div>
-                  )}
-                  {myOpen.slice(0, 8).map(t => {
-                    const over = t.due_date && new Date(t.due_date) < now
-                    return (
-                      <div key={t.id}
-                        style={{ padding: '10px 16px', borderBottom: '1px solid #F9FAFB',
-                          cursor: 'pointer', transition: 'background .1s' }}
-                        onMouseEnter={e => e.currentTarget.style.background = LGRAY}
-                        onMouseLeave={e => e.currentTarget.style.background = WHITE}
-                        onClick={() => { setBellOpen(false); onNavigate && onNavigate('mytasks') }}>
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                          <div style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, marginTop: 5,
-                            background: t.priority === 'urgent' ? '#EF4444' : t.priority === 'high' ? '#F59E0B' : BLUE }} />
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 13, fontWeight: 600, color: DARK }}>{t.title}</div>
-                            {t.due_date && (
-                              <div style={{ fontSize: 11, color: over ? '#DC2626' : GRAY2, marginTop: 2 }}>
-                                {over ? '⏰ באיחור — ' : ''}{fmtDate(t.due_date)}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
+                  ))}
                 </div>
-              )}
-              {/* Footer */}
-              <div style={{ padding: '10px 16px', borderTop: '1px solid ' + BORDER }}>
-                <button onClick={() => { setBellOpen(false); onNavigate && onNavigate('mytasks') }}
-                  style={{ width: '100%', padding: '8px 0', borderRadius: 8, border: 'none',
-                    background: BLUE_L, color: BLUE, fontSize: 12, fontWeight: 700,
-                    cursor: 'pointer', fontFamily: F }}>
-                  ← לכל המשימות שלי
-                </button>
-              </div>
+            }
+            <div style={{ padding:'10px 16px', borderTop:'1px solid '+BORDER }}>
+              <button onClick={() => { setBellOpen(false); onNavigate && onNavigate('mytasks') }}
+                style={{ width:'100%', padding:'8px 0', borderRadius:8, border:'none', background:BLUE_L, color:BLUE, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:F }}>
+                {'←'} לכל המשימות שלי
+              </button>
             </div>
-          )
-        })()}
+          </div>
+        )}
       </div>
 
-      {/* Avatar */}
-      <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg, ' + BLUE + ', #0044BB)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: WHITE, fontSize: 13, fontWeight: 800, cursor: 'default', boxShadow: '0 2px 6px rgba(0,102,255,.25)' }}
+      <div style={{ width:34, height:34, borderRadius:'50%', background:'linear-gradient(135deg,'+BLUE+',#0044BB)', display:'flex', alignItems:'center', justifyContent:'center', color:WHITE, fontSize:13, fontWeight:800, boxShadow:'0 2px 6px rgba(0,102,255,.25)' }}
         title={currentUser}>
         {currentUser?.[0] || 'א'}
       </div>
@@ -4028,362 +3861,6 @@ function InlineTextarea({ label, value, onSave, rows = 3, emptyText = 'לחץ ל
   )
 }
 
-
-// ─── EXCEL IMPORT MODAL ───────────────────────────────────────────────────────
-// Maps common Hebrew/English Excel column headers to candidate DB fields
-const EXCEL_FIELD_MAP = {
-  // שם
-  'שם מלא': 'full_name_he', 'שם': 'full_name_he', 'שם בעברית': 'full_name_he',
-  'full name': 'full_name_he', 'name': 'full_name_he',
-  'שם באנגלית': 'full_name_en', 'שם לועזי': 'full_name_en', 'name latin': 'full_name_en',
-  // קשר
-  'טלפון': 'phone', 'נייד': 'phone', 'phone': 'phone', 'mobile': 'phone', 'tel': 'phone',
-  'אימייל': 'email', 'מייל': 'email', 'email': 'email',
-  // מיקום
-  'מדינה': 'country', 'country': 'country', 'לאום': 'country', 'nationality': 'country',
-  'עיר': 'city', 'city': 'city',
-  // ת.לידה
-  'תאריך לידה': 'dob', 'ת.לידה': 'dob', 'date of birth': 'dob', 'dob': 'dob',
-  // עבודה
-  'ענף': 'sector', 'sector': 'sector', 'תחום': 'sector',
-  'מקצוע': 'profession', 'profession': 'profession', 'תפקיד': 'profession', 'role': 'profession',
-  'ניסיון': 'experience', 'שנות ניסיון': 'experience', 'experience': 'experience',
-  'מעסיק נוכחי': 'current_employer', 'מעסיק': 'current_employer', 'employer': 'current_employer',
-  'מעסיק אחרון': 'last_employer',
-  // ויזה
-  'סוג ויזה': 'permit_type', 'ויזה': 'permit_type', 'היתר': 'permit_type', 'permit': 'permit_type',
-  'מספר היתר': 'permit_number', 'permit number': 'permit_number', 'מספר דרכון': 'permit_number',
-  'תוקף ויזה': 'permit_expiry', 'תוקף': 'permit_expiry', 'expiry': 'permit_expiry', 'permit expiry': 'permit_expiry',
-  'כניסה לישראל': 'entry_date', 'תאריך כניסה': 'entry_date', 'entry date': 'entry_date',
-  // שיבוץ
-  'שיבוץ': 'placement', 'מעסיק שיבוץ': 'placement', 'placement': 'placement',
-  // הערות
-  'הערות': 'notes_import', 'הערה': 'notes_import', 'notes': 'notes_import', 'comments': 'notes_import',
-}
-
-const CANDIDATE_FIELDS = [
-  { k: 'full_name_he',      he: 'שם בעברית'           },
-  { k: 'full_name_en',      he: 'שם באנגלית'           },
-  { k: 'phone',             he: 'טלפון'                },
-  { k: 'email',             he: 'אימייל'               },
-  { k: 'country',           he: 'מדינה'                },
-  { k: 'city',              he: 'עיר'                  },
-  { k: 'dob',               he: 'תאריך לידה'           },
-  { k: 'sector',            he: 'ענף'                  },
-  { k: 'profession',        he: 'מקצוע'                },
-  { k: 'experience',        he: 'ניסיון (שנים)'        },
-  { k: 'current_employer',  he: 'מעסיק נוכחי'          },
-  { k: 'last_employer',     he: 'מעסיק אחרון'          },
-  { k: 'permit_type',       he: 'סוג ויזה'             },
-  { k: 'permit_number',     he: 'מספר היתר'            },
-  { k: 'permit_expiry',     he: 'תוקף ויזה'            },
-  { k: 'entry_date',        he: 'כניסה לישראל'         },
-  { k: 'placement',         he: 'שיבוץ'                },
-  { k: 'notes_import',      he: 'הערות'                },
-  { k: '_skip',             he: '— דלג על עמודה —'     },
-]
-
-function ExcelImportModal({ onClose, onImport, currentUser }) {
-  const [step,       setStep]       = useState(1) // 1=upload, 2=map, 3=preview, 4=done
-  const [rows,       setRows]       = useState([]) // raw rows from excel
-  const [headers,    setHeaders]    = useState([]) // excel column headers
-  const [mapping,    setMapping]    = useState({}) // { excelCol: dbField }
-  const [preview,    setPreview]    = useState([]) // mapped candidate objects
-  const [importing,  setImporting]  = useState(false)
-  const [imported,   setImported]   = useState(0)
-  const [errors,     setErrors]     = useState([])
-  const [fileName,   setFileName]   = useState('')
-  const fileRef = useRef()
-
-  // ── Parse Excel file ──────────────────────────────────────────────────────
-  const parseFile = (file) => {
-    setFileName(file.name)
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      try {
-        const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true })
-        const ws = wb.Sheets[wb.SheetNames[0]]
-        const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' })
-        if (!data || data.length < 2) { alert('הקובץ ריק או לא תקין'); return }
-
-        const hdrs = data[0].map(h => String(h || '').trim())
-        const dataRows = data.slice(1).filter(r => r.some(c => c !== ''))
-        setHeaders(hdrs)
-        setRows(dataRows)
-
-        // Auto-map columns
-        const autoMap = {}
-        hdrs.forEach(h => {
-          const lower = h.toLowerCase().trim()
-          const match = EXCEL_FIELD_MAP[h] || EXCEL_FIELD_MAP[lower]
-          autoMap[h] = match || '_skip'
-        })
-        setMapping(autoMap)
-        setStep(2)
-      } catch(e) {
-        alert('שגיאה בקריאת הקובץ: ' + e.message)
-      }
-    }
-    reader.readAsArrayBuffer(file)
-  }
-
-  // ── Build preview from mapping ─────────────────────────────────────────────
-  const buildPreview = () => {
-    const mapped = rows.slice(0, 200).map((row, ri) => {
-      const obj = { _row: ri + 2 }
-      headers.forEach((h, hi) => {
-        const field = mapping[h]
-        if (!field || field === '_skip') return
-        let val = row[hi]
-        if (val === undefined || val === '') return
-        // Format dates
-        if (val instanceof Date) {
-          val = val.toISOString().split('T')[0]
-        } else if (typeof val === 'number' && (field.includes('date') || field.includes('expiry') || field === 'dob')) {
-          // Excel serial date
-          const d = new Date((val - 25569) * 86400 * 1000)
-          val = d.toISOString().split('T')[0]
-        } else {
-          val = String(val).trim()
-        }
-        obj[field] = val
-      })
-      return obj
-    }).filter(r => r.full_name_he || r.full_name_en || r.phone)
-    setPreview(mapped)
-    setStep(3)
-  }
-
-  // ── Import to Supabase ─────────────────────────────────────────────────────
-  const doImport = async () => {
-    setImporting(true)
-    let count = 0
-    const errs = []
-    const KNOWN = ['full_name_he','full_name_en','phone','email','country','city','dob',
-      'sector','profession','experience','current_employer','last_employer',
-      'permit_type','permit_number','permit_expiry','entry_date','placement','status','form_lang']
-
-    for (const row of preview) {
-      try {
-        const fields = { status: 'new', form_lang: 'excel' }
-        KNOWN.forEach(k => { if (row[k]) fields[k] = row[k] })
-        const newCand = await insertCandidate(fields)
-        // Save notes if any
-        if (row.notes_import && newCand?.id) {
-          await supabase.from('candidate_notes').insert([{
-            candidate_id: newCand.id, text: row.notes_import,
-            note_date: new Date().toISOString().split('T')[0], created_by: currentUser
-          }])
-        }
-        count++
-        setImported(count)
-      } catch(e) {
-        errs.push('שורה ' + row._row + ': ' + e.message)
-      }
-    }
-    setErrors(errs)
-    setImporting(false)
-    setStep(4)
-    onImport && onImport(count)
-  }
-
-  const INP = { padding:'8px 12px', background:'#F8FAFC', border:'1.5px solid '+BORDER,
-    borderRadius:9, fontSize:12, fontFamily:F, color:DARK, outline:'none', width:'100%',
-    cursor:'pointer' }
-
-  return (
-    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.5)', backdropFilter:'blur(3px)',
-      display:'flex', alignItems:'center', justifyContent:'center', zIndex:9999, padding:20, fontFamily:F }}>
-      <div style={{ background:WHITE, borderRadius:20, width:'100%', maxWidth:720,
-        maxHeight:'92vh', display:'flex', flexDirection:'column',
-        boxShadow:'0 32px 80px rgba(0,0,0,.22)', border:'1px solid '+BORDER }}>
-
-        {/* ── HEADER ── */}
-        <div style={{ background:'linear-gradient(135deg,#0055DD 0%,#0033AA 100%)',
-          borderRadius:'20px 20px 0 0', padding:'20px 26px', flexShrink:0 }}>
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-            <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-              <div style={{ width:42, height:42, borderRadius:11, background:'rgba(255,255,255,.15)',
-                display:'flex', alignItems:'center', justifyContent:'center' }}>
-                <span className="material-symbols-outlined" style={{ color:WHITE, fontSize:22 }}>table_view</span>
-              </div>
-              <div>
-                <div style={{ color:WHITE, fontSize:17, fontWeight:900, letterSpacing:'-.4px' }}>ייבוא מ-Excel</div>
-                <div style={{ color:'rgba(255,255,255,.55)', fontSize:11, marginTop:2, letterSpacing:'.04em', textTransform:'uppercase' }}>ATLAS · Import Wizard</div>
-              </div>
-            </div>
-            <button onClick={onClose} style={{ width:32, height:32, borderRadius:8,
-              background:'rgba(255,255,255,.15)', border:'1px solid rgba(255,255,255,.2)',
-              color:WHITE, fontSize:16, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:F }}>✕</button>
-          </div>
-          {/* Step bar */}
-          <div style={{ display:'flex', gap:0, marginTop:18 }}>
-            {[['1','העלאה'],['2','מיפוי'],['3','תצוגה מקדימה'],['4','סיום']].map(([n,l],i) => (
-              <div key={n} style={{ display:'flex', alignItems:'center', flex: i<3?1:'none' }}>
-                <div style={{ display:'flex', alignItems:'center', gap:7 }}>
-                  <div style={{ width:26, height:26, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center',
-                    fontSize:12, fontWeight:800, fontFamily:"'Manrope',sans-serif", flexShrink:0,
-                    background: step>i+1?'rgba(255,255,255,.9)':step===i+1?WHITE:'rgba(255,255,255,.2)',
-                    color:       step>i+1?'#059669':step===i+1?'#0055DD':'rgba(255,255,255,.5)' }}>
-                    {step>i+1?<span className="material-symbols-outlined" style={{fontSize:13,fontVariationSettings:"'FILL' 1"}}>check</span>:n}
-                  </div>
-                  <span style={{ fontSize:10, fontWeight:700, letterSpacing:'.05em', textTransform:'uppercase', whiteSpace:'nowrap', fontFamily:"'Manrope',sans-serif",
-                    color: step===i+1?WHITE:'rgba(255,255,255,.45)' }}>{l}</span>
-                </div>
-                {i<3 && <div style={{ flex:1, height:1, margin:'0 10px', background: step>i+1?'rgba(255,255,255,.5)':'rgba(255,255,255,.18)' }} />}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── BODY ── */}
-        <div style={{ flex:1, overflowY:'auto', padding:'24px 26px' }}>
-
-          {/* STEP 1 — Upload */}
-          {step === 1 && (
-            <div>
-              <div style={{ textAlign:'center', padding:'32px 20px', border:'2px dashed '+BORDER,
-                borderRadius:14, background:LGRAY, cursor:'pointer', transition:'all .2s' }}
-                onClick={() => fileRef.current?.click()}
-                onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor=BLUE; e.currentTarget.style.background=BLUE_L }}
-                onDragLeave={e => { e.currentTarget.style.borderColor=BORDER; e.currentTarget.style.background=LGRAY }}
-                onDrop={e => { e.preventDefault(); e.currentTarget.style.borderColor=BORDER; e.currentTarget.style.background=LGRAY; const f=e.dataTransfer.files[0]; if(f) parseFile(f) }}>
-                <span className="material-symbols-outlined" style={{ fontSize:44, color:BLUE, display:'block', marginBottom:12, opacity:.7 }}>upload_file</span>
-                <div style={{ fontSize:15, fontWeight:700, color:DARK, marginBottom:6 }}>גרור קובץ Excel לכאן</div>
-                <div style={{ fontSize:13, color:GRAY }}>או לחץ לבחירת קובץ</div>
-                <div style={{ fontSize:11, color:GRAY2, marginTop:8 }}>.xlsx · .xls · .csv</div>
-              </div>
-              <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" style={{ display:'none' }}
-                onChange={e => { const f=e.target.files[0]; e.target.value=''; if(f) parseFile(f) }} />
-
-              <div style={{ marginTop:20, padding:'14px 16px', background:'#F0F7FF', border:'1px solid #BFDBFE', borderRadius:12 }}>
-                <div style={{ fontSize:12, fontWeight:700, color:BLUE, marginBottom:8 }}>
-                  <span className="material-symbols-outlined" style={{fontSize:14,verticalAlign:'middle',marginLeft:6}}>info</span>
-                  כותרות מזוהות אוטומטית
-                </div>
-                <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
-                  {['שם מלא','טלפון','מדינה','ענף','מקצוע','ויזה','תוקף','כניסה לישראל','מעסיק'].map(h => (
-                    <span key={h} style={{ fontSize:11, padding:'2px 9px', borderRadius:99, background:WHITE, border:'1px solid #BFDBFE', color:BLUE, fontWeight:600 }}>{h}</span>
-                  ))}
-                  <span style={{ fontSize:11, color:GRAY2 }}>...ועוד</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 2 — Map columns */}
-          {step === 2 && (
-            <div>
-              <div style={{ marginBottom:16 }}>
-                <div style={{ fontSize:14, fontWeight:700, color:DARK }}>מיפוי עמודות</div>
-                <div style={{ fontSize:12, color:GRAY, marginTop:3 }}>
-                  {fileName} · {rows.length} שורות · {headers.length} עמודות
-                </div>
-              </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr auto 1fr', gap:'8px 12px', alignItems:'center' }}>
-                <div style={{ fontSize:10, fontWeight:700, color:GRAY2, textTransform:'uppercase', letterSpacing:'.06em' }}>עמודה בקובץ</div>
-                <div />
-                <div style={{ fontSize:10, fontWeight:700, color:GRAY2, textTransform:'uppercase', letterSpacing:'.06em' }}>שדה במערכת</div>
-                {headers.map(h => (
-                  <>
-                    <div key={'h'+h} style={{ padding:'8px 12px', background:LGRAY, border:'1px solid '+BORDER, borderRadius:8, fontSize:13, fontWeight:600, color:DARK, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                      {h || '(ריק)'}
-                    </div>
-                    <span style={{ color:GRAY2, fontSize:16, textAlign:'center' }}>→</span>
-                    <select key={'m'+h} value={mapping[h]||'_skip'} onChange={e => setMapping(m => ({...m,[h]:e.target.value}))} style={{ ...INP, appearance:'none' }}>
-                      {CANDIDATE_FIELDS.map(f => <option key={f.k} value={f.k}>{f.he}</option>)}
-                    </select>
-                  </>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* STEP 3 — Preview */}
-          {step === 3 && (
-            <div>
-              <div style={{ marginBottom:14, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                <div>
-                  <div style={{ fontSize:14, fontWeight:700, color:DARK }}>תצוגה מקדימה</div>
-                  <div style={{ fontSize:12, color:GRAY, marginTop:3 }}>{preview.length} רשומות מוכנות לייבוא</div>
-                </div>
-              </div>
-              <div style={{ overflow:'auto', maxHeight:340, borderRadius:10, border:'1px solid '+BORDER }}>
-                <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
-                  <thead>
-                    <tr style={{ background:'#F8FAFC' }}>
-                      {['#','שם','טלפון','מדינה','ענף','ויזה','שיבוץ'].map(h => (
-                        <th key={h} style={{ padding:'9px 12px', textAlign:'right', fontSize:10, fontWeight:700, color:GRAY2, borderBottom:'2px solid '+BORDER, textTransform:'uppercase', letterSpacing:'.05em', whiteSpace:'nowrap' }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {preview.slice(0,50).map((r,i) => (
-                      <tr key={i} style={{ borderBottom:'1px solid #F9FAFB', background: i%2===0?WHITE:'#FAFBFC' }}>
-                        <td style={{ padding:'8px 12px', color:GRAY2, fontSize:11 }}>{r._row}</td>
-                        <td style={{ padding:'8px 12px', fontWeight:600, color:DARK }}>{r.full_name_he||r.full_name_en||'—'}</td>
-                        <td style={{ padding:'8px 12px', color:GRAY, direction:'ltr' }}>{r.phone||'—'}</td>
-                        <td style={{ padding:'8px 12px', color:GRAY }}>{r.country||'—'}</td>
-                        <td style={{ padding:'8px 12px', color:GRAY }}>{r.sector||'—'}</td>
-                        <td style={{ padding:'8px 12px', color:GRAY }}>{r.permit_type||'—'}</td>
-                        <td style={{ padding:'8px 12px', color:r.placement?'#059669':GRAY2, fontWeight:r.placement?600:400 }}>{r.placement||'—'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {preview.length > 50 && <div style={{ fontSize:11, color:GRAY2, textAlign:'center', marginTop:8 }}>מוצגות 50 מתוך {preview.length} שורות</div>}
-            </div>
-          )}
-
-          {/* STEP 4 — Done */}
-          {step === 4 && (
-            <div style={{ textAlign:'center', padding:'32px 20px' }}>
-              <div style={{ fontSize:48, marginBottom:16 }}>{errors.length === 0 ? '🎉' : '⚠️'}</div>
-              <div style={{ fontSize:20, fontWeight:800, color:DARK, marginBottom:8 }}>
-                {importing ? 'מייבא...' : imported + ' רשומות יובאו בהצלחה'}
-              </div>
-              {errors.length > 0 && (
-                <div style={{ margin:'16px 0', padding:'12px 16px', background:'#FEF2F2', border:'1px solid #FECACA', borderRadius:10, textAlign:'right' }}>
-                  <div style={{ fontSize:12, fontWeight:700, color:'#DC2626', marginBottom:6 }}>{errors.length} שגיאות:</div>
-                  {errors.map((e,i) => <div key={i} style={{ fontSize:11, color:'#9F1239' }}>{e}</div>)}
-                </div>
-              )}
-              <button className="v2-btn v2-btn-primary" style={{ marginTop:12 }} onClick={onClose}>
-                <span className="material-symbols-outlined" style={{fontSize:15}}>check_circle</span>
-                סגור ועדכן רשימה
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* ── FOOTER ── */}
-        {step < 4 && (
-          <div style={{ padding:'14px 26px', borderTop:'1px solid '+BORDER, display:'flex', justifyContent:'space-between', alignItems:'center', background:'#FAFBFC', borderRadius:'0 0 20px 20px', flexShrink:0 }}>
-            <button className="v2-btn v2-btn-ghost" onClick={() => step>1?setStep(s=>s-1):onClose()}>
-              {step>1?'← חזרה':'ביטול'}
-            </button>
-            <span style={{ fontSize:11, color:GRAY2 }}>שלב {step} מתוך 4</span>
-            {step === 2 && (
-              <button className="v2-btn v2-btn-primary" onClick={buildPreview}
-                disabled={!Object.values(mapping).some(v=>v!=='_skip')}>
-                תצוגה מקדימה ←
-              </button>
-            )}
-            {step === 3 && (
-              <button className="v2-btn v2-btn-primary" onClick={doImport} disabled={importing||preview.length===0}
-                style={{ gap:6 }}>
-                <span className="material-symbols-outlined" style={{fontSize:15}}>cloud_upload</span>
-                {importing ? 'מייבא...' : 'ייבא ' + preview.length + ' רשומות'}
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
 // ─── MAIN CRM ─────────────────────────────────────────────────────────────────
 export default function CRM({ session, onLogout }) {
   useStyles()
@@ -4434,8 +3911,6 @@ export default function CRM({ session, onLogout }) {
       .subscribe()
     return () => supabase.removeChannel(channel)
   }, [currentUser])
-
-  useEffect(() => { window.__atlasReload = loadAll }, [loadAll])
 
   const loadAll = useCallback(async () => {
     try {
