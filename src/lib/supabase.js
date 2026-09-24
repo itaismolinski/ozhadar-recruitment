@@ -2,7 +2,10 @@ import { createClient } from '@supabase/supabase-js'
 
 const url = import.meta.env.VITE_SUPABASE_URL
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY
-export const supabase = createClient(url, key)
+if (!url || !key) {
+  console.error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY')
+}
+export const supabase = createClient(url || 'https://invalid.supabase.co', key || 'missing')
 
 // ─── Security Helpers ────────────────────────────────────────────────────────
 
@@ -39,8 +42,16 @@ export async function fetchCandidates() {
   if (error) throw error; return data
 }
 export async function insertCandidate(fields) {
-  const { data, error } = await supabase.from('candidates').insert([sanitizeRecord(fields)]).select().single()
-  if (error) throw error; return data
+  try {
+    const { data, error } = await supabase.from('candidates').insert([sanitizeRecord(fields)]).select().single()
+    if (error) throw error; return data
+  } catch (e) {
+    const msg = (e && e.message) ? e.message : String(e)
+    if (/failed to fetch|networkerror|load failed|nxdomain|err_name_not_resolved/i.test(msg)) {
+      throw new Error('Cannot reach the database (network / Supabase project). Check VITE_SUPABASE_URL.')
+    }
+    throw e
+  }
 }
 export async function updateCandidate(id, changes) {
   const { error } = await supabase.from('candidates').update(changes).eq('id', id)
@@ -131,8 +142,8 @@ const EMP_BUCKET  = 'employer-docs'
 export async function uploadDoc(candidateId, field, file) {
   const ALLOWED = ['pdf','jpg','jpeg','png','doc','docx']
   const ext = file.name.split('.').pop().toLowerCase()
-  if (!ALLOWED.includes(ext)) throw new Error(`סוג קובץ לא מורשה: .${ext}`)
-  if (file.size > 25 * 1024 * 1024) throw new Error('הקובץ גדול מדי — מקסימום 25MB')
+  if (!ALLOWED.includes(ext)) throw new Error(`File type not allowed: .${ext}`)
+  if (file.size > 25 * 1024 * 1024) throw new Error('File too large — maximum 25MB')
   const path = `${candidateId}/${field}.${ext}`
   const { error } = await supabase.storage.from(CAND_BUCKET).upload(path, file, { upsert: true })
   if (error) throw error; return path

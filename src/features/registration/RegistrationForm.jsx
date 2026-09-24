@@ -301,7 +301,7 @@ function UploadZone({ label, name, file, onChange, t }) {
             onClick={e => { e.stopPropagation(); onChange(name, null) }}
             style={{ marginTop: 8, background: 'none', border: 'none', color: '#FF3B30', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
           >
-            הסר קובץ
+            {t.doc_remove || 'Remove file'}
           </button>
         )}
       </div>
@@ -377,7 +377,11 @@ export default function RegistrationForm({ lang = 'he', onDone }) {
       }
       setDone(true)
     } catch (err) {
-      setSaveError('שגיאה בשמירה. נסה שוב.')
+      const raw = (err && (err.message || err.error_description || String(err))) || ''
+      const safe = String(raw).replace(/eyJ[a-zA-Z0-9._-]{20,}/g, '[redacted]').slice(0, 180)
+      // Prefer localized detail; fall back to English so EN UI never shows Hebrew hardcodes
+      const detail = (typeof t.save_error_detail === 'function') ? t.save_error_detail(safe) : (t.save_error || 'Couldn’t save. Please try again.')
+      setSaveError(detail || safe || (t.save_error || 'Couldn’t save. Please try again.') )
       console.error(err)
     } finally { setSaving(false) }
   }
